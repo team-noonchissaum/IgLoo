@@ -10,5 +10,5 @@ public class OtherUserProfileRes {
     private Long userId;
     private String nickname;
     private String profileUrl;
-    private String location;
+    //private String location;
 }

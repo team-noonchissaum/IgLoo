@@ -1,0 +1,73 @@
+package noonchissaum.backend.domain.user.service;
+
+import lombok.RequiredArgsConstructor;
+import noonchissaum.backend.domain.user.dto.request.LocalsignupReq;
+import noonchissaum.backend.domain.user.dto.request.LoginReq;
+import noonchissaum.backend.domain.user.dto.response.SignupRes;
+import noonchissaum.backend.domain.user.dto.response.TokenRes;
+import noonchissaum.backend.domain.user.entity.*;
+import noonchissaum.backend.domain.user.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class AuthService {
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public SignupRes signup(LocalsignupReq request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new IllegalArgumentException("이미 사용중인 이메일입니다.");
+        }
+        if (userRepository.existsByNickname(request.getNickname())) {
+            throw new IllegalArgumentException("이미 사용중인 닉네임입니다.");
+        }
+
+        User user= new User(
+                request.getEmail(),
+                request.getNickname(),
+                UserRole.USER,
+                UserStatus.ACTIVE
+        );
+
+
+        UserAuth auth = new UserAuth(
+                user,
+                AuthType.LOCAL,
+                request.getEmail(),
+                passwordEncoder.encode(request.getPassword())
+        );
+
+        user.getAuths().add(auth);
+        userRepository.save(user);
+
+        return new SignupRes(
+                user.getId(),
+                user.getEmail(),
+                user.getNickname()
+        );
+
+    }
+    public TokenRes login(LoginReq request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자"));
+
+        // 비밀번호 검증
+        UserAuth auth = user.getAuths().stream()
+                .filter(a -> a.getAuthType() == AuthType.LOCAL)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("로컬 로그인 불가"));
+
+        if (!passwordEncoder.matches(request.getPassword(), auth.getPasswordHash())) {
+            throw new IllegalArgumentException("비밀번호 불일치");
+        }
+
+        return new TokenRes(
+                "ACCESS_TOKEN_SAMPLE",
+                "REFRESH_TOKEN_SAMPLE"
+        );
+    }
+}
