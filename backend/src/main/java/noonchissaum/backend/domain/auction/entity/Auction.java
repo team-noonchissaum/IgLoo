@@ -64,7 +64,7 @@ public class Auction extends BaseTimeEntity {
         this.startAt = startAt;
         this.endAt = endAt;
         this.isExtended = false;
-        this.status = AuctionStatus.WAITING;
+        this.status = AuctionStatus.READY;
     }
 
     public void cancel() {
