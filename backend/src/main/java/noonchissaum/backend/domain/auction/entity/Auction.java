@@ -70,4 +70,13 @@ public class Auction extends BaseTimeEntity {
     public void cancel() {
         this.status = AuctionStatus.CANCELED;
     }
+
+    // 상태 전환 메서드
+    public void run(){
+        if(this.status != AuctionStatus.READY){
+            return;
+        }
+        this.status = AuctionStatus.RUNNING;
+        this.startAt = LocalDateTime.now();
+    }
 }
