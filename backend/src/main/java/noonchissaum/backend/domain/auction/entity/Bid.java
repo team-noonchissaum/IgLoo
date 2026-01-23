@@ -30,4 +30,12 @@ public class Bid extends BaseTimeEntity {
 
     @Column(name = "bid_price", precision = 15, scale = 0)
     private BigDecimal bidPrice;
+
+
+    public Bid(Auction auction, User bidder, BigDecimal bidPrice) {
+        this.auction = auction;
+        this.bidder = bidder;
+        this.bidPrice = bidPrice;
+    }
+
 }
