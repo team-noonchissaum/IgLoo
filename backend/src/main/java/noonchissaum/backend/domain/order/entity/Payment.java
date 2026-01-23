@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
 
 import java.math.BigDecimal;
@@ -20,9 +21,9 @@ public class Payment extends BaseTimeEntity {
     @Column(name = "payment_id")
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false)
-    private Order order;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Column(name = "provider_payment_id")
     private String providerPaymentId;

@@ -40,10 +40,6 @@ public class Order extends BaseTimeEntity {
     @Column(nullable = false)
     private OrderStatus status;
 
-    // 양방향 매핑: 결제 정보 (1:1)
-    @OneToOne(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Payment payment;
-
     // 양방향 매핑: 배송 정보 (1:1)
     @OneToOne(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Shipment shipment;
