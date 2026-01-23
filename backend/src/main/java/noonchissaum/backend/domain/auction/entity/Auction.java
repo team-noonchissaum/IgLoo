@@ -2,6 +2,7 @@ package noonchissaum.backend.domain.auction.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import noonchissaum.backend.domain.item.entity.Item;
@@ -32,7 +33,7 @@ public class Auction extends BaseTimeEntity {
     private BigDecimal currentPrice;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "current_bidder_id", nullable = false)
+    @JoinColumn(name = "current_bidder_id")
     private User currentBidder;
 
     @Column(name = "bid_count")
@@ -54,4 +55,19 @@ public class Auction extends BaseTimeEntity {
     // 양방향 매핑: 입찰 내역
     @OneToMany(mappedBy = "auction", cascade = CascadeType.ALL)
     private List<Bid> bids = new ArrayList<>();
+
+    @Builder
+    public Auction(Item item, BigDecimal startPrice, LocalDateTime startAt, LocalDateTime endAt) {
+        this.item = item;
+        this.currentPrice = startPrice;
+        this.bidCount = 0;
+        this.startAt = startAt;
+        this.endAt = endAt;
+        this.isExtended = false;
+        this.status = AuctionStatus.WAITING;
+    }
+
+    public void cancel() {
+        this.status = AuctionStatus.CANCELED;
+    }
 }
