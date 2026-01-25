@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 
 @Slf4j
 @RequiredArgsConstructor
+@Component //컴포넌트 필요하다고 합니다!.. 보광님 죄송합니다....
 public class AuctionExposureScheduler {
     private final AuctionRepository auctionRepository;
 
@@ -39,18 +40,20 @@ public class AuctionExposureScheduler {
 
     /**
      * RUNNING상태에서 ENDED로 전환
+     * 1분마다 한번씩 조회하여
      */
-    @Scheduled(fixedRate = )
+    @Scheduled(fixedDelay = 60_000 )
     @Transactional
     public void end() {
-       LocalDateTime now = LocalDateTime.now();
-       auctionRepository.findByStartAt()
+        LocalDateTime now = LocalDateTime.now();
 
+        int updateEnd = auctionRepository.endRunningAuctions(
+                AuctionStatus.RUNNING,
+                AuctionStatus.ENDED,
+                now
+        );
+        if(updateEnd > 0){
+            log.info("[AuctionEnd] ended={}", updateEnd);
+        }
     }
-
-
-    /**
-     * RUNNING상태에서 CANCELLED로 전환
-     */
-
 }

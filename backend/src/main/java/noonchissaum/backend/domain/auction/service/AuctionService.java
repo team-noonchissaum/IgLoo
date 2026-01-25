@@ -121,6 +121,8 @@ public class AuctionService {
 
         //5분이 지났을 경우 보증금 회수하는 로직과 5분이전이면 보증금 돌려주는 로칙 추가 필요
 
+
+        //경매 취소시 상태 변경
         auction.cancel();
     }
 }

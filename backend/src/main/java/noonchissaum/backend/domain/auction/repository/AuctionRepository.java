@@ -42,5 +42,23 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
     );
 
     List<Auction> findByStartAt(LocalDateTime startAt);
+
+    /**
+     *스케줄 관련 상태값 변경쿼리
+     * RUNNING -> ENDED
+     */
+    @Modifying
+    @Query("""
+    update Auction a
+    set a.status = :ended
+    where a.status = :running
+      and a.endAt <= :now
+""")
+    int endRunningAuctions(
+            AuctionStatus running,
+            AuctionStatus ended,
+            LocalDateTime now
+    );
+
 }
 
