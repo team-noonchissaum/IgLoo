@@ -1,10 +1,12 @@
-package noonchissaum.backend.domain.user.service;
+package noonchissaum.backend.domain.auth.service;
 
 import lombok.RequiredArgsConstructor;
-import noonchissaum.backend.domain.user.dto.request.LocalsignupReq;
-import noonchissaum.backend.domain.user.dto.request.LoginReq;
-import noonchissaum.backend.domain.user.dto.response.SignupRes;
-import noonchissaum.backend.domain.user.dto.response.TokenRes;
+import noonchissaum.backend.domain.auth.domain.AuthType;
+import noonchissaum.backend.domain.auth.domain.UserAuth;
+import noonchissaum.backend.domain.auth.dto.request.LocalsignupReq;
+import noonchissaum.backend.domain.auth.dto.request.LoginReq;
+import noonchissaum.backend.domain.auth.dto.response.SignupRes;
+import noonchissaum.backend.domain.auth.dto.response.TokenRes;
 import noonchissaum.backend.domain.user.entity.*;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -52,8 +54,13 @@ public class AuthService {
 
     }
     public TokenRes login(LoginReq request) {
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmailWithAuths(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자"));
+
+        // ACTIVE 상태 유저인지 검증 - BLOCKED된 유저는 로그인 불가능
+        if (!user.isActive()) {
+            throw new IllegalArgumentException("차단되었거나 탈퇴한 계정입니다.");
+        }
 
         // 비밀번호 검증
         UserAuth auth = user.getAuths().stream()

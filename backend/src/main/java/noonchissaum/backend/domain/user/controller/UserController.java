@@ -2,10 +2,11 @@ package noonchissaum.backend.domain.user.controller;
 
 
 import lombok.RequiredArgsConstructor;
-import noonchissaum.backend.domain.user.dto.request.SignupReq;
+import noonchissaum.backend.domain.user.dto.request.ProfileUpdateUserReq;
 import noonchissaum.backend.domain.user.dto.response.MyPageRes;
-import noonchissaum.backend.domain.user.dto.response.OtherUserProfileRes;
+import noonchissaum.backend.domain.auth.dto.response.OtherUserProfileRes;
 import noonchissaum.backend.domain.user.dto.response.ProfileRes;
+import noonchissaum.backend.domain.user.dto.response.ProfileUpdateUserRes;
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.global.dto.ApiResponse;
 import org.springframework.http.ResponseEntity;
@@ -19,26 +20,21 @@ public class UserController {
 
     private final UserService userService;
 
-    /**
-     * 회원 가입
+    /** 본인 프로필 조회
+     * GET /api/users/me
      */
-    @PostMapping("/signup")
-    public ResponseEntity<Long> signup(@RequestBody SignupReq signupReq) {
-        Long userId = userService.signup(signupReq);
-        return ResponseEntity.ok(userId);
-    }
-    /**본인 프로필 조회하기*/
+
     @GetMapping("/me")
-    public ResponseEntity<ProfileRes> myProfile(
-            @RequestParam Long userId
+    public ResponseEntity<ApiResponse<ProfileRes>> myProfile(
+            @AuthenticationPrincipal Long userId
     ) {
-        return ResponseEntity.ok(userService.getMyProfile(userId));
+        ProfileRes response = userService.getMyProfile(userId);
+        return ResponseEntity.ok(ApiResponse.success("요청 성공", response));
     }
-
-
 
     /**
      * 마이페이지 조회
+     * GET /api/users/me/mypage
      */
     @GetMapping("/me/mypage")
     public ResponseEntity<ApiResponse<MyPageRes>> getMyPage(@AuthenticationPrincipal Long userId) {
@@ -49,6 +45,7 @@ public class UserController {
 
     /**
      * 다른 유저 프로필 조회
+     * GET /api/users/{userId}
      */
 
     @GetMapping("/{userId}")
@@ -59,7 +56,19 @@ public class UserController {
     }
 
     /**
+     * 프로필 수정
+     * PATCH /api/users/me
+     */
+    @PatchMapping("/me")
+    public ResponseEntity<ApiResponse<ProfileUpdateUserRes>> updateProfile(@AuthenticationPrincipal Long userId,
+            @RequestBody ProfileUpdateUserReq request) {
+        ProfileUpdateUserRes response = userService.updateProfile(userId, request);
+        return ResponseEntity.ok(ApiResponse.success("수정 성공", response));
+    }
+
+    /**
      * 회원 탈퇴
+     * DELETE /api/users/me
      */
 
     @DeleteMapping("/me")
