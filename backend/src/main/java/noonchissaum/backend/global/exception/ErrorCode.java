@@ -1,4 +1,4 @@
-package noonchissaum.backend.global.error;
+package noonchissaum.backend.global.exception;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
