@@ -46,7 +46,6 @@ public class WalletEventListener {
             prevBidUserWallet.bidCanceled(event.refundAmount());
         }
 
-        redisTemplate.delete()
     }
 
     // 재시도 3번 후에도 안됬을 경우

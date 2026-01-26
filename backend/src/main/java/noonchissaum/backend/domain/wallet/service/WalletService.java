@@ -22,18 +22,6 @@ public class WalletService {
     private final WalletRepository walletRepository;
     private final ApplicationEventPublisher eventPublisher;
 
-    // 입찰 시 지갑 변화 메서드
-//    public void processBidWallet(Long userId, Long previousBidderId,
-//                                 BigDecimal bidAmount, BigDecimal currentPrice) {
-//        Wallet newBidUserWallet = walletRepository.findByUserId(userId)
-//                .orElseThrow(() -> new RuntimeException("user not found"));
-//        Wallet prevBidUserWallet = walletRepository.findByUserId(previousBidderId)
-//                .orElseThrow(() -> new RuntimeException("user not found"));
-//
-//        prevBidUserWallet.bidCanceled(currentPrice);
-//        newBidUserWallet.bid(bidAmount);
-//    }
-
     public void processBidWallet(Long userId, Long previousBidderId, BigDecimal bidAmount, BigDecimal currentPrice) {
         String userBalanceKey = "user:" + userId + ":balance";
         String userLockedBalanceKey = "user:" + userId + ":lockedBalance";

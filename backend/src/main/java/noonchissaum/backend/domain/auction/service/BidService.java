@@ -8,6 +8,7 @@ import noonchissaum.backend.domain.auction.entity.Bid;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.repository.BidRepository;
 import noonchissaum.backend.domain.user.entity.User;
+import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
@@ -34,6 +35,7 @@ public class BidService {
     private final BidRepository bidRepository;
     private final AuctionRepository auctionRepository;
     private final BidRecordService bidRecordService;
+    private final UserService userService;
 
     public void placeBid(Long auctionId, Long userId, BigDecimal bidAmount, String requestId) {
         // 1. 멱등성 체크 (락 획득 전 수행하여 불필요한 대기 방지)
@@ -86,7 +88,7 @@ public class BidService {
 
             Auction auction = auctionRepository.findById(auctionId)
                     .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
-            User user = userService.getUser(userId);
+            User user = userService.getUserByUserId(userId);
 
             // 1. Redis에 복구용 전체 정보 저장
             Map<String, String> bidInfo = new HashMap<>();
