@@ -64,8 +64,9 @@ public class BidController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody PlaceBidReq req
     ){
-        bidService.placeBid(req.auctionId(), req.userId(), req.bidAmount(), req.requestId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("입찰 완료"));
+        bidService.placeBid(req.auctionId(), userDetails.getUserId(), req.bidAmount(), req.requestId());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("입찰 완료"));
 
     }
 

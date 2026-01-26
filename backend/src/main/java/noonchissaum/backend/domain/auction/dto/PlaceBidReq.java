@@ -8,8 +8,6 @@ public record PlaceBidReq(
         @NotNull
         Long auctionId,
         @NotNull
-        Long userId,
-        @NotNull
         BigDecimal bidAmount,
         @NotNull
         String requestId
