@@ -33,7 +33,7 @@ public class Auction extends BaseTimeEntity {
     private BigDecimal currentPrice;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "current_bidder_id", nullable = false)
+    @JoinColumn(name = "current_bidder_id")
     private User currentBidder;
 
     @Column(name = "bid_count")
