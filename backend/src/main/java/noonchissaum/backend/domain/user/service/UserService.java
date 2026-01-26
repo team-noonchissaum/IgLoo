@@ -22,6 +22,8 @@ import java.math.BigDecimal;
 public class UserService {
     private final UserRepository userRepository;
 
+    // ======= 일반 유저 기능 ========
+
     /**
      * 본인 프로필 조회
      */

@@ -9,6 +9,7 @@ import noonchissaum.backend.domain.order.entity.Payment;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,6 +44,12 @@ public class User extends BaseTimeEntity {
     @Column(length = 100)
     private String location;
 
+    private LocalDateTime deletedAt;
+
+    private LocalDateTime blockedAt;
+
+    private String blockReason;
+
     // 양방향 매핑: 유저의 인증 정보들
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<UserAuth> auths = new ArrayList<>();
@@ -62,6 +69,8 @@ public class User extends BaseTimeEntity {
     }
 
     // ============비즈니스 로직 메서드============== DDD 패턴 사용!
+
+    // ======= 일반 유저 기능 =======
 
     /**
      * 프로필 수정
@@ -86,17 +95,12 @@ public class User extends BaseTimeEntity {
         return this.status == UserStatus.ACTIVE;
     }
 
-    public void block() {
-        if (this.status == UserStatus.BLOCKED) {
-            throw new IllegalStateException("이미 차단된 사용자입니다.");
-        }
-        this.status = UserStatus.BLOCKED;
-    }
+    /**
+     * 회원 탈퇴 soft delete
+     */
 
-    public void unblock() {
-        if (this.status != UserStatus.BLOCKED) {
-            throw new IllegalStateException("차단된 사용자가 아닙니다.");
-        }
-        this.status = UserStatus.ACTIVE;
+    public void softDelete() {
+        this.status = UserStatus.DELETED;
+        this.deletedAt = LocalDateTime.now();
     }
 }
