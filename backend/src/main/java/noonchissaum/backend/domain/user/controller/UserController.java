@@ -10,6 +10,7 @@ import noonchissaum.backend.domain.user.dto.response.ProfileUpdateUserRes;
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.global.dto.ApiResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,9 +26,8 @@ public class UserController {
      */
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<ProfileRes>> myProfile(
-            @AuthenticationPrincipal Long userId
-    ) {
+    public ResponseEntity<ApiResponse<ProfileRes>> myProfile(Authentication authentication) {
+        Long userId = Long.valueOf(authentication.getName());
         ProfileRes response = userService.getMyProfile(userId);
         return ResponseEntity.ok(ApiResponse.success("요청 성공", response));
     }
@@ -70,12 +70,12 @@ public class UserController {
      * 회원 탈퇴
      * DELETE /api/users/me
      */
-
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteUser(@AuthenticationPrincipal Long userId) {
         userService.deleteUser(userId);
 
         return ResponseEntity.noContent().build();
     }
+
 }
 

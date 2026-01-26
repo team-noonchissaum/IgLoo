@@ -40,10 +40,24 @@ public class UserAuth {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    public UserAuth(User user, AuthType authType, String identifier, String passwordHash) {
-        this.user = user;
-        this.authType = authType;
-        this.identifier = identifier;
-        this.passwordHash = passwordHash;
+    public static UserAuth createLocal(
+            User user,
+            String email,
+            String passwordHash
+    ) {
+        UserAuth auth = new UserAuth();
+        auth.user = user;
+        auth.authType = AuthType.LOCAL;
+        auth.identifier = email;
+        auth.passwordHash = passwordHash;
+        return auth;
+    }
+
+    public static UserAuth oauth(User user, AuthType authType, String identifier) {
+        UserAuth auth = new UserAuth();
+        auth.user = user;
+        auth.authType = authType;
+        auth.identifier = identifier;
+        return auth;
     }
 }

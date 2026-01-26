@@ -50,15 +50,13 @@ public class User extends BaseTimeEntity {
 
     private String blockReason;
 
-    // 양방향 매핑: 유저의 인증 정보들
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<UserAuth> auths = new ArrayList<>();
 
-    // 양방향 매핑: 유저의 지갑 정보 (1:1)
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Wallet wallet;
 
-    @OneToMany(mappedBy = "user",fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private final List<Payment> payments = new ArrayList<>();
 
     public User(String email, String nickname, UserRole role, UserStatus status) {
@@ -68,15 +66,15 @@ public class User extends BaseTimeEntity {
         this.status = status;
     }
 
-    // ============비즈니스 로직 메서드============== DDD 패턴 사용!
+    public static User createLocalUser(String email, String nickname) {
+        return new User(email, nickname, UserRole.USER, UserStatus.ACTIVE);
+    }
 
-    // ======= 일반 유저 기능 =======
+    // ============ 비즈니스 로직 ============
 
     /**
      * 프로필 수정
-     * null 이면 기본값 유지
      */
-
     public void updateProfile(String nickname, String profileUrl) {
         if (nickname != null) {
             this.nickname = nickname;
@@ -88,17 +86,14 @@ public class User extends BaseTimeEntity {
 
     /**
      * 활성된 사용자인지 확인
-     * ACTIVE 상태일 때만 트루값 반환
      */
-
     public boolean isActive() {
         return this.status == UserStatus.ACTIVE;
     }
 
     /**
-     * 회원 탈퇴 soft delete
+     * 회원 탈퇴 (soft delete)
      */
-
     public void softDelete() {
         this.status = UserStatus.DELETED;
         this.deletedAt = LocalDateTime.now();
@@ -109,10 +104,9 @@ public class User extends BaseTimeEntity {
     /**
      * 사용자 차단
      */
-
     public void block(String reason) {
         if (this.status == UserStatus.BLOCKED) {
-            throw new IllegalArgumentException("이미 차단된 사용자 입니다.");
+            throw new IllegalArgumentException("이미 차단된 사용자입니다.");
         }
         this.status = UserStatus.BLOCKED;
         this.blockedAt = LocalDateTime.now();
@@ -130,5 +124,4 @@ public class User extends BaseTimeEntity {
         this.blockedAt = null;
         this.blockReason = null;
     }
-
 }
