@@ -35,13 +35,6 @@ public class WalletService {
     public void processBidWallet(Long userId, Long previousBidderId, BigDecimal bidAmount, BigDecimal currentPrice) {
         String userKey = "user:" + userId + ":balance";
 
-        // [1단계] Redis에 데이터 없으면 DB에서 가져와 등록 (Lazy Loading)
-        if (Boolean.FALSE.equals(redisTemplate.hasKey(userKey))) {
-            Wallet wallet = walletRepository.findByUserId(userId)
-                    .orElseThrow(() -> new RuntimeException("일치하는 유저의 지갑이 없습니다."));
-            redisTemplate.opsForValue().set(userKey, wallet.getBalance().toPlainString());
-        }
-
         // [2단계] Redis 상에서 변화 입력 (즉시 차감)
         // 실제로는 decrement 후 결과값이 0보다 작으면 롤백하는 로직이 추가됩니다.
         Long remain = redisTemplate.opsForValue().decrement(userKey, bidAmount.longValue());
@@ -58,5 +51,15 @@ public class WalletService {
 
         // [3단계] DB에 변화 처리하기 (비동기 이벤트 발행)
         eventPublisher.publishEvent(new WalletUpdateEvent(userId, previousBidderId, bidAmount, currentPrice));
+    }
+
+    public void getBalance(Long userId) {
+        String userKey = "user:" + userId + ":balance";
+
+        if (Boolean.FALSE.equals(redisTemplate.hasKey(userKey))) {
+            Wallet wallet = walletRepository.findByUserId(userId)
+                    .orElseThrow(() -> new RuntimeException("일치하는 유저의 지갑이 없습니다."));
+            redisTemplate.opsForValue().set(userKey, wallet.getBalance().toPlainString());
+        }
     }
 }

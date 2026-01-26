@@ -35,13 +35,10 @@ public class BidService {
 
     public void placeBid(Long auctionId, Long userId, BigDecimal bidAmount) {
         RLock lock = redissonClient.getLock("lock:auction:" + auctionId);
-        Wallet wallet = WalletService.getWallet(userId);
-
 
         try{
             boolean available = lock.tryLock(5, 2, TimeUnit.SECONDS);
             // 입찰 조건 확인 로직
-            validateBidConditions(auctionId,userId,bidAmount,wallet);
 
             if (!available){
                 throw new RuntimeException("입찰자가 많아 처리에 실패했습니다. 다시 시도해주세요");
@@ -50,18 +47,16 @@ public class BidService {
             String bidderKey = "auction:" + auctionId + ":currentBidder";
             String bidCount = "auction:" + auctionId + ":currentBidCount";
 
-
-            // 현재 경매가 조회 및 검증
-            String rawPrice = redisTemplate.opsForValue().get(priceKey);
-            String priceNum = rawPrice != null ? rawPrice : "0";
-            BigDecimal currentPrice = new BigDecimal(priceNum);
-
-            if (bidAmount.compareTo(currentPrice) <= 0) {
-                throw new RuntimeException("높은 가격으로 입찰해야 합니다.");
-            }
-
             String rawPreviousBidderId = redisTemplate.opsForValue().get(bidderKey);
             Long previousBidderId = rawPreviousBidderId != null ? Long.parseLong(rawPreviousBidderId) : -1L;
+
+            String rawPrice = redisTemplate.opsForValue().get(priceKey);
+            BigDecimal currentPrice = new BigDecimal(rawPrice);
+
+            walletService.getBalance(userId);
+            walletService.getBalance(previousBidderId);
+
+            validateBidConditions(auctionId,userId, bidAmount);
 
             // 이전 비더 유저 돈 환불 + 신규 비더 돈 Lock
             // previousBidderId가 null인 경우에는 신규 입찰자이므로 walletService에서 처리 필요
@@ -107,11 +102,11 @@ public class BidService {
     private void validateBidConditions(
             Long auctionId,
             Long userId,
-            BigDecimal bidAmount,
-            Wallet wallet
+            BigDecimal bidAmount
     ) {
         String priceKey = "auction:" + auctionId + ":currentPrice";
         String bidderKey = "auction:" + auctionId + ":currentBidder";
+        String userBalance = "user:" + userId + ":balance";
 
         String rawPrice = redisTemplate.opsForValue().get(priceKey);
         BigDecimal currentPrice = (rawPrice == null || rawPrice.isBlank()) ? BigDecimal.ZERO : new BigDecimal(rawPrice);
@@ -143,8 +138,9 @@ public class BidService {
         }
 
         //잔액 사전 검증 (가용 잔액)
-        BigDecimal usableBalance = wallet.getBalance().subtract(wallet.getLockedBalance());
-        if (usableBalance.compareTo(bidAmount) < 0) {
+        String rawUserBalance = redisTemplate.opsForValue().get(userBalance);
+        BigDecimal currentUserBalance = BigDecimal.valueOf(Long.parseLong(rawUserBalance));
+        if (currentUserBalance.compareTo(bidAmount) < 0) {
             throw new RuntimeException("사용 가능한 크레딧이 부족합니다.");
         }
     }
