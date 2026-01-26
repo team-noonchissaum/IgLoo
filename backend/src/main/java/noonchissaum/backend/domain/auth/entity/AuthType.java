@@ -1,4 +1,4 @@
-package noonchissaum.backend.domain.auth.domain;
+package noonchissaum.backend.domain.auth.entity;
 
 public enum AuthType {
     LOCAL, GOOGLE, KAKAO, NAVER

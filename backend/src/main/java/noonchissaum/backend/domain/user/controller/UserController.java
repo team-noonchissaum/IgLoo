@@ -4,7 +4,7 @@ package noonchissaum.backend.domain.user.controller;
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.user.dto.request.ProfileUpdateUserReq;
 import noonchissaum.backend.domain.user.dto.response.MyPageRes;
-import noonchissaum.backend.domain.auth.dto.response.OtherUserProfileRes;
+import noonchissaum.backend.domain.user.dto.response.OtherUserProfileRes;
 import noonchissaum.backend.domain.user.dto.response.ProfileRes;
 import noonchissaum.backend.domain.user.dto.response.ProfileUpdateUserRes;
 import noonchissaum.backend.domain.user.service.UserService;

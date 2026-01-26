@@ -1,4 +1,4 @@
-package noonchissaum.backend.domain.auth.dto.response;
+package noonchissaum.backend.domain.user.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

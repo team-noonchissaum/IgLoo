@@ -1,7 +1,7 @@
 package noonchissaum.backend.domain.auth.repository;
 
-import noonchissaum.backend.domain.auth.domain.AuthType;
-import noonchissaum.backend.domain.auth.domain.UserAuth;
+import noonchissaum.backend.domain.auth.entity.AuthType;
+import noonchissaum.backend.domain.auth.entity.UserAuth;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

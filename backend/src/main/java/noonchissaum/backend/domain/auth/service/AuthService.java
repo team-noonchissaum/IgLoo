@@ -1,8 +1,8 @@
 package noonchissaum.backend.domain.auth.service;
 
 import lombok.RequiredArgsConstructor;
-import noonchissaum.backend.domain.auth.domain.AuthType;
-import noonchissaum.backend.domain.auth.domain.UserAuth;
+import noonchissaum.backend.domain.auth.entity.AuthType;
+import noonchissaum.backend.domain.auth.entity.UserAuth;
 import noonchissaum.backend.domain.auth.dto.request.LocalsignupReq;
 import noonchissaum.backend.domain.auth.dto.request.LoginReq;
 import noonchissaum.backend.domain.auth.dto.response.SignupRes;
