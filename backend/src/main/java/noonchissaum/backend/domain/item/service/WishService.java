@@ -17,6 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class WishService {
     private final WishRepository wishRepository;
+    private final ItemService itemService;
     private final ItemRepository itemRepository;
     private final UserService userService;
 
@@ -28,16 +29,19 @@ public class WishService {
         return wishRepository.findByUserIdAndItemId(userId, itemId)
                 .map(existing -> {
                     wishRepository.delete(existing);
+                    itemRepository.decrementWishCount(itemId);
                     return false;
                 })
                 .orElseGet(() -> {
-                    User user = userService.getUserId(userId)
-                            .orElseThrow(() -> new IllegalArgumentException("user not found"));
-                    Item item = itemRepository.findById(itemId)
-                            .orElseThrow(() -> new IllegalArgumentException("item not found"));
+                    User user = userService.getUserId(userId);
+                    Item item = itemService.getActiveById(itemId);
 
                     try {
                         wishRepository.save(Wish.of(user, item));
+                        int updated = itemRepository.incrementWishCountIfActive(itemId);
+                        if (updated == 0){
+                            throw new IllegalStateException("삭제된 상품은 찜할 수 없습니다.");
+                        }
                         return true;
                     } catch (DataIntegrityViolationException e) {
                     return true;

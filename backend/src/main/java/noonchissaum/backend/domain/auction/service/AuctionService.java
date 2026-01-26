@@ -7,17 +7,19 @@ import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.category.entity.Category;
-import noonchissaum.backend.domain.category.repository.CategoryRepository;
+
+import noonchissaum.backend.domain.category.service.CategoryService;
 import noonchissaum.backend.domain.item.entity.Item;
-import noonchissaum.backend.domain.item.entity.ItemImage;
-import noonchissaum.backend.domain.item.repository.ItemImageRepository;
-import noonchissaum.backend.domain.item.repository.ItemRepository;
+
+import noonchissaum.backend.domain.item.service.ItemService;
 import noonchissaum.backend.domain.user.entity.User;
-import noonchissaum.backend.domain.user.repository.UserRepository;
+import noonchissaum.backend.domain.user.service.UserService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -25,10 +27,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuctionService {
 
     private final AuctionRepository auctionRepository;
-    private final ItemRepository itemRepository;
-    private final ItemImageRepository itemImageRepository;
-    private final UserRepository userRepository;
-    private final CategoryRepository categoryRepository;
+    private final ItemService itemService;
+    private final UserService userService;
+    private final CategoryService categoryService;
+
 
     /**
      * 새로운 경매를 등록합니다.
@@ -36,35 +38,11 @@ public class AuctionService {
      */
     @Transactional
     public Long registerAuction(Long userId, AuctionRegisterReq request) {
-        User seller = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User seller = userService.getSeller(userId);
+        Category category = categoryService.getcategory(request.getCategoryId());
 
-        Category category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new IllegalArgumentException("Category not found"));
-
-        // 1. 상품(Item) 정보 생성
-        Item item = Item.builder()
-                .seller(seller)
-                .category(category)
-                .title(request.getTitle())
-                .description(request.getDescription())
-                .startPrice(request.getStartPrice())
-                .build();
-        itemRepository.save(item);
-
-        // 2. 상품 이미지 등록 (순서 보장을 위해 order 사용)
-        if (request.getImageUrls() != null) {
-            int order = 0;
-            for (String url : request.getImageUrls()) {
-                ItemImage image = ItemImage.builder()
-                        .item(item)
-                        .imageUrl(url)
-                        .sortOrder(order++)
-                        .build();
-                itemImageRepository.save(image);
-                item.addImage(image);
-            }
-        }
+        // 1. 상품(Item) 정보 생성 + 이미지 등록
+        Item item = itemService.createItem(seller,category,request);
 
         // 3. 경매(Auction) 설정 및 저장
         Auction auction = Auction.builder()
@@ -119,7 +97,31 @@ public class AuctionService {
             throw new IllegalStateException("Cannot cancel auction with existing bids");
         }
 
-        //5분이 지났을 경우 보증금 회수하는 로직과 5분이전이면 보증금 돌려주는 로칙 추가 필요
+        /**
+         * 5분이 지났을 경우 보증금 회수하는 로직과 5분이전이면 보증금 돌려주는 로칙 추가
+         * 5분 이후 취소도 처리하려면 RUNNING 상태도 취소 허용
+         */
+        if (!(auction.getStatus() == AuctionStatus.READY || auction.getStatus() == AuctionStatus.RUNNING)) {
+            throw new IllegalStateException("Cannot cancel auction in current status: " + auction.getStatus());
+        }
+
+        // 정책 기준: 등록 + 5분
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime penaltyAt = auction.getCreatedAt().plusMinutes(5);
+
+        if (now.isBefore(penaltyAt)) {
+            // 5분 이내 취소 → 보증금 환불 처리
+            auction.refundDeposit();
+
+            // TODO: 지갑팀 연동 시 여기서 DEPOSIT_REFUND 처리 호출
+            // walletService.depositRefund(userId, auctionId, amount);
+        } else {
+            // 5분 이후 취소 → 보증금 몰수 확정(패널티)
+            auction.forfeitDeposit();
+
+            // TODO: 지갑팀 연동 시 여기서 DEPOSIT_FORFEIT 처리 호출
+            // walletService.depositForfeit(userId, auctionId, amount);
+        }
 
 
         //경매 취소시 상태 변경

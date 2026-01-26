@@ -10,9 +10,11 @@ import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Entity
 @Table(name = "auctions")
@@ -48,9 +50,17 @@ public class Auction extends BaseTimeEntity {
     @Column(name = "is_extended")
     private Boolean isExtended;
 
+    @Column(name = "extended")
+    private Boolean extended;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AuctionStatus status;
+
+    // 보증금 상태 필드
+    @Enumerated(EnumType.STRING)
+    @Column(name = "deposit_status", nullable = false, length = 20)
+    private DepositStatus depositStatus;
 
     // 양방향 매핑: 입찰 내역
     @OneToMany(mappedBy = "auction", cascade = CascadeType.ALL)
@@ -65,6 +75,8 @@ public class Auction extends BaseTimeEntity {
         this.endAt = endAt;
         this.isExtended = false;
         this.status = AuctionStatus.READY;
+        this.depositStatus = DepositStatus.HELD;
+
     }
 
     public void cancel() {
@@ -78,5 +90,42 @@ public class Auction extends BaseTimeEntity {
         }
         this.status = AuctionStatus.RUNNING;
         this.startAt = LocalDateTime.now();
+    }
+    /**
+     * 상태 전이 메서드 (중복 처리 방지)
+     */
+    public void refundDeposit() {
+        if (this.depositStatus != DepositStatus.HELD) {
+            throw new IllegalStateException("Deposit already finalized: " + this.depositStatus);
+        }
+        this.depositStatus = DepositStatus.REFUNDED;
+    }
+
+    public void forfeitDeposit() {
+        if (this.depositStatus != DepositStatus.HELD) {
+            throw new IllegalStateException("Deposit already finalized: " + this.depositStatus);
+        }
+        this.depositStatus = DepositStatus.FORFEITED;
+    }
+
+
+    /**
+     * 마감 임박 시 단 한 번만 3분 연장
+     */
+    public void extendIfNeeded(
+            LocalDateTime now,
+            Duration imminentThreshold,
+            Duration extendDuration
+    ) {
+        if (extended) {
+            return;
+        }
+
+        long remainSeconds = Duration.between(now, endAt).getSeconds();
+
+        if (remainSeconds <= imminentThreshold.getSeconds()) {
+            this.endAt = this.endAt.plus(extendDuration);
+            this.extended = true;
+        }
     }
 }
