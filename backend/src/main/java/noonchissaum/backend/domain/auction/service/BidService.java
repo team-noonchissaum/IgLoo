@@ -65,14 +65,17 @@ public class BidService {
             BigDecimal currentPrice = rawPrice != null ? new BigDecimal(rawPrice) : BigDecimal.ZERO;
 
             walletService.getBalance(userId);
-            walletService.getBalance(previousBidderId);
+
+            // 이전 입찰자가 있을 때만 getBalance 실행
+            if (previousBidderId != -1){
+                walletService.getBalance(previousBidderId);
+            }
 
             validateBidConditions(auctionId,userId, bidAmount);
 
             // 이전 비더 유저 돈 환불 + 신규 비더 돈 Lock
             // previousBidderId가 null인 경우에는 신규 입찰자이므로 walletService에서 처리 필요
             walletService.processBidWallet(userId, previousBidderId, bidAmount, currentPrice);
-
 
             String rawBidCount  = redisTemplate.opsForValue().get(bidCount);
             String bidCountStr = rawBidCount != null ? rawBidCount : "0";
@@ -139,6 +142,7 @@ public class BidService {
 
         String rawPrice = redisTemplate.opsForValue().get(priceKey);
         BigDecimal currentPrice = (rawPrice == null || rawPrice.isBlank()) ? BigDecimal.ZERO : new BigDecimal(rawPrice);
+        log.info("currentPrice:" + currentPrice);
 
         //10% 이상 체크 (10원 단위 올림)
         if (currentPrice.compareTo(BigDecimal.ZERO) > 0) {
