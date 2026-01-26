@@ -70,7 +70,6 @@ public class UserController {
      * 회원 탈퇴
      * DELETE /api/users/me
      */
-
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteUser(@AuthenticationPrincipal Long userId) {
         userService.deleteUser(userId);

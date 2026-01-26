@@ -1,6 +1,8 @@
 package noonchissaum.backend.domain.user.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -59,6 +61,10 @@ public class User extends BaseTimeEntity {
         this.nickname = nickname;
         this.role = role;
         this.status = status;
+    }
+
+    public static User createLocalUser(@NotBlank(message = "이메일은 필수 항목입니다.") @Email(message = "올바르지 않은 이메일 형식입니다.") String email, @NotBlank(message = "닉네임은 필수 항목입니다.") String nickname) {
+        return new User(email, nickname, UserRole.USER, UserStatus.ACTIVE);
     }
 
     // ============비즈니스 로직 메서드============== DDD 패턴 사용!
