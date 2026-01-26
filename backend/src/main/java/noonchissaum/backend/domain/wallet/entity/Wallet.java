@@ -42,6 +42,18 @@ public class Wallet extends BaseTimeEntity {
 
     public Wallet(User user) {
         this.user = user;
-        this.balance = BigDecimal.ZERO;
+    }
+
+    public void bidCanceled(BigDecimal amount) {
+        this.balance = this.balance.add(amount);
+        this.lockedBalance = this.lockedBalance.subtract(amount);
+    }
+
+    public void bid(BigDecimal amount) {
+        if (this.balance.compareTo(amount) <= 0) {
+            throw new RuntimeException("잔액 부족");
+        }
+        this.balance = this.balance.subtract(amount);
+        this.lockedBalance = this.lockedBalance.add(amount);
     }
 }
