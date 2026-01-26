@@ -4,6 +4,7 @@ import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -16,12 +17,11 @@ import java.util.List;
 @Repository
 public interface AuctionRepository extends JpaRepository<Auction, Long> {
 
-    @Query("SELECT a FROM Auction a JOIN FETCH a.item i JOIN FETCH i.seller s WHERE a.status = :status")
-    Page<Auction> findAllByStatus(@Param("status") AuctionStatus status, Pageable pageable);
+    @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
+    Page<Auction> findAllByStatus(AuctionStatus status, Pageable pageable);
 
-    @Query("SELECT a FROM Auction a JOIN FETCH a.item i JOIN FETCH i.seller s")
+    @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
     Page<Auction> findAllWithItemAndSeller(Pageable pageable);
-
     /**
      *스케줄 관련 상태값 변경쿼리
      * READY->RUNNING

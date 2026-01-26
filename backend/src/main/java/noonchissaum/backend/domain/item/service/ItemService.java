@@ -58,6 +58,10 @@ public class ItemService {
 
             itemImageRepository.save(image);
             item.addImage(image);
+
+            if (image.getSortOrder() == null && image.getSortOrder() == 0) {
+                item.setThumbnailUrl(url);
+            }
         }
     }
 }

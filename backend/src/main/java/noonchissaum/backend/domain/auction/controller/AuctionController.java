@@ -45,7 +45,8 @@ public class AuctionController {
     public ResponseEntity<ApiResponse<Page<AuctionRes>>> getAuctions(
             @PageableDefault(size = 10, sort = "startAt", direction = Sort.Direction.DESC) Pageable pageable,
             @RequestParam(required = false) AuctionStatus status) {
-        Page<AuctionRes> auctions = auctionService.getAuctionList(pageable, status);
+        Long userId = 1L;
+        Page<AuctionRes> auctions = auctionService.getAuctionList(userId, pageable, status);
         return ResponseEntity.ok(new ApiResponse<>("Auction list retrieved", auctions));
     }
 
@@ -54,7 +55,8 @@ public class AuctionController {
      */
     @GetMapping("/{auctionId}")
     public ResponseEntity<ApiResponse<AuctionRes>> getAuctionDetail(@PathVariable Long auctionId) {
-        AuctionRes response = auctionService.getAuctionDetail(auctionId);
+        Long userId = 1L;
+        AuctionRes response = auctionService.getAuctionDetail(userId, auctionId);
         return ResponseEntity.ok(new ApiResponse<>("Auction detail retrieved", response));
     }
 

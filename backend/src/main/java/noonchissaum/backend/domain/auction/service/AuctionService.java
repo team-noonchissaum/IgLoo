@@ -12,6 +12,7 @@ import noonchissaum.backend.domain.category.service.CategoryService;
 import noonchissaum.backend.domain.item.entity.Item;
 
 import noonchissaum.backend.domain.item.service.ItemService;
+import noonchissaum.backend.domain.item.service.WishService;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.service.UserService;
 import org.springframework.data.domain.Page;
@@ -20,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +33,7 @@ public class AuctionService {
     private final ItemService itemService;
     private final UserService userService;
     private final CategoryService categoryService;
+    private final WishService wishService;
 
 
     /**
@@ -59,22 +63,34 @@ public class AuctionService {
     /**
      * 경매 목록을 조회합니다. N+1 문제를 방지하기 위해 Fetch Join이 적용된 Repository 메서드를 사용합니다.
      */
-    public Page<AuctionRes> getAuctionList(Pageable pageable, AuctionStatus status) {
+    public Page<AuctionRes> getAuctionList(Long userId, Pageable pageable, AuctionStatus status) {
         Page<Auction> auctions;
         if (status != null) {
             auctions = auctionRepository.findAllByStatus(status, pageable);
         } else {
             auctions = auctionRepository.findAllWithItemAndSeller(pageable);
         }
-        return auctions.map(AuctionRes::from);
+        List<Long> itemIds = auctions.getContent().stream()
+                .map(a -> a.getItem().getId())
+                .distinct()
+                .toList();
+
+        Set<Long> wishedItemIds = wishService.getWishedItemIds(userId, itemIds);
+
+        return auctions.map(a ->
+                AuctionRes.from(a, wishedItemIds.contains(a.getItem().getId()))
+        );
     }
+
 
     /**
      * 경매 상세 정보를 조회합니다.
      */
-    public AuctionRes getAuctionDetail(Long auctionId) {
+    public AuctionRes getAuctionDetail(Long userId, Long auctionId) {
+        User user = userService.getUser(userId);
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new IllegalArgumentException("Auction not found"));
+        boolean isWished = wishService.isWished(userId, auction.getItem().getId());
         return AuctionRes.from(auction);
     }
 

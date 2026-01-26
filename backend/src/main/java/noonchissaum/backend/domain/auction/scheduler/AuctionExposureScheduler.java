@@ -24,9 +24,6 @@ public class AuctionExposureScheduler {
         auctionSchedulerService.expose(now);
     }
 
-
-
-
     /**
      * RUNNING상태에서 ENDED로 전환
      * 1분마다 한번씩 조회하여

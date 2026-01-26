@@ -11,7 +11,10 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +36,7 @@ public class WishService {
                     return false;
                 })
                 .orElseGet(() -> {
-                    User user = userService.getUserId(userId);
+                    User user = userService.getUser(userId);
                     Item item = itemService.getActiveById(itemId);
 
                     try {
@@ -47,7 +50,20 @@ public class WishService {
                     return true;
                     }
                 });
+    }
 
+    @Transactional(readOnly = true)
+    public boolean isWished(Long userId, Long itemId){
+        return wishRepository.existsByUserIdAndItemId(userId, itemId);
+    }
+
+    // 경매 목록에서 찜 부분 보이게 하는 메서드
+    @Transactional(readOnly = true)
+    public Set<Long> getWishedItemIds(Long userId, List<Long> itemIds) {
+        if (itemIds == null || itemIds.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return new HashSet<>(wishRepository.findWishedItemIds(userId, itemIds));
     }
 
     public List<Item> getMyWishedItems(Long userId) {

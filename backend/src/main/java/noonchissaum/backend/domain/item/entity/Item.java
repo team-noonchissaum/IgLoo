@@ -64,6 +64,9 @@ public class Item extends BaseTimeEntity {
     @OneToOne(mappedBy = "item", fetch = FetchType.LAZY)
     private Auction auction;
 
+    @Column(name = "thumbnail_url")
+    private String thumbnailUrl;
+
     @Builder
     public Item(User seller, Category category, String title, String description, BigDecimal startPrice) {
         this.seller = seller;
@@ -82,6 +85,10 @@ public class Item extends BaseTimeEntity {
             // 여기서는 ItemImage 생성자에서 처리한다고 가정하고 add만 수행하거나,
             // ItemImage setter가 있다면 호출. 현재 ItemImage에는 setter가 없으므로 add만 수행.
         }
+    }
+
+    public void setThumbnailUrl(String thumbnailUrl) {
+        this.thumbnailUrl = thumbnailUrl;
     }
 
 }

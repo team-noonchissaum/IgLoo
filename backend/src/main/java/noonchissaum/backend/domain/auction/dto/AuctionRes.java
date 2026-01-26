@@ -32,6 +32,8 @@ public class AuctionRes {
     private List<String> imageUrls;
     private Long categoryId;
     private String categoryName;
+    private Integer wishCount;
+    private Boolean isWished;
 
     public static AuctionRes from(Auction auction) {
         Item item = auction.getItem();
@@ -51,6 +53,30 @@ public class AuctionRes {
                         .collect(Collectors.toList()))
                 .categoryId(item.getCategory().getId())
                 .categoryName(item.getCategory().getName())
+                .wishCount(item.getWishCount())
+                .isWished(null)
+                .build();
+    }
+    public static AuctionRes from(Auction auction, boolean isWished) {
+        Item item = auction.getItem();
+        return AuctionRes.builder()
+                .auctionId(auction.getId())
+                .title(item.getTitle())
+                .description(item.getDescription())
+                .currentPrice(auction.getCurrentPrice())
+                .startPrice(item.getStartPrice())
+                .bidCount(auction.getBidCount())
+                .status(auction.getStatus())
+                .startAt(auction.getStartAt())
+                .endAt(auction.getEndAt())
+                .sellerNickname(item.getSeller().getNickname())
+                .imageUrls(item.getImages().stream()
+                        .map(ItemImage::getImageUrl)
+                        .collect(Collectors.toList()))
+                .categoryId(item.getCategory().getId())
+                .categoryName(item.getCategory().getName())
+                .wishCount(item.getWishCount() == null ? 0 : item.getWishCount())
+                .isWished(isWished)
                 .build();
     }
 }
