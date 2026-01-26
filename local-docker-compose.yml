@@ -9,3 +9,21 @@ services:
       - ./redis-data:/data # 데이터 저장소 연결
     command: redis-server /usr/local/etc/redis/redis.conf # 설정파일을 읽으며 실행하도록 지정
     restart: always
+
+  db:
+    image: mysql:8.0
+    container_name: igloo-db
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./db/data:/var/lib/mysql
+      - ./db/init:/docker-entrypoint-initdb.d # 초기 SQL 필요 시
+    restart: on-failure
+    environment:
+      MYSQL_DATABASE: igloo
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD} # 일반 유저 비번
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      TZ: Asia/Seoul
+    env_file:
+      - .env.dev
