@@ -31,11 +31,13 @@ public class Bid extends BaseTimeEntity {
     @Column(name = "bid_price", precision = 15, scale = 0)
     private BigDecimal bidPrice;
 
+    private String requestId;
 
-    public Bid(Auction auction, User bidder, BigDecimal bidPrice) {
+    public Bid(Auction auction, User bidder, BigDecimal bidPrice, String requestId) {
         this.auction = auction;
         this.bidder = bidder;
         this.bidPrice = bidPrice;
+        this.requestId = requestId;
     }
 
 }

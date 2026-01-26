@@ -8,6 +8,7 @@ import noonchissaum.backend.domain.wallet.repository.WalletRepository;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.context.event.EventListener;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class WalletEventListener {
 
     private final WalletRepository walletRepository;
+    private final RedisTemplate<Object, Object> redisTemplate;
 
     @Async("walletTaskExcutor")
     @EventListener
@@ -38,14 +40,13 @@ public class WalletEventListener {
 
         newBidUserWallet.bid(event.bidAmount());
 
-        if (event.previousBidderId() == null || event.previousBidderId() == -1L) {
-            return;
+        if (event.previousBidderId() != null && event.previousBidderId() != -1L) {
+            Wallet prevBidUserWallet = walletRepository.findByUserId(event.previousBidderId())
+                    .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+            prevBidUserWallet.bidCanceled(event.refundAmount());
         }
 
-        Wallet prevBidUserWallet = walletRepository.findByUserId(event.previousBidderId())
-                .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
-
-        prevBidUserWallet.bidCanceled(event.refundAmount());
+        redisTemplate.delete()
     }
 
     // 재시도 3번 후에도 안됬을 경우
