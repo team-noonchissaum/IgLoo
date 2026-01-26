@@ -2,6 +2,11 @@ package noonchissaum.backend.domain.wallet.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import noonchissaum.backend.domain.auction.entity.Auction;
+import noonchissaum.backend.domain.auction.repository.BidRepository;
+import noonchissaum.backend.domain.auction.service.BidRecordService;
+import noonchissaum.backend.domain.auction.service.BidService;
+import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.wallet.dto.WalletUpdateEvent;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
@@ -16,12 +21,16 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.awt.desktop.UserSessionEvent;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class WalletEventListener {
 
     private final WalletRepository walletRepository;
+    private final BidRecordService bidRecordService;
+    private final BidService bidService;
     private final RedisTemplate<Object, Object> redisTemplate;
 
     @Async("walletTaskExcutor")
@@ -34,6 +43,11 @@ public class WalletEventListener {
     )
     public void handleWalletUpdate(WalletUpdateEvent event) {
         log.info("비동기 DB 업데이트 시작 - 유저: {}", event.userId());
+
+        //bid 저장부분 추가
+        if (!bidService.isExistRequestId(event.requestId())) {
+            bidRecordService.saveBidRecord(event.auctionId(), event.userId(), event.bidAmount(), event.requestId());
+        }
 
         Wallet newBidUserWallet = walletRepository.findByUserId(event.userId())
                 .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));

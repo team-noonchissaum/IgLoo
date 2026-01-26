@@ -21,7 +21,6 @@ public class BidRecordService {
     private final UserService userService;
 
     @Transactional
-    @Async
     public void saveBidRecord(Long auctionId, Long userId, BigDecimal bidAmount, String requestId) {
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new RuntimeException("auction not found"));

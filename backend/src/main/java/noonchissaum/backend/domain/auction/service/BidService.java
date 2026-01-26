@@ -2,20 +2,27 @@ package noonchissaum.backend.domain.auction.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import noonchissaum.backend.domain.auction.dto.BidHistoryItemRes;
+import noonchissaum.backend.domain.auction.dto.MyBidAuctionDto;
+import noonchissaum.backend.domain.auction.dto.MyBidAuctionRes;
 import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.entity.Bid;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.repository.BidRepository;
 import noonchissaum.backend.domain.user.entity.User;
+
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -23,6 +30,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -60,6 +68,7 @@ public class BidService {
             String endTimeKey = "auction:" + auctionId + ":endTime";
             String extendedTimeKey = "auction:" + auctionId + ":extendedTime";
 
+
             String rawPreviousBidderId = redisTemplate.opsForValue().get(bidderKey);
             Long previousBidderId = rawPreviousBidderId != null ? Long.parseLong(rawPreviousBidderId) : -1L;
 
@@ -77,7 +86,7 @@ public class BidService {
 
             // 이전 비더 유저 돈 환불 + 신규 비더 돈 Lock
             // previousBidderId가 null인 경우에는 신규 입찰자이므로 walletService에서 처리 필요
-            walletService.processBidWallet(userId, previousBidderId, bidAmount, currentPrice);
+            walletService.processBidWallet(userId, previousBidderId, bidAmount, currentPrice,auctionId,requestId);
 
             String rawBidCount  = redisTemplate.opsForValue().get(bidCount);
             String bidCountStr = rawBidCount != null ? rawBidCount : "0";
@@ -97,13 +106,17 @@ public class BidService {
             Map<String, String> bidInfo = new HashMap<>();
             bidInfo.put("auctionId", String.valueOf(auctionId));
             bidInfo.put("userId", String.valueOf(userId));
-            bidInfo.put("bidAmount", bidAmount.toString());
+            bidInfo.put("bidAmount", bidAmount.toPlainString());
             bidInfo.put("requestId", requestId);
 
+            bidInfo.put("previousBidderId", String.valueOf(previousBidderId));   // wallet 용
+            bidInfo.put("refundAmount", currentPrice.toPlainString());          // wallet 용
+            bidInfo.put("createdAt", String.valueOf(System.currentTimeMillis()));
+
             String infoKey = "pending_bid_info:" + requestId;
+
             redisTemplate.opsForHash().putAll(infoKey, bidInfo);
             redisTemplate.expire(infoKey, Duration.ofMinutes(10));
-
             redisTemplate.opsForSet().add("pending_bid_requests", requestId);
 
             redisTemplate.opsForValue().set(requestId, bidAmount+"");
@@ -123,6 +136,58 @@ public class BidService {
             }
         }
     }
+
+    /**
+     * 특정 경매의 입찰 이력 조회
+     */
+    @Transactional(readOnly = true)
+    public Page<BidHistoryItemRes> getBidHistory(Long userId, Long auctionId, Pageable pageable){
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(()-> new RuntimeException(ErrorCode.NOT_FOUND_AUCTIONS.getMessage()));
+        Page<Bid> bidPage = bidRepository.findByAuctionIdOrderByCreatedAtDesc(auction.getId(), pageable);
+
+        return bidPage.map(BidHistoryItemRes::from);
+    }
+
+
+    /**
+     * 현재 참여하고 있는 모든 경매의 입찰 현황 조회
+     * 상품 이미지는 우선 제외
+     */
+    @Transactional(readOnly = true)
+    public Page<MyBidAuctionRes> getMyBidAuctions(
+            Long userId,
+            Pageable pageable
+    ) {
+        if (pageable.getPageNumber() < 0 || pageable.getPageSize() <= 0) {
+            throw new IllegalArgumentException("INVALID_PAGE_REQUEST");
+        }
+
+        Page<Auction> auctions =
+                bidRepository.findParticipatedAuctions(userId, pageable);
+
+        return auctions.map(a -> {
+            BigDecimal myMax = bidRepository.myMaxBid(userId, a.getId());
+            BigDecimal currentMax = bidRepository.currentMaxBid(a.getId());
+            int bidCount = bidRepository.countByAuctionId(a.getId());
+
+            boolean isHighest =
+                    myMax.compareTo(currentMax) == 0
+                            && currentMax.compareTo(BigDecimal.ZERO) > 0;
+
+            return MyBidAuctionRes.of(
+                    a.getId(),
+                    a.getItem().getTitle(),
+                    myMax.longValueExact(),
+                    currentMax.longValueExact(),
+                    isHighest,
+                    a.getStatus(),
+                    a.getEndAt(),
+                    bidCount
+            );
+        });
+    }
+
 
     /**
      * 입찰 조건 검증 로직:
@@ -178,8 +243,14 @@ public class BidService {
         }
     }
 
+
+
     public Bid getBid(Long bidId) {
         return bidRepository.findById(bidId)
                 .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_BID));
+    }
+
+    public boolean isExistRequestId(String requestId){
+        return bidRepository.existsByRequestId(requestId);
     }
 }
