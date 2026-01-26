@@ -22,7 +22,7 @@ public class WalletService {
     private final WalletRepository walletRepository;
     private final ApplicationEventPublisher eventPublisher;
 
-    public void processBidWallet(Long userId, Long previousBidderId, BigDecimal bidAmount, BigDecimal currentPrice) {
+    public void processBidWallet(Long userId, Long previousBidderId, BigDecimal bidAmount, BigDecimal currentPrice ,Long auctionId, String requestId) {
         String userBalanceKey = "user:" + userId + ":balance";
         String userLockedBalanceKey = "user:" + userId + ":lockedBalance";
 
@@ -46,7 +46,7 @@ public class WalletService {
         }
 
         // [3단계] DB에 변화 처리하기 (비동기 이벤트 발행)
-        eventPublisher.publishEvent(new WalletUpdateEvent(userId, previousBidderId, bidAmount, currentPrice));
+        eventPublisher.publishEvent(new WalletUpdateEvent(userId, previousBidderId, bidAmount, currentPrice,auctionId,requestId));
     }
 
     public void getBalance(Long userId) {
