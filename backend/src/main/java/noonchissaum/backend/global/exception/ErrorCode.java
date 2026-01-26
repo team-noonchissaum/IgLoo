@@ -12,6 +12,7 @@ public enum ErrorCode {
     LOW_BID_AMOUNT(HttpStatus.BAD_REQUEST, "B001", "현재가보다 같거나 낮은 가격에 입찰할 수 없습니다."),
     CANNOT_BID_CONTINUOUS(HttpStatus.TOO_MANY_REQUESTS, "B002", "연속적으로 입찰할 수 없습니다."),
     CANNOT_FIND_BID(HttpStatus.NOT_FOUND, "B003", "입찰을 찾을 수 없습니다."),
+    DUPLICATE_BID_REQUEST(HttpStatus.CONFLICT, "B004", "이미 처리중인 입찰입니다."),
 
     // Wallet Error
     INSUFFICIENT_BALANCE(HttpStatus.PAYMENT_REQUIRED, "W001", "잔액이 부족합니다."),

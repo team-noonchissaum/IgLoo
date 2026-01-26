@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -33,7 +34,14 @@ public class BidService {
     private final AuctionRepository auctionRepository;
     private final BidRecordService bidRecordService;
 
-    public void placeBid(Long auctionId, Long userId, BigDecimal bidAmount) {
+    public void placeBid(Long auctionId, Long userId, BigDecimal bidAmount, String requestId) {
+        // 1. 멱등성 체크 (락 획득 전 수행하여 불필요한 대기 방지)
+        // requestId는 FE가 UUID를 이용해서 담당
+        String requestKey = "bid_idempotency:" + requestId;
+        if (Boolean.FALSE.equals(redisTemplate.opsForValue().setIfAbsent(requestKey, "Y", Duration.ofMinutes(5)))) {
+            throw new RuntimeException("중복된 입찰 요청입니다.");
+        }
+
         RLock lock = redissonClient.getLock("lock:auction:" + auctionId);
 
         try{
@@ -51,7 +59,7 @@ public class BidService {
             Long previousBidderId = rawPreviousBidderId != null ? Long.parseLong(rawPreviousBidderId) : -1L;
 
             String rawPrice = redisTemplate.opsForValue().get(priceKey);
-            BigDecimal currentPrice = new BigDecimal(rawPrice);
+            BigDecimal currentPrice = rawPrice != null ? new BigDecimal(rawPrice) : BigDecimal.ZERO;
 
             walletService.getBalance(userId);
             walletService.getBalance(previousBidderId);
@@ -84,6 +92,9 @@ public class BidService {
         catch (InterruptedException e){
             Thread.currentThread().interrupt();
             return ;
+        } catch (Exception e) {
+            redisTemplate.delete(requestKey);
+            throw e;
         } finally {
             // 락 해제
             if (lock.isHeldByCurrentThread()){
