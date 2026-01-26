@@ -29,7 +29,7 @@ public class RedisConfig {
     @Value("${spring.data.redis.redisson.connection-minimum-idle-size}")
     private int minIdle;
 
-    @Value("${spring.data.radis.redisson.timeout}")
+    @Value("${spring.data.redis.redisson.timeout}")
     private int timeout;
 
     @Bean

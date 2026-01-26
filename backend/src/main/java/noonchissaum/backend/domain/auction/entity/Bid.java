@@ -40,6 +40,7 @@ public class Bid extends BaseTimeEntity {
         this.bidder = bidder;
         this.bidPrice = bidPrice;
         this.requestId  = requestId;
+
     }
 
 

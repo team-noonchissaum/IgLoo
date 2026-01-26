@@ -8,6 +8,8 @@ import noonchissaum.backend.domain.auction.entity.Bid;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.repository.BidRepository;
 import noonchissaum.backend.domain.user.entity.User;
+
+import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
@@ -35,13 +37,14 @@ public class BidService {
     private final BidRepository bidRepository;
     private final AuctionRepository auctionRepository;
     private final BidRecordService bidRecordService;
+    private final UserService userService;
 
     public void placeBid(Long auctionId, Long userId, BigDecimal bidAmount, String requestId) {
         // 1. 멱등성 체크 (락 획득 전 수행하여 불필요한 대기 방지)
         // requestId는 FE가 UUID를 이용해서 담당
         String requestKey = "bid_idempotency:" + requestId;
-        if (Boolean.FALSE.equals(redisTemplate.opsForValue().setIfAbsent(requestKey, "Y", Duration.ofMinutes(5)))) {
-            throw new RuntimeException("중복된 입찰 요청입니다.");
+        if (Boolean.FALSE.equals(redisTemplate.opsForValue().setIfAbsent(requestKey, "Y", Duration.ofMinutes(10)))) {
+            throw new ApiException(ErrorCode.DUPLICATE_BID_REQUEST);
         }
 
         RLock lock = redissonClient.getLock("lock:auction:" + auctionId);
@@ -51,7 +54,7 @@ public class BidService {
             // 입찰 조건 확인 로직
 
             if (!available){
-                throw new RuntimeException("입찰자가 많아 처리에 실패했습니다. 다시 시도해주세요");
+                throw new ApiException(ErrorCode.BID_LOCK_ACQUISITION);
             }
             String priceKey = "auction:" + auctionId + ":currentPrice";
             String bidderKey = "auction:" + auctionId + ":currentBidder";
@@ -87,11 +90,10 @@ public class BidService {
             // messageService.sendPriceUpdate(auctionId, bidAmount);
 
             Auction auction = auctionRepository.findById(auctionId)
-                    .orElseThrow(() -> new RuntimeException("해당되는 경매가 없습니다."));
-            User user = userService.getUser(userId);
+                    .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
+            User user = userService.getUserByUserId(userId);
 
             //검증용 데이터
-            String requestId = UUID.randomUUID().toString();
             Map<String, String> bidInfo = new HashMap<>();
             bidInfo.put("auctionId", String.valueOf(auctionId));
             bidInfo.put("userId", String.valueOf(userId));
@@ -110,6 +112,7 @@ public class BidService {
 
             //bid 저장 부분 WalletEventListener 로 이동
             //bidRecordService.saveBidRecord(auction, user, bidAmount, requestId);
+
         }
         catch (InterruptedException e){
             Thread.currentThread().interrupt();

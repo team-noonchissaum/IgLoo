@@ -2,6 +2,7 @@ package noonchissaum.backend.domain.wallet.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import noonchissaum.backend.domain.user.entity.User;
@@ -44,6 +45,14 @@ public class Wallet extends BaseTimeEntity {
 
     public Wallet(User user) {
         this.user = user;
+    }
+
+    @Builder
+    // 테스트용 wallet 생성기
+    public Wallet(User user, BigDecimal balance, BigDecimal lockedBalance) {
+        this.user = user;
+        this.balance = balance;
+        this.lockedBalance = lockedBalance;
     }
 
     public void bidCanceled(BigDecimal amount) {

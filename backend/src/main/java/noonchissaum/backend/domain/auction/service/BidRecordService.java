@@ -18,6 +18,7 @@ public class BidRecordService {
     @Transactional
     public void saveBidRecord(Auction auction, User user, BigDecimal bidAmount , String requestId) {
         Bid bid = new Bid(auction, user, bidAmount , requestId);
+
         bidRepository.save(bid);
     }
 }
