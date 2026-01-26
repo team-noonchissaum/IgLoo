@@ -7,6 +7,8 @@ import noonchissaum.backend.domain.auction.entity.Bid;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.repository.BidRepository;
 import noonchissaum.backend.domain.user.entity.User;
+import noonchissaum.backend.domain.wallet.service.BidRecordService;
+import noonchissaum.backend.domain.wallet.service.WalletService;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -23,11 +25,11 @@ public class BidService {
 
     private final RedissonClient redissonClient;
     private final StringRedisTemplate redisTemplate;
-    private WalletService walletService;
+    private final WalletService walletService;
     private final BidRepository bidRepository;
     private final AuctionRepository auctionRepository;
+    private final BidRecordService bidRecordService;
 
-    @Transactional
     public void placeBid(Long auctionId, Long userId, BigDecimal bidAmount) {
         RLock lock = redissonClient.getLock("lock:auction:" + auctionId);
         // 입찰 조건 확인 로직
@@ -45,7 +47,7 @@ public class BidService {
 
 
             // 현재 경매가 조회 및 검증
-            String rawPrice = redisTemplate.opsForValue().get(bidderKey);
+            String rawPrice = redisTemplate.opsForValue().get(priceKey);
             String priceNum = rawPrice != null ? rawPrice : "0";
             BigDecimal currentPrice = new BigDecimal(priceNum);
 
@@ -54,6 +56,7 @@ public class BidService {
             }
 
             String rawPreviousBidderId = redisTemplate.opsForValue().get(bidderKey);
+            Long previousBidderId = rawPreviousBidderId != null ? Long.parseLong(rawPreviousBidderId) : -1L;
 
             // 이전 비더 유저 돈 환불 + 신규 비더 돈 Lock
             // previousBidderId가 null인 경우에는 신규 입찰자이므로 walletService에서 처리 필요
@@ -76,9 +79,7 @@ public class BidService {
                     .orElseThrow(() -> new RuntimeException("해당되는 경매가 없습니다."));
             User user = userService.getUser(userId);
 
-            Bid bid = new Bid(auction, user, bidAmount);
-            bidRepository.save(bid);
-
+            bidRecordService.saveBidRecord(auction, user, bidAmount);
         }
         catch (InterruptedException e){
             Thread.currentThread().interrupt();
@@ -93,6 +94,6 @@ public class BidService {
 
     public Bid getBid(Long bidId) {
         return bidRepository.findById(bidId)
-                .orElseThrow(() -> );
+                .orElseThrow(() -> new RuntimeException(""));
     }
 }
