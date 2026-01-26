@@ -103,4 +103,32 @@ public class User extends BaseTimeEntity {
         this.status = UserStatus.DELETED;
         this.deletedAt = LocalDateTime.now();
     }
+
+    // =========== 관리자 기능 ==========
+
+    /**
+     * 사용자 차단
+     */
+
+    public void block(String reason) {
+        if (this.status == UserStatus.BLOCKED) {
+            throw new IllegalArgumentException("이미 차단된 사용자 입니다.");
+        }
+        this.status = UserStatus.BLOCKED;
+        this.blockedAt = LocalDateTime.now();
+        this.blockReason = reason;
+    }
+
+    /**
+     * 차단 해제
+     */
+    public void unblock() {
+        if (this.status != UserStatus.BLOCKED) {
+            throw new IllegalArgumentException("차단된 사용자가 아닙니다");
+        }
+        this.status = UserStatus.ACTIVE;
+        this.blockedAt = null;
+        this.blockReason = null;
+    }
+
 }

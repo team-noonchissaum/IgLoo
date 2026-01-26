@@ -2,8 +2,6 @@ package noonchissaum.backend.domain.auth.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import noonchissaum.backend.domain.auth.dto.request.LocalsignupReq;
-import noonchissaum.backend.domain.auth.dto.request.LoginReq;
 import noonchissaum.backend.domain.auth.dto.response.SignupRes;
 import noonchissaum.backend.domain.auth.dto.response.TokenRes;
 import noonchissaum.backend.domain.auth.service.AuthService;
@@ -28,7 +26,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<TokenRes> login(
-            @Valid @RequestBody LoginReq request
+            @Valid @RequestBody OAuthLoginReq request
     ) {
         return ResponseEntity.ok(authService.login(request));
     }

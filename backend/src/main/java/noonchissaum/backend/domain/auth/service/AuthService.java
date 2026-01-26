@@ -3,8 +3,6 @@ package noonchissaum.backend.domain.auth.service;
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.auth.entity.AuthType;
 import noonchissaum.backend.domain.auth.entity.UserAuth;
-import noonchissaum.backend.domain.auth.dto.request.LocalsignupReq;
-import noonchissaum.backend.domain.auth.dto.request.LoginReq;
 import noonchissaum.backend.domain.auth.dto.response.SignupRes;
 import noonchissaum.backend.domain.auth.dto.response.TokenRes;
 import noonchissaum.backend.domain.user.entity.*;
@@ -53,7 +51,7 @@ public class AuthService {
         );
 
     }
-    public TokenRes login(LoginReq request) {
+    public TokenRes login(OAuthLoginReq request) {
         User user = userRepository.findByEmailWithAuths(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자"));
 
