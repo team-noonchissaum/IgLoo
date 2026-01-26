@@ -33,6 +33,16 @@ dependencyManagement {
     }
 }
 
+ext {
+    set('springCloudVersion', "2024.0.0")
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+
 dependencies {
 // 1. Web & Common
     implementation 'org.springframework.boot:spring-boot-starter-web'
