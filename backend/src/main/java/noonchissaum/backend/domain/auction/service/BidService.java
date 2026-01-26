@@ -57,6 +57,8 @@ public class BidService {
             String priceKey = "auction:" + auctionId + ":currentPrice";
             String bidderKey = "auction:" + auctionId + ":currentBidder";
             String bidCount = "auction:" + auctionId + ":currentBidCount";
+            String endTimeKey = "auction:" + auctionId + ":endTime";
+            String extendedTimeKey = "auction:" + auctionId + ":extendedTime";
 
             String rawPreviousBidderId = redisTemplate.opsForValue().get(bidderKey);
             Long previousBidderId = rawPreviousBidderId != null ? Long.parseLong(rawPreviousBidderId) : -1L;
@@ -86,12 +88,10 @@ public class BidService {
             redisTemplate.opsForValue().set(bidderKey, String.valueOf(userId));
             redisTemplate.opsForValue().set(bidCount, String.valueOf(++bidCountInt));
 
+            // 마감 시간에 대한 정보 확인 후 변경
+
             // Stomp 메세지 발행 로직
             // messageService.sendPriceUpdate(auctionId, bidAmount);
-
-            Auction auction = auctionRepository.findById(auctionId)
-                    .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
-            User user = userService.getUserByUserId(userId);
 
             // 1. Redis에 복구용 전체 정보 저장
             Map<String, String> bidInfo = new HashMap<>();
@@ -108,7 +108,7 @@ public class BidService {
 
             redisTemplate.opsForValue().set(requestId, bidAmount+"");
 
-            bidRecordService.saveBidRecord(auction, user, bidAmount, requestId);
+            bidRecordService.saveBidRecord(auctionId, userId, bidAmount, requestId);
         }
         catch (InterruptedException e){
             Thread.currentThread().interrupt();
