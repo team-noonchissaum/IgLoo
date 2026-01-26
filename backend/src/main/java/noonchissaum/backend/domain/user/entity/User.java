@@ -35,7 +35,7 @@ public class User extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private UserStatus status;
+    private UserStatus status = UserStatus.ACTIVE;
 
     @Column(length = 100)
     private String location;
@@ -57,5 +57,9 @@ public class User extends BaseTimeEntity {
         this.nickname = nickname;
         this.role = role;
         this.status = status;
+    }
+
+    public void setWallet(Wallet wallet) {
+        this.wallet = wallet;
     }
 }
