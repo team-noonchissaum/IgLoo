@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.wallet.dto.WalletUpdateEvent;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
+import noonchissaum.backend.global.exception.ApiException;
+import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -40,7 +42,7 @@ public class WalletService {
         Long remain = redisTemplate.opsForValue().decrement(userKey, bidAmount.longValue());
         if (remain < 0) {
             redisTemplate.opsForValue().increment(userKey, bidAmount.longValue());
-            throw new RuntimeException("잔액이 부족합니다.");
+            throw new ApiException(ErrorCode.INSUFFICIENT_BALANCE);
         }
 
         // 이전 유저는 redis상에서 잔액 추가
@@ -58,7 +60,7 @@ public class WalletService {
 
         if (Boolean.FALSE.equals(redisTemplate.hasKey(userKey))) {
             Wallet wallet = walletRepository.findByUserId(userId)
-                    .orElseThrow(() -> new RuntimeException("일치하는 유저의 지갑이 없습니다."));
+                    .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
             redisTemplate.opsForValue().set(userKey, wallet.getBalance().toPlainString());
         }
     }

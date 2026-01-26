@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.wallet.dto.WalletUpdateEvent;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
+import noonchissaum.backend.global.exception.ApiException;
+import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.context.event.EventListener;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
@@ -32,7 +34,7 @@ public class WalletEventListener {
         log.info("비동기 DB 업데이트 시작 - 유저: {}", event.userId());
 
         Wallet newBidUserWallet = walletRepository.findByUserId(event.userId())
-                .orElseThrow(() -> new RuntimeException("신규 입찰자 지갑을 찾을 수 없습니다."));
+                .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
 
         newBidUserWallet.bid(event.bidAmount());
 
@@ -41,7 +43,7 @@ public class WalletEventListener {
         }
 
         Wallet prevBidUserWallet = walletRepository.findByUserId(event.previousBidderId())
-                .orElseThrow(() -> new RuntimeException("기존 입찰자 지갑을 찾을 수 없습니다."));
+                .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
 
         prevBidUserWallet.bidCanceled(event.refundAmount());
     }

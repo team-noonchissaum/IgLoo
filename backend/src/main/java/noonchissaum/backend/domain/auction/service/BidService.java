@@ -8,14 +8,14 @@ import noonchissaum.backend.domain.auction.entity.Bid;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.repository.BidRepository;
 import noonchissaum.backend.domain.user.entity.User;
-import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.service.BidRecordService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
+import noonchissaum.backend.global.exception.ApiException;
+import noonchissaum.backend.global.exception.ErrorCode;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -117,7 +117,7 @@ public class BidService {
                     .setScale(-1, RoundingMode.CEILING);
 
             if (bidAmount.compareTo(minBid) < 0) {
-                throw new RuntimeException("최저 입찰 금액보다 낮습니다.");
+                throw new ApiException(ErrorCode.LOW_BID_AMOUNT);
             }
         }
 
@@ -126,7 +126,7 @@ public class BidService {
         if (rawBidderId != null && !rawBidderId.isBlank()) {
             Long currentBidderId = Long.parseLong(rawBidderId);
             if (currentBidderId.equals(userId)) {
-                throw new RuntimeException("연속 입찰은 제한되어 있습니다.");
+                throw new ApiException(ErrorCode.CANNOT_BID_CONTINUOUS);
             }
         }
 
@@ -134,19 +134,19 @@ public class BidService {
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new RuntimeException("해당 경매는 존재하지 않습니다."));
         if (!auction.getStatus().equals(AuctionStatus.RUNNING)) {
-            throw new RuntimeException("진행 중인 경매가 아닙니다.");
+            throw new ApiException(ErrorCode.NOT_FOUND_AUCTIONS);
         }
 
         //잔액 사전 검증 (가용 잔액)
         String rawUserBalance = redisTemplate.opsForValue().get(userBalance);
         BigDecimal currentUserBalance = BigDecimal.valueOf(Long.parseLong(rawUserBalance));
         if (currentUserBalance.compareTo(bidAmount) < 0) {
-            throw new RuntimeException("사용 가능한 크레딧이 부족합니다.");
+            throw new ApiException(ErrorCode.INSUFFICIENT_BALANCE);
         }
     }
 
     public Bid getBid(Long bidId) {
         return bidRepository.findById(bidId)
-                .orElseThrow(() -> new RuntimeException(""));
+                .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_BID));
     }
 }

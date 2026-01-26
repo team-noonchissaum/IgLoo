@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
+import noonchissaum.backend.global.exception.ApiException;
+import noonchissaum.backend.global.exception.ErrorCode;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -51,7 +53,7 @@ public class Wallet extends BaseTimeEntity {
 
     public void bid(BigDecimal amount) {
         if (this.balance.compareTo(amount) <= 0) {
-            throw new RuntimeException("잔액 부족");
+            throw new ApiException(ErrorCode.INSUFFICIENT_BALANCE);
         }
         this.balance = this.balance.subtract(amount);
         this.lockedBalance = this.lockedBalance.add(amount);
