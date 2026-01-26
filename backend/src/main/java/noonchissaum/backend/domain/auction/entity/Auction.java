@@ -50,8 +50,6 @@ public class Auction extends BaseTimeEntity {
     @Column(name = "is_extended")
     private Boolean isExtended;
 
-    @Column(name = "extended")
-    private Boolean extended;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -112,20 +110,17 @@ public class Auction extends BaseTimeEntity {
     /**
      * 마감 임박 시 단 한 번만 3분 연장
      */
-    public void extendIfNeeded(
-            LocalDateTime now,
-            Duration imminentThreshold,
-            Duration extendDuration
-    ) {
-        if (extended) {
-            return;
+    public void extendIfNeeded(LocalDateTime now) {
+        if (isExtended) {
+            return; // 이미 연장됨
         }
 
         long remainSeconds = Duration.between(now, endAt).getSeconds();
+        int imminentMinutes = ThreadLocalRandom.current().nextInt(5, 8); // 5분에서 7분 사이
 
-        if (remainSeconds <= imminentThreshold.getSeconds()) {
-            this.endAt = this.endAt.plus(extendDuration);
-            this.extended = true;
+        if (remainSeconds <= imminentMinutes) {
+            this.endAt = this.endAt.plusMinutes(3);
+            this.isExtended = true;
         }
     }
 }
