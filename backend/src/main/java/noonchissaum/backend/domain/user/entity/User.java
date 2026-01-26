@@ -85,4 +85,18 @@ public class User extends BaseTimeEntity {
     public boolean isActive() {
         return this.status == UserStatus.ACTIVE;
     }
+
+    public void block() {
+        if (this.status == UserStatus.BLOCKED) {
+            throw new IllegalStateException("이미 차단된 사용자입니다.");
+        }
+        this.status = UserStatus.BLOCKED;
+    }
+
+    public void unblock() {
+        if (this.status != UserStatus.BLOCKED) {
+            throw new IllegalStateException("차단된 사용자가 아닙니다.");
+        }
+        this.status = UserStatus.ACTIVE;
+    }
 }
