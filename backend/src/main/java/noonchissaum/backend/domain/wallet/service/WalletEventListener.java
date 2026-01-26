@@ -2,6 +2,11 @@ package noonchissaum.backend.domain.wallet.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import noonchissaum.backend.domain.auction.entity.Auction;
+import noonchissaum.backend.domain.auction.repository.BidRepository;
+import noonchissaum.backend.domain.auction.service.BidRecordService;
+import noonchissaum.backend.domain.auction.service.BidService;
+import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.wallet.dto.WalletUpdateEvent;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
@@ -13,12 +18,18 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.awt.desktop.UserSessionEvent;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class WalletEventListener {
 
     private final WalletRepository walletRepository;
+    private final BidRecordService bidRecordService;
+    private final BidService bidService;
+    private final AuctionService auctionService;
+    private final UserService userService;
 
     @Async("walletTaskExcutor")
     @EventListener
@@ -30,6 +41,13 @@ public class WalletEventListener {
     )
     public void handleWalletUpdate(WalletUpdateEvent event) {
         log.info("비동기 DB 업데이트 시작 - 유저: {}", event.userId());
+
+        //bid 저장부분 추가
+        if (!bidService.isExistRequestId(event.requestId())) {
+            Auction auction = auctionService.getAuction(event.auctionId());
+            User user = userService.getUser(event.userId());
+            bidRecordService.saveBidRecord(auction, user, event.bidAmount(), event.requestId());
+        }
 
         Wallet newBidUserWallet = walletRepository.findByUserId(event.userId())
                 .orElseThrow(() -> new RuntimeException("신규 입찰자 지갑을 찾을 수 없습니다."));
@@ -52,4 +70,5 @@ public class WalletEventListener {
         log.error("최종 DB 업데이트 실패! 직접 확인 필요 - 유저ID: {}, 금액: {}",
                 event.userId(), event.bidAmount(), e);
     }
+
 }

@@ -8,17 +8,18 @@ import noonchissaum.backend.domain.auction.entity.Bid;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.repository.BidRepository;
 import noonchissaum.backend.domain.user.entity.User;
-import noonchissaum.backend.domain.wallet.entity.Wallet;
-import noonchissaum.backend.domain.wallet.service.BidRecordService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -46,6 +47,7 @@ public class BidService {
             String priceKey = "auction:" + auctionId + ":currentPrice";
             String bidderKey = "auction:" + auctionId + ":currentBidder";
             String bidCount = "auction:" + auctionId + ":currentBidCount";
+
 
             String rawPreviousBidderId = redisTemplate.opsForValue().get(bidderKey);
             Long previousBidderId = rawPreviousBidderId != null ? Long.parseLong(rawPreviousBidderId) : -1L;
@@ -79,7 +81,26 @@ public class BidService {
                     .orElseThrow(() -> new RuntimeException("해당되는 경매가 없습니다."));
             User user = userService.getUser(userId);
 
-            bidRecordService.saveBidRecord(auction, user, bidAmount);
+            //검증용 데이터
+            String requestId = UUID.randomUUID().toString();
+            Map<String, String> bidInfo = new HashMap<>();
+            bidInfo.put("auctionId", String.valueOf(auctionId));
+            bidInfo.put("userId", String.valueOf(userId));
+            bidInfo.put("bidAmount", bidAmount.toPlainString());
+            bidInfo.put("requestId", requestId);
+
+            bidInfo.put("previousBidderId", String.valueOf(previousBidderId));   // wallet 용
+            bidInfo.put("refundAmount", currentPrice.toPlainString());          // wallet 용
+            bidInfo.put("createdAt", String.valueOf(System.currentTimeMillis()));
+
+            String infoKey = "pending_bid_info:" + requestId;
+
+            redisTemplate.opsForHash().putAll(infoKey, bidInfo);
+            redisTemplate.expire(infoKey, Duration.ofMinutes(10));
+            redisTemplate.opsForSet().add("pending_bid_requests", requestId);
+
+            //bid 저장 부분 WalletEventListener 로 이동
+            //bidRecordService.saveBidRecord(auction, user, bidAmount, requestId);
         }
         catch (InterruptedException e){
             Thread.currentThread().interrupt();
@@ -148,5 +169,9 @@ public class BidService {
     public Bid getBid(Long bidId) {
         return bidRepository.findById(bidId)
                 .orElseThrow(() -> new RuntimeException(""));
+    }
+
+    public boolean isExistRequestId(String requestId){
+        return bidRepository.existsByRequestId(requestId);
     }
 }

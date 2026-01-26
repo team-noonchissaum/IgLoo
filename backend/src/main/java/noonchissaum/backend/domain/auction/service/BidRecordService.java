@@ -1,4 +1,4 @@
-package noonchissaum.backend.domain.wallet.service;
+package noonchissaum.backend.domain.auction.service;
 
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.auction.entity.Auction;
@@ -16,8 +16,8 @@ public class BidRecordService {
     private final BidRepository bidRepository;
 
     @Transactional
-    public void saveBidRecord(Auction auction, User user, BigDecimal bidAmount) {
-        Bid bid = new Bid(auction, user, bidAmount);
+    public void saveBidRecord(Auction auction, User user, BigDecimal bidAmount , String requestId) {
+        Bid bid = new Bid(auction, user, bidAmount , requestId);
         bidRepository.save(bid);
     }
 }
