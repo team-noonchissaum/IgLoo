@@ -1,12 +1,12 @@
-package noonchissaum.backend.domain.user.controller;
+package noonchissaum.backend.domain.auth.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import noonchissaum.backend.domain.user.dto.request.LocalsignupReq;
-import noonchissaum.backend.domain.user.dto.request.LoginReq;
-import noonchissaum.backend.domain.user.dto.response.SignupRes;
-import noonchissaum.backend.domain.user.dto.response.TokenRes;
-import noonchissaum.backend.domain.user.service.AuthService;
+import noonchissaum.backend.domain.auth.dto.request.LocalsignupReq;
+import noonchissaum.backend.domain.auth.dto.request.LoginReq;
+import noonchissaum.backend.domain.auth.dto.response.SignupRes;
+import noonchissaum.backend.domain.auth.dto.response.TokenRes;
+import noonchissaum.backend.domain.auth.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

@@ -1,9 +1,10 @@
-package noonchissaum.backend.domain.user.entity;
+package noonchissaum.backend.domain.auth.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import noonchissaum.backend.domain.user.entity.User;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -38,4 +39,11 @@ public class UserAuth {
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    public UserAuth(User user, AuthType authType, String identifier, String passwordHash) {
+        this.user = user;
+        this.authType = authType;
+        this.identifier = identifier;
+        this.passwordHash = passwordHash;
+    }
 }

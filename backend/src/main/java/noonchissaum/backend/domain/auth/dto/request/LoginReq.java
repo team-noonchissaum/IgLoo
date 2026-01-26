@@ -1,4 +1,4 @@
-package noonchissaum.backend.domain.user.dto.request;
+package noonchissaum.backend.domain.auth.dto.request;
 
 
 import jakarta.validation.constraints.Email;

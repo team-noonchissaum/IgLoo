@@ -1,10 +1,12 @@
-package noonchissaum.backend.domain.user.service;
+package noonchissaum.backend.domain.auth.service;
 
 import lombok.RequiredArgsConstructor;
-import noonchissaum.backend.domain.user.dto.request.LocalsignupReq;
-import noonchissaum.backend.domain.user.dto.request.LoginReq;
-import noonchissaum.backend.domain.user.dto.response.SignupRes;
-import noonchissaum.backend.domain.user.dto.response.TokenRes;
+import noonchissaum.backend.domain.auth.entity.AuthType;
+import noonchissaum.backend.domain.auth.entity.UserAuth;
+import noonchissaum.backend.domain.auth.dto.request.LocalsignupReq;
+import noonchissaum.backend.domain.auth.dto.request.LoginReq;
+import noonchissaum.backend.domain.auth.dto.response.SignupRes;
+import noonchissaum.backend.domain.auth.dto.response.TokenRes;
 import noonchissaum.backend.domain.user.entity.*;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;

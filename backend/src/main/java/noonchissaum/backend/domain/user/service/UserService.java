@@ -69,6 +69,7 @@ public class UserService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
         if(!user.getNickname().equals(request.getNickname())
         && userRepository.existsByNickname(request.getNickname())) {
             throw new IllegalArgumentException("이미 사용중인 닉네임입니다.");

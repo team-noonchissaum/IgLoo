@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import noonchissaum.backend.domain.auth.entity.UserAuth;
 import noonchissaum.backend.domain.order.entity.Payment;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.global.entity.BaseTimeEntity;

@@ -2,7 +2,7 @@ package noonchissaum.backend.domain.user.controller;
 
 
 import lombok.RequiredArgsConstructor;
-import noonchissaum.backend.domain.user.dto.request.SignupReq;
+import noonchissaum.backend.domain.auth.dto.request.SignupReq;
 import noonchissaum.backend.domain.user.dto.response.MyPageRes;
 import noonchissaum.backend.domain.user.dto.response.OtherUserProfileRes;
 import noonchissaum.backend.domain.user.dto.response.ProfileRes;
@@ -19,14 +19,6 @@ public class UserController {
 
     private final UserService userService;
 
-    /**
-     * 회원 가입
-     */
-    @PostMapping("/signup")
-    public ResponseEntity<Long> signup(@RequestBody SignupReq signupReq) {
-        Long userId = userService.signup(signupReq);
-        return ResponseEntity.ok(userId);
-    }
     /**본인 프로필 조회하기*/
     @GetMapping("/me")
     public ResponseEntity<ProfileRes> myProfile(
