@@ -26,7 +26,6 @@ public class LoginReq {
     @NotBlank(message = "비밀번호는 필수 항목입니다.")
     private String password;
 
-    @NotBlank(message = "닉네임은 필수 항목입니다.")
     private String nickname;//OAuth신규유저일때만 사용,Local에서는 무시
 
     private String oauthToken;

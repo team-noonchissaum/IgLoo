@@ -7,7 +7,10 @@ import noonchissaum.backend.domain.report.entity.ReportStatus;
 import noonchissaum.backend.domain.user.dto.request.AdminReportProcessReq;
 import noonchissaum.backend.domain.user.dto.response.*;
 import noonchissaum.backend.domain.user.entity.User;
+import noonchissaum.backend.domain.user.entity.UserStatus;
 import noonchissaum.backend.domain.user.repository.*;
+import noonchissaum.backend.global.exception.CustomException;
+import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -55,7 +58,7 @@ public class AdminService {
 
     public AdminReportDetailRes getReportDetail(Long reportId) {
         Report report = reportRepository.findByIdWithReporter(reportId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 신고입니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.REPORT_NOT_FOUND));
 
         AdminReportDetailRes.ReporterInfo reporterInfo = new AdminReportDetailRes.ReporterInfo(
                 report.getReporter().getId(),
@@ -82,7 +85,12 @@ public class AdminService {
     @Transactional
     public void processReport(Long reportId, AdminReportProcessReq req) {
         Report report = reportRepository.findById(reportId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 신고입니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.REPORT_NOT_FOUND));
+
+        // 이미 처리된 신고인지 체크
+        if (report.getStatus() != ReportStatus.PENDING) {
+            throw new CustomException(ErrorCode.REPORT_ALREADY_PROCESSED);
+        }
 
         report.process(ReportStatus.valueOf(req.getStatus()));
     }
@@ -93,7 +101,13 @@ public class AdminService {
     @Transactional
     public AdminBlockUserRes blockUser(Long userId, String reason) {
         User user = userRepository.findById(userId)
-                        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자"));
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 이미 차단된 사용자인지 체크
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            throw new CustomException(ErrorCode.USER_ALREADY_BLOCKED);
+        }
+
         user.block(reason);
 
         return AdminBlockUserRes.from(user);
@@ -103,7 +117,13 @@ public class AdminService {
     @Transactional
     public void unblockUser(Long userId) {
         User user = userRepository.findById(userId)
-                        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자"));
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 차단되지 않은 사용자인지 체크
+        if (user.getStatus() != UserStatus.BLOCKED) {
+            throw new CustomException(ErrorCode.USER_NOT_BLOCKED);
+        }
+
         user.unblock();
     }
 
@@ -131,7 +151,7 @@ public class AdminService {
     @Transactional
     public void restoreItem(Long itemId) {
         Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글 입니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
 
         item.restore();
 }

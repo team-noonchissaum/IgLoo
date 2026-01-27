@@ -27,6 +27,8 @@ public enum ErrorCode {
     TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다.", "AUTH-005"),
     /** 리프레시 토큰 오류 */
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 올바르지 않습니다.", "AUTH-006"),
+    /** 차단된 사용자 - 로그인 불가능 */
+    USER_BLOCKED(HttpStatus.FORBIDDEN, "차단된 사용자입니다. 관리자에게 문의하세요.", "AUTH-007"),
 
     // ========== USER (사용자 에러) ==========
     /** 이메일 중복 */
@@ -43,24 +45,10 @@ public enum ErrorCode {
     // ========== REPORT (신고 에러) ==========
     /** 신고 조회 실패 */
     REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "신고를 찾을 수 없습니다.", "REPORT-001"),
+    REPORT_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "이미 처리된 신고입니다.", "REPORT-002"),
 
     // ========== ITEM (상품/게시글 에러) ==========
-    /** 게시글 조회 실패 */
     ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다.", "ITEM-001"),
-    /** 이미 차단된 게시글 재차단 시도 */
-    ITEM_ALREADY_BLOCKED(HttpStatus.BAD_REQUEST, "이미 차단된 게시글입니다.", "ITEM-002"),
-    /** 차단되지 않은 게시글 복구 시도 */
-    ITEM_NOT_BLOCKED(HttpStatus.BAD_REQUEST, "차단되지 않은 게시글입니다.", "ITEM-003"),
-
-    // ========== AUCTION (경매 에러) ==========
-    /** 경매 조회 실패 */
-    AUCTION_NOT_FOUND(HttpStatus.NOT_FOUND, "경매를 찾을 수 없습니다.", "AUCTION-001"),
-
-    // ========== WALLET (지갑/크레딧 에러) ==========
-    /** 지갑 조회 실패 */
-    WALLET_NOT_FOUND(HttpStatus.NOT_FOUND, "지갑을 찾을 수 없습니다.", "WALLET-001"),
-    /** 잔액 부족 */
-    INSUFFICIENT_BALANCE(HttpStatus.BAD_REQUEST, "잔액이 부족합니다.", "WALLET-002"),
     ;
 
 
