@@ -2,14 +2,6 @@ spring:
   application:
     name: noonchissaum
 
-  cloud:
-    compatibility-verifier:
-      enabled: false
-    aws:
-      enabled: false
-      s3:
-        enabled: false
-
   datasource:
     url: jdbc:mysql://localhost:3307/noonchissaum?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
     username: root
@@ -24,6 +16,7 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
+    open-in-view: false
 
   data:
     redis:
@@ -34,28 +27,36 @@ spring:
     jdbc:
       initialize-schema: never
 
+  cloud:
+    compatibility-verifier:
+      enabled: false
+    aws:
+      s3:
+        enabled: false
+
   security:
     oauth2:
       client:
         registration:
           google:
-            client-id: temp-google-client-id
-            client-secret: temp-google-secret
+            client-id: ${GOOGLE_CLIENT_ID:dummy}
+            client-secret: ${GOOGLE_CLIENT_SECRET:dummy}
             scope: profile, email
           kakao:
-            client-id: temp-kakao-client-id
-            client-secret: temp-kakao-secret
+            client-id: ${KAKAO_CLIENT_ID:dummy}
+            client-secret: ${KAKAO_CLIENT_SECRET:dummy}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope: profile_nickname, account_email
-            authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-            client-authentication-method: client_secret_post
+            client-name: Kakao
           naver:
-            client-id: temp-naver-client-id
-            client-secret: temp-naver-secret
-            scope: name, email
+            client-id: ${NAVER_CLIENT_ID:dummy}
+            client-secret: ${NAVER_CLIENT_SECRET:dummy}
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-            client-authentication-method: client_secret_post
+            scope: name, email, profile_image
+            client-name: Naver
         provider:
           kakao:
             authorization-uri: https://kauth.kakao.com/oauth/authorize
@@ -69,7 +70,7 @@ spring:
             user-name-attribute: response
 
 jwt:
-  secret: noonchissaum-jwt-secret-key-for-local-dev
+  secret: bm9vbmNoaXNzYXVtand0c2VjcmV0a2V5Zm9ybG9jYWxkZXZlbG9wbWVudDEyMzQ1Ng==
   access-token-validity: 3600000
   refresh-token-validity: 604800000
 
@@ -79,3 +80,8 @@ server:
 logging:
   level:
     org.hibernate.SQL: debug
+
+management:
+  health:
+    redis:
+      enabled: false
