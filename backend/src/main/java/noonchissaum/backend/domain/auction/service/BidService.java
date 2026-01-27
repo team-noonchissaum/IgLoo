@@ -109,14 +109,16 @@ public class BidService {
             //검증용 데이터 (Bid,Wallet 재저장용 데이터)
             Map<String, String> bidInfo = getStringStringMap(auctionId, userId, bidAmount, requestId, previousBidderId, currentPrice);
 
+
             String infoKey = RedisKeys.pendingBidInfo(requestId);
 
             redisTemplate.opsForHash().putAll(infoKey, bidInfo);
             redisTemplate.expire(infoKey, Duration.ofMinutes(10));
             redisTemplate.opsForSet().add(RedisKeys.pendingBidRequestsSet(), requestId);
 
-            //bid 저장 부분 WalletEventListener 로 이동
-            //bidRecordService.saveBidRecord(auction, user, bidAmount, requestId);
+            redisTemplate.opsForValue().set(requestId, bidAmount+"");
+
+            bidRecordService.saveBidRecord(auctionId, userId, bidAmount, requestId);
         }
         catch (InterruptedException e){
             Thread.currentThread().interrupt();
@@ -138,7 +140,7 @@ public class BidService {
      * 특정 경매의 입찰 이력 조회
      */
     @Transactional(readOnly = true)
-    public Page<BidHistoryItemRes> getBidHistory(Long userId, Long auctionId, Pageable pageable){
+    public Page<BidHistoryItemRes> getBidHistory(Long auctionId, Pageable pageable){
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(()-> new RuntimeException(ErrorCode.NOT_FOUND_AUCTIONS.getMessage()));
         Page<Bid> bidPage = bidRepository.findByAuctionIdOrderByCreatedAtDesc(auction.getId(), pageable);

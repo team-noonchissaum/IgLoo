@@ -23,14 +23,13 @@ public class BidController {
 
     @GetMapping("/{auctionId}")
     public ResponseEntity<ApiResponse<Page<BidHistoryItemRes>>> getBidHistory(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long auctionId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ){
         Pageable pageable = PageRequest.of(page,size);
 
-        Page<BidHistoryItemRes> bidHistory = bidService.getBidHistory(userDetails.getUserId(), auctionId, pageable);
+        Page<BidHistoryItemRes> bidHistory = bidService.getBidHistory(auctionId, pageable);
 
         return ResponseEntity.ok(ApiResponse.success("조회 완료",bidHistory));
 
@@ -64,8 +63,9 @@ public class BidController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody PlaceBidReq req
     ){
-        bidService.placeBid(req.auctionId(), req.userId(), req.bidAmount(), req.requestId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("입찰 완료"));
+        bidService.placeBid(req.auctionId(), userDetails.getUserId(), req.bidAmount(), req.requestId());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("입찰 완료"));
 
     }
 

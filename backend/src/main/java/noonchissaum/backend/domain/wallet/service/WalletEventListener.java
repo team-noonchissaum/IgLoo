@@ -31,8 +31,6 @@ public class WalletEventListener {
     private final WalletRepository walletRepository;
     private final BidRecordService bidRecordService;
     private final BidService bidService;
-    private final AuctionService auctionService;
-    private final UserService userService;
     private final RedisTemplate<Object, Object> redisTemplate;
 
     @Async("walletTaskExcutor")
@@ -48,9 +46,7 @@ public class WalletEventListener {
 
         //bid 저장부분 추가
         if (!bidService.isExistRequestId(event.requestId())) {
-            Auction auction = auctionService.getAuction(event.auctionId());
-            User user = userService.getUser(event.userId());
-            bidRecordService.saveBidRecord(auction, user, event.bidAmount(), event.requestId());
+            bidRecordService.saveBidRecord(event.auctionId(), event.userId(), event.bidAmount(), event.requestId());
         }
 
         Wallet newBidUserWallet = walletRepository.findByUserId(event.userId())
@@ -72,5 +68,4 @@ public class WalletEventListener {
         log.error("최종 DB 업데이트 실패! 직접 확인 필요 - 유저ID: {}, 금액: {}",
                 event.userId(), event.bidAmount(), e);
     }
-
 }

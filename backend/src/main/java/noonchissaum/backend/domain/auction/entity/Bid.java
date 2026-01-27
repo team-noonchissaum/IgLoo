@@ -42,6 +42,4 @@ public class Bid extends BaseTimeEntity {
         this.requestId  = requestId;
 
     }
-
-
 }
