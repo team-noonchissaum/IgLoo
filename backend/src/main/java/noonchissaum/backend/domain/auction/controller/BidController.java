@@ -37,7 +37,7 @@ public class BidController {
 
     @GetMapping("/my")
     public ResponseEntity<ApiResponse<Page<MyBidAuctionRes>>> getMyBidAuctions(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
+            //@AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
@@ -60,7 +60,7 @@ public class BidController {
 
     @PostMapping()
     public ResponseEntity<ApiResponse<Void>> placeBid(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
+            //@AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody PlaceBidReq req
     ){
         bidService.placeBid(req.auctionId(), userDetails.getUserId(), req.bidAmount(), req.requestId());
