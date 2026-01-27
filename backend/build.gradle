@@ -25,7 +25,7 @@ repositories {
 }
 
 ext {
-    set('springCloudVersion', "2023.0.3")
+    set('springCloudVersion', "2024.0.2")
 }
 
 dependencyManagement {
@@ -53,11 +53,11 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-websocket' // STOMP 프로토콜 포함
 
     // 5. Security & Auth (회원관리 담당 핵심)
-    implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client' // 구글/카카오 로그인
-    implementation 'io.jsonwebtoken:jjwt-api:0.11.5' // JWT 생성 및 검증
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+//    implementation 'org.springframework.boot:spring-boot-starter-security'
+//    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client' // 구글/카카오 로그인
+//    implementation 'io.jsonwebtoken:jjwt-api:0.11.5' // JWT 생성 및 검증
+//    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+//    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
     // 6. Batch (경매 마감 스케줄러 담당 핵심)
     implementation 'org.springframework.boot:spring-boot-starter-batch' // 경매 상태 자동 업데이트
