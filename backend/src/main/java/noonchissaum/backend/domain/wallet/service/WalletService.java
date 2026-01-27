@@ -2,7 +2,6 @@ package noonchissaum.backend.domain.wallet.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import noonchissaum.backend.domain.wallet.dto.WalletUpdateEvent;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
 import noonchissaum.backend.global.RedisKeys;
@@ -45,7 +44,6 @@ public class WalletService {
             redisTemplate.opsForValue().decrement(prevUserLockedBalanceKey, currentPrice.longValue());
         }
 
-        //eventPublisher.publishEvent(new WalletUpdateEvent(userId, previousBidderId, bidAmount, currentPrice, auctionId, requestId));
     }
 
     public void getBalance(Long userId) {

@@ -13,9 +13,9 @@ import noonchissaum.backend.domain.auction.repository.BidRepository;
 import noonchissaum.backend.domain.user.entity.User;
 
 import noonchissaum.backend.domain.user.service.UserService;
-import noonchissaum.backend.domain.wallet.dto.WalletUpdateEvent;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.RedisKeys;
+import noonchissaum.backend.global.event.DbUpdateEvent;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.redisson.api.RLock;
@@ -91,7 +91,7 @@ public class BidService {
             // previousBidderId가 null인 경우에는 신규 입찰자이므로 walletService에서 처리 필요
             walletService.processBidWallet(userId, previousBidderId, bidAmount, currentPrice,auctionId,requestId);
 
-            eventPublisher.publishEvent(new WalletUpdateEvent(userId, previousBidderId, bidAmount, currentPrice, auctionId, requestId));
+            eventPublisher.publishEvent(new DbUpdateEvent(userId, previousBidderId, bidAmount, currentPrice, auctionId, requestId));
 
 
             String rawBidCount  = redisTemplate.opsForValue().get(bidCount);

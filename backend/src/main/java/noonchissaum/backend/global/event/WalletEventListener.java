@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.auction.service.BidRecordService;
 import noonchissaum.backend.domain.auction.service.BidService;
-import noonchissaum.backend.domain.wallet.dto.WalletUpdateEvent;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
 import noonchissaum.backend.domain.wallet.service.WalletRecordService;
@@ -55,7 +54,7 @@ public class WalletEventListener {
 
     // 재시도 3번 후에도 안됬을 경우
     @Recover
-    public void recover(Exception e, WalletUpdateEvent event) {
+    public void recover(Exception e, DbUpdateEvent event) {
         log.error("최종 DB 업데이트 실패! 직접 확인 필요 - 유저ID: {}, 금액: {}",
                 event.userId(), event.bidAmount(), e);
     }
