@@ -14,6 +14,7 @@ import noonchissaum.backend.domain.user.entity.User;
 
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
+import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.redisson.api.RLock;
@@ -48,12 +49,12 @@ public class BidService {
     public void placeBid(Long auctionId, Long userId, BigDecimal bidAmount, String requestId) {
         // 1. 멱등성 체크 (락 획득 전 수행하여 불필요한 대기 방지)
         // requestId는 FE가 UUID를 이용해서 담당
-        String requestKey = "bid_idempotency:" + requestId;
+        String requestKey = RedisKeys.bidIdempotency(requestId);
         if (Boolean.FALSE.equals(redisTemplate.opsForValue().setIfAbsent(requestKey, "Y", Duration.ofMinutes(10)))) {
             throw new ApiException(ErrorCode.DUPLICATE_BID_REQUEST);
         }
 
-        RLock lock = redissonClient.getLock("lock:auction:" + auctionId);
+        RLock lock = redissonClient.getLock(RedisKeys.auctionLock(auctionId));
 
         try{
             boolean available = lock.tryLock(5, 2, TimeUnit.SECONDS);
@@ -62,12 +63,11 @@ public class BidService {
             if (!available){
                 throw new ApiException(ErrorCode.BID_LOCK_ACQUISITION);
             }
-            String priceKey = "auction:" + auctionId + ":currentPrice";
-            String bidderKey = "auction:" + auctionId + ":currentBidder";
-            String bidCount = "auction:" + auctionId + ":currentBidCount";
-            String endTimeKey = "auction:" + auctionId + ":endTime";
-            String extendedTimeKey = "auction:" + auctionId + ":extendedTime";
-
+            String priceKey = RedisKeys.auctionCurrentPrice(auctionId);
+            String bidderKey = RedisKeys.auctionCurrentBidder(auctionId);
+            String bidCount = RedisKeys.auctionCurrentBidCount(auctionId);
+            String endTimeKey = RedisKeys.auctionEndTime(auctionId);
+            String extendedTimeKey = RedisKeys.auctionExtendedTime(auctionId);
 
             String rawPreviousBidderId = redisTemplate.opsForValue().get(bidderKey);
             Long previousBidderId = rawPreviousBidderId != null ? Long.parseLong(rawPreviousBidderId) : -1L;
@@ -106,23 +106,14 @@ public class BidService {
                     .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
             User user = userService.getUserByUserId(userId);
 
-            //검증용 데이터
-            // 1. Redis에 복구용 전체 정보 저장
-            Map<String, String> bidInfo = new HashMap<>();
-            bidInfo.put("auctionId", String.valueOf(auctionId));
-            bidInfo.put("userId", String.valueOf(userId));
-            bidInfo.put("bidAmount", bidAmount.toPlainString());
-            bidInfo.put("requestId", requestId);
+            //검증용 데이터 (Bid,Wallet 재저장용 데이터)
+            Map<String, String> bidInfo = getStringStringMap(auctionId, userId, bidAmount, requestId, previousBidderId, currentPrice);
 
-            bidInfo.put("previousBidderId", String.valueOf(previousBidderId));   // wallet 용
-            bidInfo.put("refundAmount", currentPrice.toPlainString());          // wallet 용
-            bidInfo.put("createdAt", String.valueOf(System.currentTimeMillis()));
-
-            String infoKey = "pending_bid_info:" + requestId;
+            String infoKey = RedisKeys.pendingBidInfo(requestId);
 
             redisTemplate.opsForHash().putAll(infoKey, bidInfo);
             redisTemplate.expire(infoKey, Duration.ofMinutes(10));
-            redisTemplate.opsForSet().add("pending_bid_requests", requestId);
+            redisTemplate.opsForSet().add(RedisKeys.pendingBidRequestsSet(), requestId);
 
             //bid 저장 부분 WalletEventListener 로 이동
             //bidRecordService.saveBidRecord(auction, user, bidAmount, requestId);
@@ -140,6 +131,8 @@ public class BidService {
             }
         }
     }
+
+
 
     /**
      * 특정 경매의 입찰 이력 조회
@@ -205,15 +198,15 @@ public class BidService {
             Long userId,
             BigDecimal bidAmount
     ) {
-        String priceKey = "auction:" + auctionId + ":currentPrice";
-        String bidderKey = "auction:" + auctionId + ":currentBidder";
-        String userBalance = "user:" + userId + ":balance";
+        String priceKey = RedisKeys.auctionCurrentPrice(auctionId);
+        String bidderKey = RedisKeys.auctionCurrentBidder(auctionId);
+        String userBalance = RedisKeys.userBalance(userId);
 
         String rawPrice = redisTemplate.opsForValue().get(priceKey);
         BigDecimal currentPrice = (rawPrice == null || rawPrice.isBlank()) ? BigDecimal.ZERO : new BigDecimal(rawPrice);
         log.info("currentPrice:" + currentPrice);
 
-        //10% 이상 체크 (10원 단위 올림)
+        //10% 이상 체크 (10원 단위 올림),
         if (currentPrice.compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal minBid = currentPrice.multiply(new BigDecimal("1.1"))
                     .setScale(-1, RoundingMode.CEILING);
@@ -247,7 +240,22 @@ public class BidService {
         }
     }
 
+    /**
+     * 검증용 데이터
+     * Bid,Wallet 저장에 필요한 데이터를 HashMap 형태로 반환
+     */
+    private static Map<String, String> getStringStringMap(Long auctionId, Long userId, BigDecimal bidAmount, String requestId, Long previousBidderId, BigDecimal currentPrice) {
+        Map<String, String> bidInfo = new HashMap<>();
+        bidInfo.put("auctionId", String.valueOf(auctionId));
+        bidInfo.put("userId", String.valueOf(userId));
+        bidInfo.put("bidAmount", bidAmount.toPlainString());
+        bidInfo.put("requestId", requestId);
 
+        bidInfo.put("previousBidderId", String.valueOf(previousBidderId));   // wallet 용
+        bidInfo.put("refundAmount", currentPrice.toPlainString());          // wallet 용
+        bidInfo.put("createdAt", String.valueOf(System.currentTimeMillis()));
+        return bidInfo;
+    }
 
     public Bid getBid(Long bidId) {
         return bidRepository.findById(bidId)
@@ -257,4 +265,5 @@ public class BidService {
     public boolean isExistRequestId(String requestId){
         return bidRepository.existsByRequestId(requestId);
     }
+
 }

@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.wallet.dto.WalletUpdateEvent;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
+import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.context.ApplicationEventPublisher;
@@ -22,12 +23,12 @@ public class WalletService {
     private final WalletRepository walletRepository;
     private final ApplicationEventPublisher eventPublisher;
 
-    public void processBidWallet(Long userId, Long previousBidderId, BigDecimal bidAmount, BigDecimal currentPrice ,Long auctionId, String requestId) {
-        String userBalanceKey = "user:" + userId + ":balance";
-        String userLockedBalanceKey = "user:" + userId + ":lockedBalance";
 
-        // [2단계] Redis 상에서 변화 입력 (즉시 차감)
-        // 실제로는 decrement 후 결과값이 0보다 작으면 롤백하는 로직이 추가됩니다.
+    public void processBidWallet(Long userId, Long previousBidderId, BigDecimal bidAmount, BigDecimal currentPrice ,Long auctionId, String requestId) {
+
+        String userBalanceKey = RedisKeys.userBalance(userId);
+        String userLockedBalanceKey = RedisKeys.userLockedBalance(userId);
+
         Long remain = redisTemplate.opsForValue().decrement(userBalanceKey, bidAmount.longValue());
         redisTemplate.opsForValue().increment(userLockedBalanceKey, bidAmount.longValue());
         if (remain < 0) {
@@ -36,22 +37,20 @@ public class WalletService {
             throw new ApiException(ErrorCode.INSUFFICIENT_BALANCE);
         }
 
-        // 이전 유저는 redis상에서 잔액 추가
         if (previousBidderId != null && previousBidderId != -1L) {
-            String prevUserBalanceKey = "user:" + previousBidderId + ":balance";
-            String prevUserLockedBalanceKey = "user:" + previousBidderId + ":lockedBalance";
+            String prevUserBalanceKey = RedisKeys.userBalance(previousBidderId);
+            String prevUserLockedBalanceKey = RedisKeys.userLockedBalance(previousBidderId);
 
             redisTemplate.opsForValue().increment(prevUserBalanceKey, currentPrice.longValue());
             redisTemplate.opsForValue().decrement(prevUserLockedBalanceKey, currentPrice.longValue());
         }
 
-        // [3단계] DB에 변화 처리하기 (비동기 이벤트 발행)
-        eventPublisher.publishEvent(new WalletUpdateEvent(userId, previousBidderId, bidAmount, currentPrice,auctionId,requestId));
+        eventPublisher.publishEvent(new WalletUpdateEvent(userId, previousBidderId, bidAmount, currentPrice, auctionId, requestId));
     }
 
     public void getBalance(Long userId) {
-        String userBalanceKey = "user:" + userId + ":balance";
-        String userLockedBalanceKey = "user:" + userId + ":lockedBalance";
+        String userBalanceKey = RedisKeys.userBalance(userId);
+        String userLockedBalanceKey = RedisKeys.userLockedBalance(userId);
 
         if (!redisTemplate.hasKey(userBalanceKey) || !redisTemplate.hasKey(userLockedBalanceKey)) {
             Wallet wallet = walletRepository.findByUserId(userId)
