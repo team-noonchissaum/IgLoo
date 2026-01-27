@@ -13,12 +13,14 @@ import noonchissaum.backend.domain.auction.repository.BidRepository;
 import noonchissaum.backend.domain.user.entity.User;
 
 import noonchissaum.backend.domain.user.service.UserService;
+import noonchissaum.backend.domain.wallet.dto.WalletUpdateEvent;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -45,6 +47,7 @@ public class BidService {
     private final AuctionRepository auctionRepository;
     private final BidRecordService bidRecordService;
     private final UserService userService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public void placeBid(Long auctionId, Long userId, BigDecimal bidAmount, String requestId) {
         // 1. 멱등성 체크 (락 획득 전 수행하여 불필요한 대기 방지)
@@ -88,6 +91,9 @@ public class BidService {
             // previousBidderId가 null인 경우에는 신규 입찰자이므로 walletService에서 처리 필요
             walletService.processBidWallet(userId, previousBidderId, bidAmount, currentPrice,auctionId,requestId);
 
+            eventPublisher.publishEvent(new WalletUpdateEvent(userId, previousBidderId, bidAmount, currentPrice, auctionId, requestId));
+
+
             String rawBidCount  = redisTemplate.opsForValue().get(bidCount);
             String bidCountStr = rawBidCount != null ? rawBidCount : "0";
 
@@ -102,9 +108,6 @@ public class BidService {
             // Stomp 메세지 발행 로직
             // messageService.sendPriceUpdate(auctionId, bidAmount);
 
-            Auction auction = auctionRepository.findById(auctionId)
-                    .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
-            User user = userService.getUserByUserId(userId);
 
             //검증용 데이터 (Bid,Wallet 재저장용 데이터)
             Map<String, String> bidInfo = getStringStringMap(auctionId, userId, bidAmount, requestId, previousBidderId, currentPrice);
@@ -118,7 +121,6 @@ public class BidService {
 
             redisTemplate.opsForValue().set(requestId, bidAmount+"");
 
-            bidRecordService.saveBidRecord(auctionId, userId, bidAmount, requestId);
         }
         catch (InterruptedException e){
             Thread.currentThread().interrupt();

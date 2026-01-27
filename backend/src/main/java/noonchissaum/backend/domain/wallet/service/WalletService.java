@@ -45,7 +45,7 @@ public class WalletService {
             redisTemplate.opsForValue().decrement(prevUserLockedBalanceKey, currentPrice.longValue());
         }
 
-        eventPublisher.publishEvent(new WalletUpdateEvent(userId, previousBidderId, bidAmount, currentPrice, auctionId, requestId));
+        //eventPublisher.publishEvent(new WalletUpdateEvent(userId, previousBidderId, bidAmount, currentPrice, auctionId, requestId));
     }
 
     public void getBalance(Long userId) {
