@@ -41,13 +41,21 @@ public class AuctionSchedulerService {
     }
 
     /**
-     * RUNNING -> ENDED
+     * RUNNING -> DEADLINE
+     */
+    @Transactional
+    public void markDeadLine() {
+        auctionRepository.markDeadlineAuctions(LocalDateTime.now());
+    }
+
+    /**
+     * DEADLINE -> ENDED
      */
     @Transactional
     public int end(LocalDateTime now) {
         long startMs = System.currentTimeMillis();
         int updated = auctionRepository.endRunningAuctions(
-                AuctionStatus.RUNNING,
+                AuctionStatus.DEADLINE,
                 AuctionStatus.ENDED,
                 now
         );
@@ -59,9 +67,7 @@ public class AuctionSchedulerService {
             log.debug("[AuctionEnd] ended=0 elapsedMs={}", elapsed);
         }
 
-
         // 종료된 경매들의 낙찰/유찰 후처리를 붙이기 가능
-
 
         return updated;
     }

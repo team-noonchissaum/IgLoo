@@ -51,14 +51,29 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
     @Query("""
     update Auction a
     set a.status = :ended
-    where a.status = :running
+    where a.status = :deadline
       and a.endAt <= :now
 """)
     int endRunningAuctions(
-            AuctionStatus running,
+            AuctionStatus deadline,
             AuctionStatus ended,
             LocalDateTime now
     );
 
+    /**
+     * 스케줄 관련 상태값 변경 쿼리
+     * Running -> DEADLINE
+     */
+    @Modifying
+    @Query(
+            value = """
+        UPDATE auction a
+        SET a.status = 'DEADLINE'
+        WHERE a.status = 'RUNNING'
+            AND TIMESTAMPDIFF(MINUTE, :now, a.end_at) <= a.imminent_minutes
+        """,
+            nativeQuery = true
+    )
+    int markDeadlineAuctions(@Param("now") LocalDateTime now);
 }
 
