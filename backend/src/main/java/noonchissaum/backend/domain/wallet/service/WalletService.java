@@ -34,7 +34,7 @@ public class WalletService {
             throw new ApiException(ErrorCode.INSUFFICIENT_BALANCE);
         }
 
-        if (previousBidderId != null && previousBidderId != -1L) {
+        if (previousBidderId != -1L) {
             String prevUserBalanceKey = RedisKeys.userBalance(previousBidderId);
             String prevUserLockedBalanceKey = RedisKeys.userLockedBalance(previousBidderId);
 

@@ -70,14 +70,23 @@ public class BidService {
             String priceKey = RedisKeys.auctionCurrentPrice(auctionId);
             String bidderKey = RedisKeys.auctionCurrentBidder(auctionId);
             String bidCount = RedisKeys.auctionCurrentBidCount(auctionId);
-            String endTimeKey = RedisKeys.auctionEndTime(auctionId);
-            String extendedTimeKey = RedisKeys.auctionExtended(auctionId);
 
             String rawPreviousBidderId = redisTemplate.opsForValue().get(bidderKey);
-            Long previousBidderId = rawPreviousBidderId != null && !rawPreviousBidderId.isBlank() ? Long.parseLong(rawPreviousBidderId) : -1L;
-
             String rawPrice = redisTemplate.opsForValue().get(priceKey);
-            BigDecimal currentPrice = rawPrice != null ? new BigDecimal(rawPrice) : BigDecimal.ZERO;
+            String rawBidCount  = redisTemplate.opsForValue().get(bidCount);
+
+            if (rawPreviousBidderId == null || rawPrice == null || rawBidCount == null) {
+                auctionRedisService.setredis(auctionId);
+
+                // 휘발된 데이터 다시 읽어오기
+                rawPreviousBidderId = redisTemplate.opsForValue().get(bidderKey);
+                rawPrice = redisTemplate.opsForValue().get(priceKey);
+                rawBidCount  = redisTemplate.opsForValue().get(bidCount);
+
+            }
+
+            Long previousBidderId = !rawPreviousBidderId.isBlank() ? Long.parseLong(rawPreviousBidderId) : -1L;
+            BigDecimal currentPrice = new BigDecimal(rawPrice);
 
             walletService.getBalance(userId);
 
@@ -95,11 +104,7 @@ public class BidService {
 
             eventPublisher.publishEvent(new DbUpdateEvent(userId, previousBidderId, bidAmount, currentPrice, auctionId, requestId));
 
-
-            String rawBidCount  = redisTemplate.opsForValue().get(bidCount);
-            String bidCountStr = rawBidCount != null ? rawBidCount : "0";
-
-            Integer bidCountInt = Integer.parseInt(bidCountStr);
+            Integer bidCountInt = Integer.parseInt(rawBidCount);
             // Redis 새로운 1등 정보 저장
             redisTemplate.opsForValue().set(priceKey, String.valueOf(bidAmount));
             redisTemplate.opsForValue().set(bidderKey, String.valueOf(userId));
