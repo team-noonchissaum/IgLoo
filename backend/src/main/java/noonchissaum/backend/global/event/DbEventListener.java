@@ -4,11 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.auction.service.BidRecordService;
 import noonchissaum.backend.domain.auction.service.BidService;
-import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
 import noonchissaum.backend.domain.wallet.service.WalletRecordService;
-import noonchissaum.backend.global.exception.ApiException;
-import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.retry.annotation.Backoff;
@@ -21,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class WalletEventListener {
+public class DbEventListener {
 
     private final WalletRepository walletRepository;
     private final WalletRecordService walletRecordService;
@@ -29,7 +26,7 @@ public class WalletEventListener {
     private final BidService bidService;
     private final RedisTemplate<Object, Object> redisTemplate;
 
-    @Async("walletTaskExcutor")
+    @Async("DBTaskExcutor")
     @EventListener
     @Transactional
     @Retryable(
