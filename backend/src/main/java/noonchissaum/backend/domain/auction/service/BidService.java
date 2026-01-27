@@ -10,7 +10,6 @@ import noonchissaum.backend.domain.auction.entity.Bid;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.repository.BidRepository;
 
-import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.event.DbUpdateEvent;
@@ -42,9 +41,8 @@ public class BidService {
     private final WalletService walletService;
     private final BidRepository bidRepository;
     private final AuctionRepository auctionRepository;
-    private final BidRecordService bidRecordService;
-    private final UserService userService;
     private final ApplicationEventPublisher eventPublisher;
+    private final AuctionRedisService auctionRedisService;
 
     public void placeBid(Long auctionId, Long userId, BigDecimal bidAmount, String requestId) {
         // 1. 멱등성 체크 (락 획득 전 수행하여 불필요한 대기 방지)
@@ -72,7 +70,7 @@ public class BidService {
             String rawBidCount  = redisTemplate.opsForValue().get(bidCount);
 
             if (rawPreviousBidderId == null || rawPrice == null || rawBidCount == null) {
-                auctionRedisService.setredis(auctionId);
+                auctionRedisService.setRedis(auctionId);
 
                 // 휘발된 데이터 다시 읽어오기
                 rawPreviousBidderId = redisTemplate.opsForValue().get(bidderKey);

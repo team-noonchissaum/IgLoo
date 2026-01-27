@@ -13,7 +13,6 @@ public class AuctionRegisterReq {
     private String description;
     private BigDecimal startPrice;
     private Long categoryId;
-    private LocalDateTime startAt;
-    private LocalDateTime endAt;
+    private Long auctionDuration;
     private List<String> imageUrls; // Base64 or URLs. Here assumes URLs or handles separately.
 }

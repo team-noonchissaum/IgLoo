@@ -16,6 +16,7 @@ public class UserService {
     public User getUserByUserId(Long userId) {
         return userRepository.findById(userId).
                 orElseThrow(() -> new RuntimeException("user not found"));
+    }
 
     public User getSeller(Long userId) {
         return userRepository.findById(userId)

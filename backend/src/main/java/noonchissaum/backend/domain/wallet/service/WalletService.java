@@ -10,8 +10,10 @@ import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +46,7 @@ public class WalletService {
 
     }
 
+    @Transactional(readOnly = true)
     public void getBalance(Long userId) {
         String userBalanceKey = RedisKeys.userBalance(userId);
         String userLockedBalanceKey = RedisKeys.userLockedBalance(userId);
@@ -51,8 +54,8 @@ public class WalletService {
         if (!redisTemplate.hasKey(userBalanceKey) || !redisTemplate.hasKey(userLockedBalanceKey)) {
             Wallet wallet = walletRepository.findByUserId(userId)
                     .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
-            redisTemplate.opsForValue().set(userBalanceKey, wallet.getBalance().toPlainString());
-            redisTemplate.opsForValue().set(userLockedBalanceKey, wallet.getLockedBalance().toPlainString());
+            redisTemplate.opsForValue().set(userBalanceKey, wallet.getBalance().toPlainString(), Duration.ofMinutes(30));
+            redisTemplate.opsForValue().set(userLockedBalanceKey, wallet.getLockedBalance().toPlainString(), Duration.ofMinutes(30));
         }
     }
 }

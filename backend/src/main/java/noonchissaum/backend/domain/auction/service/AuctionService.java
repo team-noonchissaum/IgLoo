@@ -56,8 +56,8 @@ public class AuctionService {
         Auction auction = Auction.builder()
                 .item(item)
                 .startPrice(request.getStartPrice())
-                .startAt(request.getStartAt())
-                .endAt(request.getEndAt())
+                .startAt(LocalDateTime.now())
+                .endAt(LocalDateTime.now().plusHours(request.getAuctionDuration()))
                 .build();
         auctionRepository.save(auction);
 
