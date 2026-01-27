@@ -3,6 +3,8 @@ package noonchissaum.backend.global.config;
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.auth.oauth2.OAuth2SuccessHandler;
 import noonchissaum.backend.domain.auth.oauth2.service.CustomOAuth2UserService;
+import noonchissaum.backend.global.handler.JwtAccessDeniedHandler;
+import noonchissaum.backend.global.handler.JwtAuthenticationEntryPoint;
 import noonchissaum.backend.global.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,6 +16,17 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+
+/**
+ * Spring Security 설정
+ * - JWT 기반 인증
+ * - OAuth2 소셜 로그인
+ * - 인증/인가 예외 시 JSON 응답 처리
+ */
 
 @Configuration
 @EnableWebSecurity
@@ -23,12 +36,10 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2UserService oAuth2UserService;
+    private final noonchissaum.backend.domain.auth.oauth2.OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;   // ← 추가
+    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, OAuth2SuccessHandler oAuth2SuccessHandler) throws Exception {
@@ -41,7 +52,18 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
+                // 인증/인가 예외 처리 (JSON 응답)
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                        .accessDeniedHandler(jwtAccessDeniedHandler)
+                )
+
                 .authorizeHttpRequests(auth -> auth
+                        //  preflight OPTIONS 허용
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+
+                        //  actuator 전부 허용
+                        .requestMatchers("/actuator/**").permitAll()
                         //인증 없이 접근
                         .requestMatchers(
                                 "/api/auth/**",
@@ -73,5 +95,21 @@ public class SecurityConfig {
 
 
         return http.build();
+    }
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(java.util.List.of("http://localhost:3000"));
+        config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(java.util.List.of("*"));
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }
