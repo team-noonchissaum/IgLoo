@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @RequestMapping("/api/bid")
 public class BidController {
-    private final BidService bidService;
+    /*private final BidService bidService;
 
     @GetMapping("/{auctionId}")
     public ResponseEntity<ApiResponse<Page<BidHistoryItemRes>>> getBidHistory(
@@ -67,6 +67,6 @@ public class BidController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("입찰 완료"));
 
-    }
+    }*/
 
 }
