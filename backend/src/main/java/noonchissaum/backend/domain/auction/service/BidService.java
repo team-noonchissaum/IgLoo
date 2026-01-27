@@ -71,10 +71,10 @@ public class BidService {
             String bidderKey = RedisKeys.auctionCurrentBidder(auctionId);
             String bidCount = RedisKeys.auctionCurrentBidCount(auctionId);
             String endTimeKey = RedisKeys.auctionEndTime(auctionId);
-            String extendedTimeKey = RedisKeys.auctionExtendedTime(auctionId);
+            String extendedTimeKey = RedisKeys.auctionExtended(auctionId);
 
             String rawPreviousBidderId = redisTemplate.opsForValue().get(bidderKey);
-            Long previousBidderId = rawPreviousBidderId != null ? Long.parseLong(rawPreviousBidderId) : -1L;
+            Long previousBidderId = rawPreviousBidderId != null && !rawPreviousBidderId.isBlank() ? Long.parseLong(rawPreviousBidderId) : -1L;
 
             String rawPrice = redisTemplate.opsForValue().get(priceKey);
             BigDecimal currentPrice = rawPrice != null ? new BigDecimal(rawPrice) : BigDecimal.ZERO;
@@ -106,22 +106,6 @@ public class BidService {
             redisTemplate.opsForValue().set(bidCount, String.valueOf(++bidCountInt));
 
             // 마감 시간에 대한 정보 확인 후 변경
-            String endTimeStr = redisTemplate.opsForValue().get(endTimeKey);
-            LocalDateTime endTime = LocalDateTime.parse(endTimeStr);
-            LocalDateTime currentTime = LocalDateTime.now();
-
-            // 늘어난 시간은 초로 관리
-            String extendedTimeStr = redisTemplate.opsForValue().get(extendedTimeKey);
-            Integer extendedTimeSec = Integer.parseInt(extendedTimeStr);
-
-            if (checkTimeLimit(endTime, extendedTimeSec)) {
-                LocalDateTime newEndTime = currentTime.plusMinutes(1);
-                int seconds = (int) Duration.between(endTime, newEndTime).getSeconds();
-                extendedTimeSec += seconds;
-
-                redisTemplate.opsForValue().set(endTimeKey, newEndTime.toString());
-                redisTemplate.opsForValue().set(extendedTimeKey, extendedTimeSec + "");
-            }
 
             // Stomp 메세지 발행 로직
             // messageService.sendPriceUpdate(auctionId, bidAmount);
@@ -278,24 +262,6 @@ public class BidService {
     public Bid getBid(Long bidId) {
         return bidRepository.findById(bidId)
                 .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_BID));
-    }
-
-    /**
-     * 시간 체크 로직
-     * 경매 남은 시간이 1분 미만이면 경매 시간 추가 알림 */
-    public boolean checkTimeLimit(LocalDateTime checkTime, Integer extendedTime) {
-        LocalDateTime now = LocalDateTime.now();
-        long remainingSeconds = Duration.between(now, checkTime).getSeconds();
-
-        if (remainingSeconds > 0 && remainingSeconds < 60) {
-            log.info("마감 1분 이내 입찰 발생! 시간 연장 필요");
-            if (extendedTime >= 300) {
-                log.info("입찰 마감 시간 연장이 5분을 넘어서 불가능합니다.");
-                return false;
-            }
-            return true;
-        }
-        return false;
     }
 
     public boolean isExistRequestId(String requestId){

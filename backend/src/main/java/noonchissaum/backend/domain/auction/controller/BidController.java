@@ -19,54 +19,54 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @RequestMapping("/api/bid")
 public class BidController {
-    /*private final BidService bidService;
+    private final BidService bidService;
 
-    @GetMapping("/{auctionId}")
-    public ResponseEntity<ApiResponse<Page<BidHistoryItemRes>>> getBidHistory(
-            @PathVariable Long auctionId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-    ){
-        Pageable pageable = PageRequest.of(page,size);
-
-        Page<BidHistoryItemRes> bidHistory = bidService.getBidHistory(auctionId, pageable);
-
-        return ResponseEntity.ok(ApiResponse.success("조회 완료",bidHistory));
-
-    }
-
-    @GetMapping("/my")
-    public ResponseEntity<ApiResponse<Page<MyBidAuctionRes>>> getMyBidAuctions(
-            //@AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-    ) {
-        Pageable pageable = PageRequest.of(page, size);
-
-        Page<MyBidAuctionRes> result =
-                bidService.getMyBidAuctions(userDetails.getUserId(), pageable);
-
-        String message = result.isEmpty()
-                ? "입찰 참여 내역이 존재하지 않습니다."
-                : "조회가 완료되었습니다.";
-
-        return ResponseEntity.ok(
-                ApiResponse.success(message, result)
-        );
-    }
-
-
-
-
-    @PostMapping()
-    public ResponseEntity<ApiResponse<Void>> placeBid(
-            //@AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody PlaceBidReq req
-    ){
-        bidService.placeBid(req.auctionId(), userDetails.getUserId(), req.bidAmount(), req.requestId());
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("입찰 완료"));
-
-    }*/
+//    @GetMapping("/{auctionId}")
+//    public ResponseEntity<ApiResponse<Page<BidHistoryItemRes>>> getBidHistory(
+//            @PathVariable Long auctionId,
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "20") int size
+//    ){
+//        Pageable pageable = PageRequest.of(page,size);
+//
+//        Page<BidHistoryItemRes> bidHistory = bidService.getBidHistory(auctionId, pageable);
+//
+//        return ResponseEntity.ok(ApiResponse.success("조회 완료",bidHistory));
+//
+//    }
+//
+//    @GetMapping("/my")
+//    public ResponseEntity<ApiResponse<Page<MyBidAuctionRes>>> getMyBidAuctions(
+//            //@AuthenticationPrincipal CustomUserDetails userDetails,
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "20") int size
+//    ) {
+//        Pageable pageable = PageRequest.of(page, size);
+//
+//        Page<MyBidAuctionRes> result =
+//                bidService.getMyBidAuctions(userDetails.getUserId(), pageable);
+//
+//        String message = result.isEmpty()
+//                ? "입찰 참여 내역이 존재하지 않습니다."
+//                : "조회가 완료되었습니다.";
+//
+//        return ResponseEntity.ok(
+//                ApiResponse.success(message, result)
+//        );
+//    }
+//
+//
+//
+//
+//    @PostMapping()
+//    public ResponseEntity<ApiResponse<Void>> placeBid(
+//            //@AuthenticationPrincipal CustomUserDetails userDetails,
+//            @Valid @RequestBody PlaceBidReq req
+//    ){
+//        bidService.placeBid(req.auctionId(), userDetails.getUserId(), req.bidAmount(), req.requestId());
+//        return ResponseEntity.status(HttpStatus.CREATED)
+//                .body(ApiResponse.success("입찰 완료"));
+//
+//    }
 
 }
