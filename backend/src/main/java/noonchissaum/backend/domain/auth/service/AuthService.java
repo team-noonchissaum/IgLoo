@@ -25,6 +25,7 @@ public class AuthService {
     private final UserAuthRepository userAuthRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenService refreshTokenService;
 
     /**로컬 회원가입*/
     public SignupRes signup(SignupReq signupReq) {
@@ -61,6 +62,7 @@ public class AuthService {
 
         UserAuth userAuth;
         boolean isNewer = false;
+
         if (req.getAuthType() == AuthType.LOCAL) {
             userAuth = localLogin(req);
         } else {
@@ -72,6 +74,13 @@ public class AuthService {
         User user = userAuth.getUser();
         String accessToken = jwtTokenProvider.createAccessToken(user.getId(),user.getRole());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
+
+        //Redis에 Refresh토큰을 저장
+        refreshTokenService.save(
+                user.getId(),
+                refreshToken,
+                60L*60*24*7
+        );
 
         return new LoginRes(
                 user.getId(),
@@ -143,18 +152,42 @@ public class AuthService {
 
     /**토큰 재발급(refresh)*/
     public RefreshRes refresh(RefreshReq req) {
-        Long userId =jwtTokenProvider.getUserId(req.getRefreshToken());
+        String refreshToken= req.getRefreshToken();
 
-        User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("유저가 존재하지 않음"));
+        if(!jwtTokenProvider.validateToken(refreshToken)) {
+            throw new IllegalArgumentException("Refresh Token 만료 혹은 위조");
+        }
+        Long userId=jwtTokenProvider.getUserId(refreshToken);
 
-        String newAccessToken = jwtTokenProvider.createAccessToken(user.getId(),user.getRole());
+        //Redis에 저장된 RT와 비교+ 중복로그인/재사용 방지
+        if(!refreshTokenService.isValid(userId, refreshToken)) {
+            throw new IllegalArgumentException("이미 사용되었거나 다른 기기에서 로그인 됨");
+        }
 
-        return new RefreshRes(newAccessToken);
+        User user = userRepository.findById(userId)
+                .orElseThrow(()-> new IllegalArgumentException("유저가 존재하지 않습니다."));
+        //기존 RT제거(rotation)
+        refreshTokenService.delete(userId);
+
+        //새 토큰 발급
+        String newAccessToken=
+                jwtTokenProvider.createAccessToken(user.getId(),user.getRole());
+        String newRefreshToken=
+                jwtTokenProvider.createRefreshToken(user.getId());
+
+        //새 RT저장
+        refreshTokenService.save(
+                user.getId(),
+                newAccessToken,
+                60L*60*24*7
+        );
+        return new RefreshRes(newAccessToken,newRefreshToken);
     }
 
     /**로그아웃*/
     public void logout(String refreshToken) {
-        //추후 redis도입해서 삭제 처리 할 부분.
+        Long userId=jwtTokenProvider.getUserId(refreshToken);
+        refreshTokenService.delete(userId);
     }
 
 
