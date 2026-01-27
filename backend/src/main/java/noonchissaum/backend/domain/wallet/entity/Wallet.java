@@ -2,10 +2,13 @@ package noonchissaum.backend.domain.wallet.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
+import noonchissaum.backend.global.exception.ApiException;
+import noonchissaum.backend.global.exception.ErrorCode;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -42,6 +45,26 @@ public class Wallet extends BaseTimeEntity {
 
     public Wallet(User user) {
         this.user = user;
-        this.balance = BigDecimal.ZERO;
+    }
+
+    @Builder
+    // 테스트용 wallet 생성기
+    public Wallet(User user, BigDecimal balance, BigDecimal lockedBalance) {
+        this.user = user;
+        this.balance = balance;
+        this.lockedBalance = lockedBalance;
+    }
+
+    public void bidCanceled(BigDecimal amount) {
+        this.balance = this.balance.add(amount);
+        this.lockedBalance = this.lockedBalance.subtract(amount);
+    }
+
+    public void bid(BigDecimal amount) {
+        if (this.balance.compareTo(amount) <= 0) {
+            throw new ApiException(ErrorCode.INSUFFICIENT_BALANCE);
+        }
+        this.balance = this.balance.subtract(amount);
+        this.lockedBalance = this.lockedBalance.add(amount);
     }
 }

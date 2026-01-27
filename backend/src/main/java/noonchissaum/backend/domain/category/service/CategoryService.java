@@ -1,0 +1,17 @@
+package noonchissaum.backend.domain.category.service;
+
+import lombok.NoArgsConstructor;
+import noonchissaum.backend.domain.category.entity.Category;
+import noonchissaum.backend.domain.category.repository.CategoryRepository;
+import org.springframework.stereotype.Service;
+
+@Service
+@NoArgsConstructor
+public class CategoryService {
+    private CategoryRepository categoryRepository;
+
+    public Category getcategory(Long categoryId) {
+        return categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new IllegalArgumentException("Category not found"));
+    }
+}

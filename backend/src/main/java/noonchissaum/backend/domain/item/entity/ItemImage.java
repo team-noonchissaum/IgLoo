@@ -2,6 +2,7 @@ package noonchissaum.backend.domain.item.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
@@ -26,4 +27,11 @@ public class ItemImage extends BaseTimeEntity {
 
     @Column(name = "sort_order")
     private Integer sortOrder;
+
+    @Builder
+    public ItemImage(Item item, String imageUrl, Integer sortOrder) {
+        this.item = item;
+        this.imageUrl = imageUrl;
+        this.sortOrder = sortOrder;
+    }
 }
