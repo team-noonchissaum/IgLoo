@@ -18,7 +18,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @Entity
 @Table(name = "auctions")
-@Getter
+@Getter @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Auction extends BaseTimeEntity {
 
