@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -85,6 +86,7 @@ public class BidService {
                 walletService.getBalance(previousBidderId);
             }
 
+            // 입찰 조건 확인 후 이상 없으면 입찰 진행
             validateBidConditions(auctionId,userId, bidAmount);
 
             // 이전 비더 유저 돈 환불 + 신규 비더 돈 Lock
@@ -104,6 +106,22 @@ public class BidService {
             redisTemplate.opsForValue().set(bidCount, String.valueOf(++bidCountInt));
 
             // 마감 시간에 대한 정보 확인 후 변경
+            String endTimeStr = redisTemplate.opsForValue().get(endTimeKey);
+            LocalDateTime endTime = LocalDateTime.parse(endTimeStr);
+            LocalDateTime currentTime = LocalDateTime.now();
+
+            // 늘어난 시간은 초로 관리
+            String extendedTimeStr = redisTemplate.opsForValue().get(extendedTimeKey);
+            Integer extendedTimeSec = Integer.parseInt(extendedTimeStr);
+
+            if (checkTimeLimit(endTime, extendedTimeSec)) {
+                LocalDateTime newEndTime = currentTime.plusMinutes(1);
+                int seconds = (int) Duration.between(endTime, newEndTime).getSeconds();
+                extendedTimeSec += seconds;
+
+                redisTemplate.opsForValue().set(endTimeKey, newEndTime.toString());
+                redisTemplate.opsForValue().set(extendedTimeKey, extendedTimeSec + "");
+            }
 
             // Stomp 메세지 발행 로직
             // messageService.sendPriceUpdate(auctionId, bidAmount);
@@ -136,8 +154,6 @@ public class BidService {
         }
     }
 
-
-
     /**
      * 특정 경매의 입찰 이력 조회
      */
@@ -149,7 +165,6 @@ public class BidService {
 
         return bidPage.map(BidHistoryItemRes::from);
     }
-
 
     /**
      * 현재 참여하고 있는 모든 경매의 입찰 현황 조회
@@ -188,7 +203,6 @@ public class BidService {
             );
         });
     }
-
 
     /**
      * 입찰 조건 검증 로직:
@@ -266,8 +280,25 @@ public class BidService {
                 .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_BID));
     }
 
+    /**
+     * 시간 체크 로직
+     * 경매 남은 시간이 1분 미만이면 경매 시간 추가 알림 */
+    public boolean checkTimeLimit(LocalDateTime checkTime, Integer extendedTime) {
+        LocalDateTime now = LocalDateTime.now();
+        long remainingSeconds = Duration.between(now, checkTime).getSeconds();
+
+        if (remainingSeconds > 0 && remainingSeconds < 60) {
+            log.info("마감 1분 이내 입찰 발생! 시간 연장 필요");
+            if (extendedTime >= 300) {
+                log.info("입찰 마감 시간 연장이 5분을 넘어서 불가능합니다.");
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
     public boolean isExistRequestId(String requestId){
         return bidRepository.existsByRequestId(requestId);
     }
-
 }
