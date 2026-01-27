@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public interface UserAuthRepository extends JpaRepository<UserAuth,Long>{
     /**로그인용 조회(Local/OAuth)*/
-    Optional<UserAuth> findByAuthTypeAndIdentifier(String identifier,AuthType authType);
+    Optional<UserAuth> findByAuthTypeAndIdentifier(AuthType authType, String identifier);
 
     /**회원 가입시 중복 체크용*/
     boolean existsByIdentifierAndAuthType(String identifier,AuthType authType);

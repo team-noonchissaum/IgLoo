@@ -54,7 +54,7 @@ public class AuthService {
      */
     private UserAuth localLogin(LoginReq req) {
         UserAuth userAuth = userAuthRepository
-                .findByAuthTypeAndIdentifier(req.getEmail(), AuthType.LOCAL)
+                .findByAuthTypeAndIdentifier(AuthType.LOCAL , req.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계정입니다."));
 
         if (!passwordEncoder.matches(req.getPassword(), userAuth.getPasswordHash())) {
@@ -73,7 +73,7 @@ public class AuthService {
         String oauthIdentifier = req.getOauthToken(); // 예시용
 
         return userAuthRepository
-                .findByAuthTypeAndIdentifier(oauthIdentifier, req.getAuthType())
+                .findByAuthTypeAndIdentifier(req.getAuthType() , oauthIdentifier)
                 .map(auth -> new LoginResult(auth, false))
                 .orElseGet(() -> oauthSignup(req, oauthIdentifier));
     }
