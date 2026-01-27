@@ -141,7 +141,7 @@ public class BidService {
      * 특정 경매의 입찰 이력 조회
      */
     @Transactional(readOnly = true)
-    public Page<BidHistoryItemRes> getBidHistory(Long userId, Long auctionId, Pageable pageable){
+    public Page<BidHistoryItemRes> getBidHistory(Long auctionId, Pageable pageable){
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(()-> new RuntimeException(ErrorCode.NOT_FOUND_AUCTIONS.getMessage()));
         Page<Bid> bidPage = bidRepository.findByAuctionIdOrderByCreatedAtDesc(auction.getId(), pageable);

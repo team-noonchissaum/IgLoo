@@ -23,14 +23,13 @@ public class BidController {
 
     @GetMapping("/{auctionId}")
     public ResponseEntity<ApiResponse<Page<BidHistoryItemRes>>> getBidHistory(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long auctionId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ){
         Pageable pageable = PageRequest.of(page,size);
 
-        Page<BidHistoryItemRes> bidHistory = bidService.getBidHistory(userDetails.getUserId(), auctionId, pageable);
+        Page<BidHistoryItemRes> bidHistory = bidService.getBidHistory(auctionId, pageable);
 
         return ResponseEntity.ok(ApiResponse.success("조회 완료",bidHistory));
 
