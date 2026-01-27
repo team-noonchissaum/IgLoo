@@ -1,6 +1,8 @@
 package noonchissaum.backend.domain.auth.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,16 +42,17 @@ public class UserAuth {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    /**계정 생성*/
     public static UserAuth createLocal(
             User user,
-            String email,
-            String passwordHash
+            @NotBlank @Email String email,
+            String encode
     ) {
         UserAuth auth = new UserAuth();
         auth.user = user;
         auth.authType = AuthType.LOCAL;
         auth.identifier = email;
-        auth.passwordHash = passwordHash;
+        auth.passwordHash = encode;
         return auth;
     }
 

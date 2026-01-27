@@ -7,6 +7,7 @@ import noonchissaum.backend.domain.user.dto.request.AdminBlockUserReq;
 import noonchissaum.backend.domain.user.dto.request.AdminReportProcessReq;
 import noonchissaum.backend.domain.user.dto.response.*;
 import noonchissaum.backend.domain.user.service.AdminService;
+import noonchissaum.backend.global.dto.ApiResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -103,9 +104,9 @@ public class AdminController {
      */
 
     @PatchMapping("/users/{userId}/unblock")
-    public ResponseEntity<Void> unblockUser(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponse> unblockUser(@PathVariable Long userId) {
         adminService.unblockUser(userId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success("사용자 차단 해제 완료"));//이부분 response사용하기
     }
 
     /* ================= 게시글 관리 ================= */
@@ -123,9 +124,9 @@ public class AdminController {
      * 차단된 게시글 복구
      */
     @PatchMapping("/items/{itemId}/restore")
-    public ResponseEntity<Void> restoreItem(@PathVariable Long itemId) {
+    public ResponseEntity<ApiResponse> restoreItem(@PathVariable Long itemId) {
         adminService.restoreItem(itemId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success("차단된 게시글 복구 완료"));//이부분 response사용하기
     }
 
 }

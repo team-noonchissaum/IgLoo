@@ -68,13 +68,13 @@ public class UserController {
 
     /**
      * 회원 탈퇴
-     * DELETE /api/users/me
+     * DELETE /api/users/me-현재 hardDelete여서 삭제시 db에서 바로 날려버림.
      */
     @DeleteMapping("/me")
-    public ResponseEntity<Void> deleteUser(@AuthenticationPrincipal Long userId) {
+    public ResponseEntity<ApiResponse> deleteUser(@AuthenticationPrincipal Long userId) {
         userService.deleteUser(userId);
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success("회원 탈퇴 완료"));
     }
 
 }

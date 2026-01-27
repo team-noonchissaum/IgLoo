@@ -57,7 +57,9 @@ public class JwtTokenProvider {
     /**검증(만료&위조확인)*/
     public boolean validateToken(String token) {
         try {
-            Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
+            Jwts.parser()
+                    .setSigningKey(secretKey)
+                    .parseClaimsJws(token);
             return true;
         } catch (Exception e) {
             return false;
