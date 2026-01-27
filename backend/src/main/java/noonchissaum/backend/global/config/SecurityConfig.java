@@ -34,8 +34,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final CustomOAuth2UserService customOAuth2UserService;
-    private final OAuth2UserService oAuth2UserService;
     private final noonchissaum.backend.domain.auth.oauth2.OAuth2SuccessHandler oAuth2SuccessHandler;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;   // ← 추가
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
