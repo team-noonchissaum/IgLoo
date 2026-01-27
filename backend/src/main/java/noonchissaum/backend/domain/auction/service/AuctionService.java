@@ -1,8 +1,8 @@
 package noonchissaum.backend.domain.auction.service;
 
 import lombok.RequiredArgsConstructor;
-import noonchissaum.backend.domain.auction.dto.AuctionRegisterReq;
-import noonchissaum.backend.domain.auction.dto.AuctionRes;
+import noonchissaum.backend.domain.auction.dto.req.AuctionRegisterReq;
+import noonchissaum.backend.domain.auction.dto.res.AuctionRes;
 import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;

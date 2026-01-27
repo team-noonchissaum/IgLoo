@@ -2,15 +2,13 @@ package noonchissaum.backend.domain.auction.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import noonchissaum.backend.domain.auction.dto.BidHistoryItemRes;
-import noonchissaum.backend.domain.auction.dto.MyBidAuctionDto;
-import noonchissaum.backend.domain.auction.dto.MyBidAuctionRes;
+import noonchissaum.backend.domain.auction.dto.res.BidHistoryItemRes;
+import noonchissaum.backend.domain.auction.dto.res.MyBidAuctionRes;
 import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.entity.Bid;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.repository.BidRepository;
-import noonchissaum.backend.domain.user.entity.User;
 
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
@@ -30,11 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor

@@ -1,4 +1,4 @@
-package noonchissaum.backend.domain.auction.dto;
+package noonchissaum.backend.domain.auction.dto.req;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

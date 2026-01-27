@@ -1,7 +1,7 @@
 package noonchissaum.backend.domain.item.service;
 
 import lombok.RequiredArgsConstructor;
-import noonchissaum.backend.domain.auction.dto.AuctionRegisterReq;
+import noonchissaum.backend.domain.auction.dto.req.AuctionRegisterReq;
 import noonchissaum.backend.domain.category.entity.Category;
 import noonchissaum.backend.domain.item.entity.Item;
 import noonchissaum.backend.domain.item.entity.ItemImage;
