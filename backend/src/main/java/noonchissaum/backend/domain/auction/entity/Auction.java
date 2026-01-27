@@ -1,10 +1,7 @@
 package noonchissaum.backend.domain.auction.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import noonchissaum.backend.domain.item.entity.Item;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
@@ -16,7 +13,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "auctions")
-@Getter
+@Getter @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Auction extends BaseTimeEntity {
 
@@ -57,8 +54,9 @@ public class Auction extends BaseTimeEntity {
     private List<Bid> bids = new ArrayList<>();
 
     @Builder
-    public Auction(AuctionStatus status, BigDecimal currentPrice) {
+    public Auction(AuctionStatus status, BigDecimal currentPrice, LocalDateTime endAt) {
         this.status = status;
         this.currentPrice = currentPrice;
+        this.endAt = endAt;
     }
 }

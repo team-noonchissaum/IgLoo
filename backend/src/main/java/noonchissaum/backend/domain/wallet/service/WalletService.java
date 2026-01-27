@@ -20,8 +20,6 @@ public class WalletService {
 
     private final StringRedisTemplate redisTemplate;
     private final WalletRepository walletRepository;
-    private final ApplicationEventPublisher eventPublisher;
-
 
     public void processBidWallet(Long userId, Long previousBidderId, BigDecimal bidAmount, BigDecimal currentPrice ,Long auctionId, String requestId) {
 
