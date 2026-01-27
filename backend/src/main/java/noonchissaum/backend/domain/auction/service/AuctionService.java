@@ -15,8 +15,10 @@ import noonchissaum.backend.domain.item.service.ItemService;
 import noonchissaum.backend.domain.item.service.WishService;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.service.UserService;
+import noonchissaum.backend.global.RedisKeys;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +36,8 @@ public class AuctionService {
     private final UserService userService;
     private final CategoryService categoryService;
     private final WishService wishService;
+    private final StringRedisTemplate redisTemplate;
+    private final AuctionRedisService auctionRedisService;
 
 
     /**
@@ -57,6 +61,7 @@ public class AuctionService {
                 .build();
         auctionRepository.save(auction);
 
+        auctionRedisService.setRedis(auction.getId());
         return auction.getId();
     }
 
@@ -114,7 +119,7 @@ public class AuctionService {
         }
 
         /**
-         * 5분이 지났을 경우 보증금 회수하는 로직과 5분이전이면 보증금 돌려주는 로칙 추가
+         * 5분이 지났을 경우 보증금 회수하는 로직과 5분이전이면 보증금 돌려주는 로직 추가
          * 5분 이후 취소도 처리하려면 RUNNING 상태도 취소 허용
          */
         if (!(auction.getStatus() == AuctionStatus.READY || auction.getStatus() == AuctionStatus.RUNNING)) {
@@ -142,5 +147,40 @@ public class AuctionService {
 
         //경매 취소시 상태 변경
         auction.cancel();
+
+        //radis에서 삭제
+        auctionRedisService.cancelAuction(auctionId);
+    }
+
+    public void checkDeadLine(Long auctionId) {
+        String rawEndTime = redisTemplate.opsForValue().get(RedisKeys.auctionEndTime(auctionId));
+        String rawImminentMinutes = redisTemplate.opsForValue().get(RedisKeys.auctionImminentMinutes(auctionId));
+        String isExtended = redisTemplate.opsForValue().get(RedisKeys.auctionIsExtended(auctionId));
+
+        if (rawEndTime == null || rawImminentMinutes == null || isExtended == null) {
+            auctionRedisService.setRedis(auctionId);
+
+            rawEndTime = redisTemplate.opsForValue().get(RedisKeys.auctionEndTime(auctionId));
+            rawImminentMinutes = redisTemplate.opsForValue().get(RedisKeys.auctionImminentMinutes(auctionId));
+            isExtended = redisTemplate.opsForValue().get(RedisKeys.auctionIsExtended(auctionId));
+        }
+
+        LocalDateTime endTime = LocalDateTime.parse(rawEndTime);
+        Integer imminentMinutes = Integer.parseInt(rawImminentMinutes);
+
+        LocalDateTime now = LocalDateTime.now();
+
+        if (now.isAfter(endTime) || now.isBefore(endTime.minusMinutes(imminentMinutes))) {
+            return;
+        }
+
+        if (isExtended.equals("true")) {
+            return;
+        }
+
+        endTime = endTime.plusMinutes(3);
+
+        redisTemplate.opsForValue().set(RedisKeys.auctionEndTime(auctionId), endTime.toString());
+        redisTemplate.opsForValue().set(RedisKeys.auctionIsExtended(auctionId), "true");
     }
 }

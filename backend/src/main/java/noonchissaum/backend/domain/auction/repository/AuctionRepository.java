@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface AuctionRepository extends JpaRepository<Auction, Long> {
@@ -75,5 +76,12 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
             nativeQuery = true
     )
     int markDeadlineAuctions(@Param("now") LocalDateTime now);
+
+
+    @Query(
+            "select a from Auction a where a.id = :auctionId " +
+                    "and (a.status = noonchissaum.backend.domain.auction.entity.AuctionStatus.RUNNING " +
+                    "or a.status = noonchissaum.backend.domain.auction.entity.AuctionStatus.DEADLINE)")
+    Optional<Auction> findByIdWithStatus(@Param("auctionId") Long auctionId);
 }
 
