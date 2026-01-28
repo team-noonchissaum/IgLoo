@@ -13,6 +13,8 @@ import noonchissaum.backend.domain.auth.repository.UserAuthRepository;
 import noonchissaum.backend.domain.user.entity.*;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 import noonchissaum.backend.global.config.JwtTokenProvider;
+import noonchissaum.backend.global.exception.CustomException;
+import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

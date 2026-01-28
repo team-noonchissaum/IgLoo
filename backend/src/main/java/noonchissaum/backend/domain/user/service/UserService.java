@@ -35,7 +35,7 @@ public class UserService {
      */
 
     public ProfileRes getMyProfile(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         return new ProfileRes(
                 user.getId(),
                 user.getNickname(),
