@@ -18,6 +18,8 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Component
 @RequiredArgsConstructor
@@ -30,6 +32,7 @@ public class DbEventListener {
     private final AuctionRecordService auctionRecordService;
     private final AsyncTaskRepository asyncTaskRepository;
     private final StringRedisTemplate redisTemplate;
+    private final AsyncTaskTxService asyncTaskTxService;
 
     @Async("DBTaskExcutor")
     @EventListener
@@ -41,7 +44,8 @@ public class DbEventListener {
     )
     public void handleWalletUpdate(DbUpdateEvent event) {
         log.info("비동기 DB 업데이트 시작 - 유저: {}", event.userId());
-        AsyncTask save = asyncTaskRepository.save(new AsyncTask(event));
+
+        asyncTaskTxService.startTask(event);
 
         //bid 저장
         if (!bidService.isExistRequestId(event.requestId())) {
@@ -55,16 +59,41 @@ public class DbEventListener {
         auctionRecordService.saveAuction(event.auctionId(), event.userId(),event.bidAmount());
 
         // 작업이 완료되었는지 db저장
-        save.taskSuccess();
+        registerAfterCommit(event);
 
+
+
+    }
+
+    private void registerAfterCommit(DbUpdateEvent event) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            // 원래라면 @Transactional 안에서는 active여야 함. 방어 코드.
+            log.warn("Transaction synchronization is not active. Fallback to immediate execution.");
+            markSuccessAndCleanupRedis(event);
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                markSuccessAndCleanupRedis(event);
+            }
+        });
+    }
+
+    private void markSuccessAndCleanupRedis(DbUpdateEvent event) {
+        // (A) 성공 마킹은 REQUIRES_NEW로 안전하게 확정
+        asyncTaskTxService.markSuccess(event.requestId());
+
+        // (B) Redis pending 제거
         String userKey = RedisKeys.pendingUser(event.userId());
-        String prevUserPendingKey = RedisKeys.pendingUser(event.previousBidderId());
-
         redisTemplate.opsForSet().remove(userKey, event.requestId());
-        redisTemplate.opsForSet().remove(prevUserPendingKey, event.requestId());
 
-        Long pendingCount = redisTemplate.opsForSet().size(userKey);
-
+        // previousBidderId가 -1이면 건드리지 않기 권장
+        if (event.previousBidderId() != null && event.previousBidderId() != -1L) {
+            String prevUserKey = RedisKeys.pendingUser(event.previousBidderId());
+            redisTemplate.opsForSet().remove(prevUserKey, event.requestId());
+        }
     }
 
     // 재시도 3번 후에도 안됬을 경우
