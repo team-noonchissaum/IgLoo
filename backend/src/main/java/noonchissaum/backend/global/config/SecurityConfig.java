@@ -2,7 +2,6 @@ package noonchissaum.backend.global.config;
 
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.auth.oauth2.OAuth2SuccessHandler;
-import noonchissaum.backend.domain.auth.oauth2.service.CustomOAuth2UserService;
 import noonchissaum.backend.global.handler.JwtAccessDeniedHandler;
 import noonchissaum.backend.global.handler.JwtAuthenticationEntryPoint;
 import noonchissaum.backend.global.security.JwtAuthenticationFilter;
@@ -15,7 +14,6 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;

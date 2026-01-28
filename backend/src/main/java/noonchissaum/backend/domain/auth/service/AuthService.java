@@ -30,10 +30,10 @@ public class AuthService {
     /**로컬 회원가입*/
     public SignupRes signup(SignupReq signupReq) {
         if(userRepository.existsByEmail(signupReq.getEmail())) {
-            throw new IllegalArgumentException("이미 사용중인 이메일 입니다");
+            throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
         }
         if(userRepository.existsByNickname(signupReq.getNickname())) {
-            throw new IllegalArgumentException("이미 사용중인 닉네임입니다.");
+            throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
         }
         User user= new User(
                 signupReq.getEmail(),
@@ -72,6 +72,12 @@ public class AuthService {
         }
 
         User user = userAuth.getUser();
+
+        // 차단된 사용자 체크
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            throw new CustomException(ErrorCode.USER_BLOCKED);
+        }
+
         String accessToken = jwtTokenProvider.createAccessToken(user.getId(),user.getRole());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
 
@@ -99,10 +105,10 @@ public class AuthService {
     private UserAuth localLogin(LoginReq req) {
         UserAuth userAuth = userAuthRepository
                 .findByAuthTypeAndIdentifier(AuthType.LOCAL,req.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계정입니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_LOGIN));
 
         if (!passwordEncoder.matches(req.getPassword(), userAuth.getPasswordHash())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+            throw new CustomException(ErrorCode.INVALID_LOGIN);
         }
 
         return userAuth;
@@ -128,11 +134,11 @@ public class AuthService {
     private LoginResult oauthSignup(LoginReq req, String identifier) {
 
         if (userAuthRepository.existsByIdentifierAndAuthType(req.getAuthType(),identifier)) {
-            throw new IllegalArgumentException("이미 가입된 OAuth 계정입니다.");
+            throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
         }
 
         if (req.getNickname() == null || req.getNickname().isBlank()) {
-            throw new IllegalArgumentException("신규 OAuth 회원은 닉네임이 필요합니다.");
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
         User user = new User(
@@ -155,17 +161,17 @@ public class AuthService {
         String refreshToken= req.getRefreshToken();
 
         if(!jwtTokenProvider.validateToken(refreshToken)) {
-            throw new IllegalArgumentException("Refresh Token 만료 혹은 위조");
+            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
         Long userId=jwtTokenProvider.getUserId(refreshToken);
 
         //Redis에 저장된 RT와 비교+ 중복로그인/재사용 방지
         if(!refreshTokenService.isValid(userId, refreshToken)) {
-            throw new IllegalArgumentException("이미 사용되었거나 다른 기기에서 로그인 됨");
+            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(()-> new IllegalArgumentException("유저가 존재하지 않습니다."));
+                .orElseThrow(()-> new CustomException(ErrorCode.USER_NOT_FOUND));
         //기존 RT제거(rotation)
         refreshTokenService.delete(userId);
 

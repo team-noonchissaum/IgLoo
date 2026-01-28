@@ -14,6 +14,8 @@ import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.repository.ReportRepository;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 
+import noonchissaum.backend.global.exception.CustomException;
+import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,7 +51,7 @@ public class UserService {
      */
 
     public MyPageRes getMyPage(Long userId) {
-        User user = userRepository.findByIdWithWallet(userId).orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+        User user = userRepository.findByIdWithWallet(userId).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         BigDecimal balance =
                 user.getWallet() != null ? user.getWallet().getBalance() : BigDecimal.ZERO;
@@ -70,7 +72,7 @@ public class UserService {
     public OtherUserProfileRes getOtherUserProfile(Long userId) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         return new OtherUserProfileRes(
                 user.getId(),
@@ -88,11 +90,11 @@ public class UserService {
     public ProfileUpdateUserRes updateProfile(Long userId, ProfileUpdateUserReq request) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (!user.getNickname().equals(request.getNickname())
                 && userRepository.existsByNickname(request.getNickname())) {
-            throw new IllegalArgumentException("이미 사용중인 닉네임입니다.");
+            throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
         }
 
         user.updateProfile(request.getNickname(), request.getProfileUrl());
@@ -117,7 +119,7 @@ public class UserService {
     @Transactional
     public void deleteUser(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         userRepository.delete(user);
 
