@@ -137,4 +137,8 @@ public class Auction extends BaseTimeEntity {
         this.currentPrice = newBid;
         this.bidCount++;
     }
+
+    public User getSeller() {
+        return this.item != null ? this.item.getSeller() : null;
+    }
 }
