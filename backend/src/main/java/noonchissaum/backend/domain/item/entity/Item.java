@@ -86,9 +86,26 @@ public class Item extends BaseTimeEntity {
             // ItemImage setter가 있다면 호출. 현재 ItemImage에는 setter가 없으므로 add만 수행.
         }
     }
-
-    public void setThumbnailUrl(String thumbnailUrl) {
-        this.thumbnailUrl = thumbnailUrl;
+    /**관리자 계정용*/
+    public void delete() {
+        if (Boolean.FALSE.equals(this.status)) {
+            throw new IllegalStateException("이미 삭제된 상품입니다.");
+        }
+        this.status = false;
     }
 
+    public void restore() {
+        if (Boolean.TRUE.equals(this.status)) {
+            throw new IllegalStateException("이미 활성 상태인 상품입니다.");
+        }
+        this.status = true;
+    }
+
+    public boolean isDeleted() {
+        return Boolean.FALSE.equals(this.status);
+    }
+
+    public boolean isActive() {
+        return Boolean.TRUE.equals(this.status);
+    }
 }
