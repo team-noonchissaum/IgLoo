@@ -79,7 +79,7 @@ public class UserPrincipal implements UserDetails, OAuth2User {
 
     @Override
     public String getUsername() {
-        return String.valueOf(userId);  // userId를 username으로 사용
+        return email;
     }
 
     @Override
