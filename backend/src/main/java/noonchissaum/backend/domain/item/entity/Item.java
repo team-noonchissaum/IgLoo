@@ -86,6 +86,11 @@ public class Item extends BaseTimeEntity {
             // ItemImage setter가 있다면 호출. 현재 ItemImage에는 setter가 없으므로 add만 수행.
         }
     }
+
+    public void setThumbnailUrl(String thumbnailUrl) {
+        this.thumbnailUrl = thumbnailUrl;
+    }
+
     /**관리자 계정용*/
     public void delete() {
         if (Boolean.FALSE.equals(this.status)) {

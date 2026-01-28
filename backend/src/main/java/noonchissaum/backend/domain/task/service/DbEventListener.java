@@ -5,8 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.auction.service.AuctionRecordService;
 import noonchissaum.backend.domain.auction.service.BidRecordService;
 import noonchissaum.backend.domain.auction.service.BidService;
-import noonchissaum.backend.domain.task.entity.AsyncTask;
-import noonchissaum.backend.domain.task.repository.AsyncTaskRepository;
 import noonchissaum.backend.domain.wallet.service.WalletRecordService;
 import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.domain.task.dto.DbUpdateEvent;
@@ -30,7 +28,6 @@ public class DbEventListener {
     private final BidRecordService bidRecordService;
     private final BidService bidService;
     private final AuctionRecordService auctionRecordService;
-    private final AsyncTaskRepository asyncTaskRepository;
     private final StringRedisTemplate redisTemplate;
     private final AsyncTaskTxService asyncTaskTxService;
 

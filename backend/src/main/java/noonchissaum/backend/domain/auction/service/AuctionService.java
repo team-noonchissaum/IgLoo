@@ -46,7 +46,7 @@ public class AuctionService {
      */
     @Transactional
     public Long registerAuction(Long userId, AuctionRegisterReq request) {
-        User seller = userService.getSeller(userId);
+        User seller = userService.getUserByUserId(userId);
         Category category = categoryService.getcategory(request.getCategoryId());
 
         // 1. 상품(Item) 정보 생성 + 이미지 등록
@@ -92,7 +92,7 @@ public class AuctionService {
      * 경매 상세 정보를 조회합니다.
      */
     public AuctionRes getAuctionDetail(Long userId, Long auctionId) {
-        User user = userService.getUser(userId);
+        User user = userService.getUserByUserId(userId);
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new IllegalArgumentException("Auction not found"));
         boolean isWished = wishService.isWished(userId, auction.getItem().getId());
