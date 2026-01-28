@@ -15,6 +15,10 @@ public final class RedisKeys {
         return "user:" + userId + ":lockedBalance";
     }
 
+    public static String pendingUser(Long userId) {
+        return "pending:user:" + userId;
+    }
+
     /**
      * auction
      */

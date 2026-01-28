@@ -12,7 +12,7 @@ import noonchissaum.backend.domain.auction.repository.BidRepository;
 
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.RedisKeys;
-import noonchissaum.backend.global.event.DbUpdateEvent;
+import noonchissaum.backend.domain.task.dto.DbUpdateEvent;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.redisson.api.RLock;
@@ -121,6 +121,11 @@ public class BidService {
             redisTemplate.opsForSet().add(RedisKeys.pendingBidRequestsSet(), requestId);
 
             redisTemplate.opsForValue().set(requestId, bidAmount+"");
+
+            String userPendingKey = RedisKeys.pendingUser(userId);
+            String prevUserPendingKey = RedisKeys.pendingUser(previousBidderId);
+            redisTemplate.opsForSet().add(userPendingKey, requestId);
+            redisTemplate.opsForSet().add(prevUserPendingKey, requestId);
 
         }
         catch (InterruptedException e){
