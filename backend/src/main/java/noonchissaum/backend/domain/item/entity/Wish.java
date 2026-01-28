@@ -2,6 +2,7 @@ package noonchissaum.backend.domain.item.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import noonchissaum.backend.domain.user.entity.User;
@@ -27,4 +28,17 @@ public class Wish extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "item_id", nullable = false)
     private Item item;
+
+    @Builder
+    private Wish(User user, Item item) {
+        this.user = user;
+        this.item = item;
+    }
+
+    public static Wish of(User user, Item item) {
+        return Wish.builder()
+                .user(user)
+                .item(item)
+                .build();
+    }
 }

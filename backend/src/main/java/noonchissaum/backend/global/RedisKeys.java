@@ -42,9 +42,13 @@ public final class RedisKeys {
         return "auction:" + auctionId + ":endTime";
     }
 
-    public static String auctionExtended(Long auctionId) {
-        return "auction:" + auctionId + ":extended";
+    public static String auctionExtendedTime(Long auctionId) {
+        return "auction:" + auctionId + ":extendedTime";
     }
+
+    public static String auctionImminentMinutes(Long auctionId) { return "auction:" + auctionId + ":imminentMinutes"; }
+
+    public static String auctionIsExtended(Long auctionId) { return "auction:" + auctionId + ":isExtended"; }
 
     /**
      * Bid Idempotency / Pending
