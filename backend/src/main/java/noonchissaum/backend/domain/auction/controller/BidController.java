@@ -1,17 +1,7 @@
 package noonchissaum.backend.domain.auction.controller;
 
-import jakarta.validation.Valid;
-import noonchissaum.backend.domain.auction.dto.MyBidAuctionRes;
-import noonchissaum.backend.domain.auction.dto.PlaceBidReq;
-import noonchissaum.backend.domain.auction.dto.BidHistoryItemRes;
 import noonchissaum.backend.domain.auction.service.BidService;
-import noonchissaum.backend.global.dto.ApiResponse;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+//import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
 

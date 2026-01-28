@@ -6,6 +6,7 @@ import noonchissaum.backend.domain.wallet.repository.WalletRepository;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
@@ -14,7 +15,7 @@ import java.math.BigDecimal;
 public class WalletRecordService {
     private final WalletRepository walletRepository;
 
-
+    @Transactional
     public void saveWalletRecord(Long userId, BigDecimal bidAmount, Long previousBidderId , BigDecimal refundAmount){
         Wallet newBidUserWallet = walletRepository.findByUserId(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));

@@ -2,16 +2,15 @@ package noonchissaum.backend.domain.task.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import noonchissaum.backend.domain.auction.service.AuctionRecordService;
 import noonchissaum.backend.domain.auction.service.BidRecordService;
 import noonchissaum.backend.domain.auction.service.BidService;
 import noonchissaum.backend.domain.task.entity.AsyncTask;
 import noonchissaum.backend.domain.task.repository.AsyncTaskRepository;
-import noonchissaum.backend.domain.wallet.repository.WalletRepository;
 import noonchissaum.backend.domain.wallet.service.WalletRecordService;
 import noonchissaum.backend.global.RedisKeys;
-import noonchissaum.backend.global.event.DbUpdateEvent;
+import noonchissaum.backend.domain.task.dto.DbUpdateEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;

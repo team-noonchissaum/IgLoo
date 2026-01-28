@@ -18,7 +18,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @Entity
 @Table(name = "auctions")
-@Getter @Setter
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Auction extends BaseTimeEntity {
 
@@ -127,5 +127,18 @@ public class Auction extends BaseTimeEntity {
             this.endAt = this.endAt.plusMinutes(3);
             this.isExtended = true;
         }
+    }
+
+    /**
+     * 새로운 bid가 생겼을 때 상태 정보 수정하기
+     */
+    public void updateBid(User user, BigDecimal newBid){
+        this.currentBidder = user;
+        this.currentPrice = newBid;
+        this.bidCount++;
+    }
+
+    public User getSeller() {
+        return this.item != null ? this.item.getSeller() : null;
     }
 }

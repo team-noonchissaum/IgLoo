@@ -2,20 +2,17 @@ package noonchissaum.backend.domain.auction.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import noonchissaum.backend.domain.auction.dto.BidHistoryItemRes;
-import noonchissaum.backend.domain.auction.dto.MyBidAuctionDto;
-import noonchissaum.backend.domain.auction.dto.MyBidAuctionRes;
+import noonchissaum.backend.domain.auction.dto.res.BidHistoryItemRes;
+import noonchissaum.backend.domain.auction.dto.res.MyBidAuctionRes;
 import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.entity.Bid;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.repository.BidRepository;
-import noonchissaum.backend.domain.user.entity.User;
 
-import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.RedisKeys;
-import noonchissaum.backend.global.event.DbUpdateEvent;
+import noonchissaum.backend.domain.task.dto.DbUpdateEvent;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.redisson.api.RLock;
@@ -30,11 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -46,9 +41,8 @@ public class BidService {
     private final WalletService walletService;
     private final BidRepository bidRepository;
     private final AuctionRepository auctionRepository;
-    private final BidRecordService bidRecordService;
-    private final UserService userService;
     private final ApplicationEventPublisher eventPublisher;
+    private final AuctionRedisService auctionRedisService;
 
     public void placeBid(Long auctionId, Long userId, BigDecimal bidAmount, String requestId) {
         // 1. 멱등성 체크 (락 획득 전 수행하여 불필요한 대기 방지)
@@ -76,7 +70,7 @@ public class BidService {
             String rawBidCount  = redisTemplate.opsForValue().get(bidCount);
 
             if (rawPreviousBidderId == null || rawPrice == null || rawBidCount == null) {
-                auctionRedisService.setredis(auctionId);
+                auctionRedisService.setRedis(auctionId);
 
                 // 휘발된 데이터 다시 읽어오기
                 rawPreviousBidderId = redisTemplate.opsForValue().get(bidderKey);

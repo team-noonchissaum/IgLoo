@@ -1,18 +1,15 @@
 package noonchissaum.backend.domain.auction.service;
 
 import jakarta.persistence.EntityManager;
-import noonchissaum.backend.domain.auction.dto.BidHistoryItemRes;
+import noonchissaum.backend.domain.auction.dto.res.BidHistoryItemRes;
 import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.entity.Bid;
-import noonchissaum.backend.domain.auction.repository.AuctionRepository;
-import noonchissaum.backend.domain.auction.repository.BidRepository;
 import noonchissaum.backend.domain.category.entity.Category;
 import noonchissaum.backend.domain.item.entity.Item;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.entity.UserRole;
 import noonchissaum.backend.domain.user.entity.UserStatus;
-import noonchissaum.backend.domain.user.repository.UserRepository;
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import org.junit.jupiter.api.BeforeEach;

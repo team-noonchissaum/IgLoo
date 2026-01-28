@@ -1,4 +1,4 @@
-package noonchissaum.backend.domain.auction.dto;
+package noonchissaum.backend.domain.auction.dto.req;
 
 import jakarta.validation.constraints.NotNull;
 

@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
-import noonchissaum.backend.global.event.DbUpdateEvent;
+import noonchissaum.backend.domain.task.dto.DbUpdateEvent;
 
 @Entity
 @Table(name = "tasks")
