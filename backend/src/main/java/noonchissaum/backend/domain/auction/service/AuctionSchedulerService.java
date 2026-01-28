@@ -2,12 +2,20 @@ package noonchissaum.backend.domain.auction.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
+import noonchissaum.backend.domain.auction.entity.Bid;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
+import noonchissaum.backend.domain.auction.repository.BidRepository;
+import noonchissaum.backend.domain.order.service.OrderService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -15,7 +23,8 @@ import java.time.LocalDateTime;
 public class AuctionSchedulerService {
 
     private final AuctionRepository auctionRepository;
-    private final AuctionRedisService auctionRedisService;
+    private final BidRepository bidRepository;
+    private final OrderService orderService;
 
     /**
      * READY -> RUNNING
@@ -68,8 +77,37 @@ public class AuctionSchedulerService {
             log.debug("[AuctionEnd] ended=0 elapsedMs={}", elapsed);
         }
 
-        // 종료된 경매들의 낙찰/유찰 후처리를 붙이기 가능
-
         return updated;
     }
+
+    /**
+     * ended -> success or failed
+     */
+    @Transactional
+    public void result() {
+        // ENDED 상태인 경매를 페이지 단위로 가져옴
+        Page<Auction> endedPage = auctionRepository.findAllByStatus(
+                AuctionStatus.ENDED,
+                PageRequest.of(0,100)
+        );
+
+        List<Auction> endedAuctions = endedPage.getContent();
+
+        // 최고 입찰자 조회
+        for (Auction auction : endedAuctions) {
+            Optional<Bid> winningBid = bidRepository.findFirstByAuctionIdOrderByBidPriceDesc(auction.getId());
+            if (winningBid.isPresent()) {
+                //낙찰 성공: 주문생성 + SUCCESS 변경
+                // 주문생성
+                orderService.createOrder(auction, winningBid.get().getBidder());
+                auctionRepository.finalizeAuctionStatus(auction.getId(), AuctionStatus.ENDED,AuctionStatus.SUCCESS);
+
+            } else {
+                //유찰 : failed
+                auctionRepository.finalizeAuctionStatus(auction.getId(), AuctionStatus.ENDED,AuctionStatus.FAILED);
+            }
+        }
+
+    }
+
 }

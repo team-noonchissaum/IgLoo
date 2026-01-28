@@ -15,7 +15,7 @@ public class AuctionExposureScheduler {
     private final AuctionSchedulerService auctionSchedulerService;
 
     /**
-     * 5분뒤 상태 RUNNING으로 전환
+     * 5분뒤 READY상태에서 RUNNING으로 전환
      */
     @Scheduled(fixedRate = 300_000)
     public void exposeReadyAuctions() {
@@ -28,18 +28,29 @@ public class AuctionExposureScheduler {
      * 1분마다 한번씩 조회하여
      */
     @Scheduled(fixedRate = 60_000)
+    public void exposeAuctions() {
+        auctionSchedulerService.markDeadLine();
+    }
+
+    /**
+     * DEADLINE 상태에서 end으로 전환
+     * 1분마다 한번씩 조회하여
+     */
+    @Scheduled(fixedRate = 60_000)
     public void endRunningAuctions() {
         LocalDateTime now = LocalDateTime.now();
         auctionSchedulerService.end(now);
     }
 
     /**
-     * 1분마다 조회하여 imminent_minutes 보다 적은 시간을 가지고 있다면
-     * 상태값 변경
+     * end상태에서 SUCCESS or failed로 전환
+     * 1분마다 조회
      */
     @Scheduled(fixedRate = 60_000)
-    public void exposeAuctions() {
-        auctionSchedulerService.markDeadLine();
+    public void resultAuctions() {
+//        LocalDateTime now = LocalDateTime.now();
+        auctionSchedulerService.result();
     }
+
 }
 
