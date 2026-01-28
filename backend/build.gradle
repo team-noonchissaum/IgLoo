@@ -47,7 +47,7 @@ dependencies {
 
     // 3. Redis & Concurrency (입찰 담당 핵심)
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-    implementation 'org.redisson:redisson-spring-boot-starter:3.24.3' // 분산 락 구현용
+    implementation 'org.redisson:redisson-spring-boot-starter:3.27.0' // 분산 락 구현용
 
     // 4. WebSocket (실시간 중계 담당 핵심)
     implementation 'org.springframework.boot:spring-boot-starter-websocket' // STOMP 프로토콜 포함
@@ -64,7 +64,7 @@ dependencies {
 
     // 7. Infra & External API
 //    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign' // 토스페이먼츠 API 호출용
-    implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3:3.0.0' // 상품 이미지 S3 업로드
+//    implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3:3.0.0' // 상품 이미지 S3 업로드
 
     // 8. Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

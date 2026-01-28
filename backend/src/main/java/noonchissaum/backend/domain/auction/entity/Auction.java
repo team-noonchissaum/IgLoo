@@ -128,4 +128,13 @@ public class Auction extends BaseTimeEntity {
             this.isExtended = true;
         }
     }
+
+    /**
+     * 새로운 bid가 생겼을 때 상태 정보 수정하기
+     */
+    public void updateBid(User user, BigDecimal newBid){
+        this.currentBidder = user;
+        this.currentPrice = newBid;
+        this.bidCount++;
+    }
 }

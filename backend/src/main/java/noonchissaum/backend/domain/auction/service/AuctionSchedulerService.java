@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 public class AuctionSchedulerService {
 
     private final AuctionRepository auctionRepository;
+    private final AuctionRedisService auctionRedisService;
 
     /**
      * READY -> RUNNING

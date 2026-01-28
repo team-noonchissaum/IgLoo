@@ -10,6 +10,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -25,12 +27,14 @@ public class AuctionRedisService {
         Auction auction = auctionRepository.findByIdWithStatus(auctionId)
                 .orElseThrow(() -> new IllegalArgumentException("Auction not found"));
 
-        redisTemplate.opsForValue().set(RedisKeys.auctionCurrentPrice(auction.getId()), auction.getCurrentPrice().toString());
-        redisTemplate.opsForValue().set(RedisKeys.auctionCurrentBidder(auction.getId()), auction.getCurrentBidder().toString());
-        redisTemplate.opsForValue().set(RedisKeys.auctionCurrentBidCount(auction.getId()), auction.getBidCount().toString());
-        redisTemplate.opsForValue().set(RedisKeys.auctionEndTime(auction.getId()), auction.getEndAt().toString());
-        redisTemplate.opsForValue().set(RedisKeys.auctionImminentMinutes(auction.getId()), auction.getImminentMinutes().toString());
-        redisTemplate.opsForValue().set(RedisKeys.auctionIsExtended(auction.getId()), auction.getIsExtended().toString());
+        Duration redisTTL = Duration.between(LocalDateTime.now(), auction.getEndAt().plusMinutes(10));
+
+        redisTemplate.opsForValue().set(RedisKeys.auctionCurrentPrice(auction.getId()), auction.getCurrentPrice().toString(), redisTTL);
+        redisTemplate.opsForValue().set(RedisKeys.auctionCurrentBidder(auction.getId()), auction.getCurrentBidder().toString(), redisTTL);
+        redisTemplate.opsForValue().set(RedisKeys.auctionCurrentBidCount(auction.getId()), auction.getBidCount().toString(), redisTTL);
+        redisTemplate.opsForValue().set(RedisKeys.auctionEndTime(auction.getId()), auction.getEndAt().toString(), redisTTL);
+        redisTemplate.opsForValue().set(RedisKeys.auctionImminentMinutes(auction.getId()), auction.getImminentMinutes().toString(), redisTTL);
+        redisTemplate.opsForValue().set(RedisKeys.auctionIsExtended(auction.getId()), auction.getIsExtended().toString(), redisTTL);
     }
 
 

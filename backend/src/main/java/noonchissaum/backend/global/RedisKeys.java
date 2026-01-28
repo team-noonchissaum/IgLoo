@@ -1,23 +1,26 @@
 package noonchissaum.backend.global;
 
-public class RedisKeys {
+public final class RedisKeys {
 
+    private RedisKeys() {}
 
     /**
-     * *user
+     * user
      */
     public static String userBalance(Long userId) {
-        return "user:" + userId + ":balance";}
+        return "user:" + userId + ":balance";
+    }
 
     public static String userLockedBalance(Long userId) {
         return "user:" + userId + ":lockedBalance";
     }
 
     /**
-     *auction
+     * auction
      */
     public static String auctionLock(Long auctionId) {
-        return "lock:auction:" + auctionId;}
+        return "lock:auction:" + auctionId;
+    }
 
     public static String auctionCurrentPrice(Long auctionId) {
         return "auction:" + auctionId + ":currentPrice";
@@ -35,10 +38,6 @@ public class RedisKeys {
         return "auction:" + auctionId + ":endTime";
     }
 
-    public static String auctionExtendedTime(Long auctionId) {
-        return "auction:" + auctionId + ":extendedTime";
-    }
-
     public static String auctionImminentMinutes(Long auctionId) { return "auction:" + auctionId + ":imminentMinutes"; }
 
     public static String auctionIsExtended(Long auctionId) { return "auction:" + auctionId + ":isExtended"; }
@@ -47,7 +46,8 @@ public class RedisKeys {
      * Bid Idempotency / Pending
      */
     public static String bidIdempotency(String requestId) {
-        return "bid_idempotency:" + requestId;}
+        return "bid_idempotency:" + requestId;
+    }
 
     public static String pendingBidInfo(String requestId) {
         return "pending_bid_info:" + requestId;
