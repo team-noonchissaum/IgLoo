@@ -1,4 +1,4 @@
-package noonchissaum.backend.global.event;
+package noonchissaum.backend.domain.task.dto;
 
 import java.math.BigDecimal;
 
