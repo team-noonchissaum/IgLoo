@@ -1,4 +1,4 @@
-package noonchissaum.backend.domain.user.repository;
+package noonchissaum.backend.domain.report.repository;
 
 import noonchissaum.backend.domain.report.entity.Report;
 import noonchissaum.backend.domain.report.entity.ReportStatus;

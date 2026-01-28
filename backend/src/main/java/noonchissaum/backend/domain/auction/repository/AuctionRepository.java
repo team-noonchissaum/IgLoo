@@ -22,7 +22,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
     Page<Auction> findAllByStatus(AuctionStatus status, Pageable pageable);
 
     @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
-    Page<Auction> findAllWithItemAndSeller(Pageable pageable);
+    Page<Auction> findAll(Pageable pageable);
     /**
      *스케줄 관련 상태값 변경쿼리
      * READY->RUNNING
@@ -68,7 +68,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
     @Modifying
     @Query(
             value = """
-        UPDATE auction a
+        UPDATE auctions a
         SET a.status = 'DEADLINE'
         WHERE a.status = 'RUNNING'
             AND TIMESTAMPDIFF(MINUTE, :now, a.end_at) <= a.imminent_minutes

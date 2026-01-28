@@ -73,7 +73,7 @@ public class AuctionService {
         if (status != null) {
             auctions = auctionRepository.findAllByStatus(status, pageable);
         } else {
-            auctions = auctionRepository.findAllWithItemAndSeller(pageable);
+            auctions = auctionRepository.findAll(pageable);
         }
         List<Long> itemIds = auctions.getContent().stream()
                 .map(a -> a.getItem().getId())
