@@ -128,6 +128,11 @@ public class BidService {
 
             redisTemplate.opsForValue().set(requestId, bidAmount+"");
 
+            String userPendingKey = RedisKeys.pendingUser(userId);
+            String prevUserPendingKey = RedisKeys.pendingUser(previousBidderId);
+            redisTemplate.opsForSet().add(userPendingKey, requestId);
+            redisTemplate.opsForSet().add(prevUserPendingKey, requestId);
+
         }
         catch (InterruptedException e){
             Thread.currentThread().interrupt();
