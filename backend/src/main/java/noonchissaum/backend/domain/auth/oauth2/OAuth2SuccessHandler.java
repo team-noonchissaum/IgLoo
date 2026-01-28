@@ -6,7 +6,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.auth.service.RefreshTokenService;
 import noonchissaum.backend.global.config.JwtTokenProvider;
-import noonchissaum.backend.domain.auth.oauth2.principal.CustomOAuth2User;
 import noonchissaum.backend.global.security.UserPrincipal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;

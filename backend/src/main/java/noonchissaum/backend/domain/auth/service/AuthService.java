@@ -186,7 +186,7 @@ public class AuthService {
         //새 RT저장
         refreshTokenService.save(
                 user.getId(),
-                newAccessToken,
+                newRefreshToken,
                 60L*60*24*7
         );
         return new RefreshRes(newAccessToken,newRefreshToken);

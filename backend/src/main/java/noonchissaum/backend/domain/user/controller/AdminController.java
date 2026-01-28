@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
+@EnableMethodSecurity(prePostEnabled = true)
 public class AdminController {
     private final AdminService adminService;
 
@@ -106,7 +108,7 @@ public class AdminController {
     @PatchMapping("/users/{userId}/unblock")
     public ResponseEntity<ApiResponse> unblockUser(@PathVariable Long userId) {
         adminService.unblockUser(userId);
-        return ResponseEntity.ok(ApiResponse.success("사용자 차단 해제 완료"));//이부분 response사용하기
+        return ResponseEntity.ok(ApiResponse.success("사용자 차단 해제 완료"));
     }
 
     /* ================= 게시글 관리 ================= */
@@ -126,7 +128,7 @@ public class AdminController {
     @PatchMapping("/items/{itemId}/restore")
     public ResponseEntity<ApiResponse> restoreItem(@PathVariable Long itemId) {
         adminService.restoreItem(itemId);
-        return ResponseEntity.ok(ApiResponse.success("차단된 게시글 복구 완료"));//이부분 response사용하기
+        return ResponseEntity.ok(ApiResponse.success("차단된 게시글 복구 완료"));
     }
 
 }

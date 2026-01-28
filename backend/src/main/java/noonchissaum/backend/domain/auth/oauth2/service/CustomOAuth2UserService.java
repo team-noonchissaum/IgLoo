@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.auth.entity.UserAuth;
 import noonchissaum.backend.domain.auth.entity.AuthType;
 import noonchissaum.backend.domain.auth.repository.UserAuthRepository;
-import noonchissaum.backend.domain.auth.oauth2.principal.CustomOAuth2User;
 import noonchissaum.backend.domain.auth.oauth2.userinfo.OAuth2UserInfo;
 import noonchissaum.backend.domain.auth.oauth2.userinfo.OAuth2UserInfoFactory;
 import noonchissaum.backend.domain.user.entity.User;

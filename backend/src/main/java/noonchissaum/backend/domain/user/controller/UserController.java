@@ -2,6 +2,7 @@ package noonchissaum.backend.domain.user.controller;
 
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.user.dto.request.ProfileUpdateUserReq;
 import noonchissaum.backend.domain.user.dto.response.MyPageRes;
 import noonchissaum.backend.domain.user.dto.response.OtherUserProfileRes;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
@@ -77,6 +79,7 @@ public class UserController {
         userService.deleteUser(principal.getUserId());
         return ResponseEntity.ok(ApiResponse.success("회원 탈퇴 완료"));
     }
+
 
 }
 

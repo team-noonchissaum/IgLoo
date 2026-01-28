@@ -1,6 +1,9 @@
 package noonchissaum.backend.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
+import noonchissaum.backend.domain.report.dto.ReportReq;
+import noonchissaum.backend.domain.report.entity.Report;
+import noonchissaum.backend.domain.report.entity.ReportStatus;
 import noonchissaum.backend.domain.user.dto.request.ProfileUpdateUserReq;
 import noonchissaum.backend.domain.user.dto.response.MyPageRes;
 import noonchissaum.backend.domain.user.dto.response.OtherUserProfileRes;
@@ -8,6 +11,7 @@ import noonchissaum.backend.domain.user.dto.response.ProfileRes;
 import noonchissaum.backend.domain.user.dto.response.ProfileUpdateUserRes;
 import noonchissaum.backend.domain.user.entity.User;
 
+import noonchissaum.backend.domain.user.repository.ReportRepository;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 
 import noonchissaum.backend.global.exception.CustomException;
@@ -16,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 
 @Service
@@ -23,6 +28,7 @@ import java.math.BigDecimal;
 @Transactional(readOnly = true)
 public class UserService {
     private final UserRepository userRepository;
+    private final ReportRepository reportRepository;
 
     /**
      * 본인 프로필 조회
@@ -117,5 +123,28 @@ public class UserService {
 
         userRepository.delete(user);
 
+    }
+
+    @Transactional
+    public void createReport(Long reporterId, ReportReq request) {
+        User reporter=userRepository.findById(reporterId)
+                .orElseThrow(()->new IllegalArgumentException("유저 없음"));
+
+        //중복 신고 방지
+        if (reportRepository.existsByReporterIdAndTargetTypeAndTargetId(
+                reporterId, request.getTargetType(), request.getTargetId())) {
+            throw new IllegalStateException("이미 신고한 대상입니다.");
+        }
+
+        Report report = Report.builder()
+                .reporter(reporter)
+                .targetType(request.getTargetType())
+                .targetId(request.getTargetId())
+                .reason(request.getReason())
+                .description(request.getDescription())
+                .status(ReportStatus.PENDING)
+                .build();
+
+        reportRepository.save(report);
     }
 }
