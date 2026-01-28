@@ -2,13 +2,17 @@ package noonchissaum.backend.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.item.entity.Item;
+import noonchissaum.backend.domain.item.repository.ItemRepository;
+import noonchissaum.backend.domain.order.repositroy.OrderRepository;
 import noonchissaum.backend.domain.report.entity.Report;
 import noonchissaum.backend.domain.report.entity.ReportStatus;
+import noonchissaum.backend.domain.report.repository.ReportRepository;
 import noonchissaum.backend.domain.user.dto.request.AdminReportProcessReq;
 import noonchissaum.backend.domain.user.dto.response.*;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.entity.UserStatus;
 import noonchissaum.backend.domain.user.repository.*;
+import noonchissaum.backend.domain.wallet.repository.WalletTransactionRepository;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.data.domain.Page;

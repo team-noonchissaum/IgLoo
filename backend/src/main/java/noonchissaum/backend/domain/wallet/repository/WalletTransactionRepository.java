@@ -1,4 +1,4 @@
-package noonchissaum.backend.domain.user.repository;
+package noonchissaum.backend.domain.wallet.repository;
 
 import noonchissaum.backend.domain.wallet.entity.WalletTransaction;
 import org.springframework.data.jpa.repository.JpaRepository;

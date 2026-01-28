@@ -11,7 +11,7 @@ import noonchissaum.backend.domain.user.dto.response.ProfileRes;
 import noonchissaum.backend.domain.user.dto.response.ProfileUpdateUserRes;
 import noonchissaum.backend.domain.user.entity.User;
 
-import noonchissaum.backend.domain.user.repository.ReportRepository;
+import noonchissaum.backend.domain.report.repository.ReportRepository;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 
 import noonchissaum.backend.global.exception.CustomException;
@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 
 @Service
