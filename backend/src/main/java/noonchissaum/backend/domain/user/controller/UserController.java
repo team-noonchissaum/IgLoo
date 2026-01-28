@@ -2,6 +2,7 @@ package noonchissaum.backend.domain.user.controller;
 
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.user.dto.request.ProfileUpdateUserReq;
 import noonchissaum.backend.domain.user.dto.response.MyPageRes;
 import noonchissaum.backend.domain.user.dto.response.OtherUserProfileRes;
@@ -9,11 +10,14 @@ import noonchissaum.backend.domain.user.dto.response.ProfileRes;
 import noonchissaum.backend.domain.user.dto.response.ProfileUpdateUserRes;
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.global.dto.ApiResponse;
+import noonchissaum.backend.global.security.principal.AuthenticatedUser;
+import noonchissaum.backend.global.security.principal.CustomOAuth2User;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
@@ -26,9 +30,8 @@ public class UserController {
      */
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<ProfileRes>> myProfile(Authentication authentication) {
-        Long userId = Long.valueOf(authentication.getName());
-        ProfileRes response = userService.getMyProfile(userId);
+    public ResponseEntity<ApiResponse<ProfileRes>> myProfile(@AuthenticationPrincipal AuthenticatedUser user) {
+        ProfileRes response = userService.getMyProfile(user.getUserId());
         return ResponseEntity.ok(ApiResponse.success("요청 성공", response));
     }
 
@@ -37,8 +40,8 @@ public class UserController {
      * GET /api/users/me/mypage
      */
     @GetMapping("/me/mypage")
-    public ResponseEntity<ApiResponse<MyPageRes>> getMyPage(@AuthenticationPrincipal Long userId) {
-        MyPageRes response = userService.getMyPage(userId);
+    public ResponseEntity<ApiResponse<MyPageRes>> getMyPage(@AuthenticationPrincipal AuthenticatedUser user) {
+        MyPageRes response = userService.getMyPage(user.getUserId());
         return ResponseEntity.ok(ApiResponse.success("요청 성공", response));
 
     }
@@ -60,9 +63,9 @@ public class UserController {
      * PATCH /api/users/me
      */
     @PatchMapping("/me")
-    public ResponseEntity<ApiResponse<ProfileUpdateUserRes>> updateProfile(@AuthenticationPrincipal Long userId,
+    public ResponseEntity<ApiResponse<ProfileUpdateUserRes>> updateProfile(@AuthenticationPrincipal AuthenticatedUser user,
             @RequestBody ProfileUpdateUserReq request) {
-        ProfileUpdateUserRes response = userService.updateProfile(userId, request);
+        ProfileUpdateUserRes response = userService.updateProfile(user.getUserId(), request);
         return ResponseEntity.ok(ApiResponse.success("수정 성공", response));
     }
 
@@ -71,11 +74,12 @@ public class UserController {
      * DELETE /api/users/me-현재 hardDelete여서 삭제시 db에서 바로 날려버림.
      */
     @DeleteMapping("/me")
-    public ResponseEntity<ApiResponse> deleteUser(@AuthenticationPrincipal Long userId) {
-        userService.deleteUser(userId);
+    public ResponseEntity<ApiResponse> deleteUser(@AuthenticationPrincipal AuthenticatedUser user) {
+        userService.deleteUser(user.getUserId());
 
         return ResponseEntity.ok(ApiResponse.success("회원 탈퇴 완료"));
     }
+
 
 }
 

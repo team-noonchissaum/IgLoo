@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.auth.entity.UserAuth;
 import noonchissaum.backend.domain.auth.entity.AuthType;
 import noonchissaum.backend.domain.auth.repository.UserAuthRepository;
-import noonchissaum.backend.domain.auth.oauth2.principal.CustomOAuth2User;
+import noonchissaum.backend.global.security.principal.CustomOAuth2User;
 import noonchissaum.backend.domain.auth.oauth2.userinfo.OAuth2UserInfo;
 import noonchissaum.backend.domain.auth.oauth2.userinfo.OAuth2UserInfoFactory;
 import noonchissaum.backend.domain.user.entity.User;
@@ -49,7 +49,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .map(UserAuth::getUser)
                 .orElseGet(() -> createNewOAuthUser(authType, identifier, info));
 
-        return new CustomOAuth2User(user.getId(), user.getRole(), oAuth2User.getAttributes());
+        return new CustomOAuth2User(user,oAuth2User.getAttributes());
     }
 
     private User createNewOAuthUser(AuthType authType, String identifier, OAuth2UserInfo info) {

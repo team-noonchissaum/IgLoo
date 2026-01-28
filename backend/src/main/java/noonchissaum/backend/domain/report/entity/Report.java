@@ -1,9 +1,7 @@
 package noonchissaum.backend.domain.report.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
 
@@ -11,6 +9,8 @@ import noonchissaum.backend.global.entity.BaseTimeEntity;
 @Table(name = "reports")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
 public class Report extends BaseTimeEntity {
 
     @Id
@@ -36,6 +36,9 @@ public class Report extends BaseTimeEntity {
     @Column(length = 255)
     private String reason;
 
+    //상세사유
+    @Column(length = 255)
+    private String description;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
