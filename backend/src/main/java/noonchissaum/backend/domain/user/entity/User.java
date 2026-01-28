@@ -2,6 +2,7 @@ package noonchissaum.backend.domain.user.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import noonchissaum.backend.domain.order.entity.ChargeCheck;
 import noonchissaum.backend.domain.order.entity.Payment;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
@@ -50,6 +51,9 @@ public class User extends BaseTimeEntity {
 
     @OneToMany(mappedBy = "user",fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Payment> payments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<ChargeCheck> chargeChecks = new ArrayList<>();
 
     @Builder
     public User(String email, String nickname, UserRole role, UserStatus status) {
