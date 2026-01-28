@@ -42,6 +42,9 @@ public class Item extends BaseTimeEntity {
     @Column(name = "start_price", precision = 15, scale = 0)
     private BigDecimal startPrice;
 
+    @Column(name = "wish_count")
+    private Integer wishCount;
+
     /**
      * true: ACTIVE
      * false: DELETED

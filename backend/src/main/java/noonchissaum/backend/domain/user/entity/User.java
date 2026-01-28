@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import noonchissaum.backend.domain.order.entity.Payment;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
 
@@ -48,6 +49,9 @@ public class User extends BaseTimeEntity {
     // 양방향 매핑: 유저의 지갑 정보 (1:1)
     @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Wallet wallet;
+
+    @OneToMany(mappedBy = "user",fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<Payment> payments = new ArrayList<>();
 
     public User(String email, String nickname, UserRole role, UserStatus status) {
         this.email = email;

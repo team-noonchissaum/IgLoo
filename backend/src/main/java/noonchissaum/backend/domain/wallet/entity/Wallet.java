@@ -29,6 +29,9 @@ public class Wallet extends BaseTimeEntity {
     @Column(nullable = false, precision = 15, scale = 0)
     private BigDecimal balance = BigDecimal.ZERO;
 
+    @Column(nullable = false, precision = 15, scale = 0)
+    private BigDecimal lockedBalance = BigDecimal.ZERO;
+
     // 양방향 매핑: 지갑 거래 내역
     @OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL)
     private List<WalletTransaction> transactions = new ArrayList<>();
