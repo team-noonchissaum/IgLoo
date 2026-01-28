@@ -79,7 +79,7 @@ spring:
             user-name-attribute: response
 
 jwt:
-  secret: bm9vbmNoaXNzYXVtand0c2VjcmV0a2V5Zm9ybG9jYWxkZXZlbG9wbWVudDEyMzQ1Ng==
+  secret: ${JWT_SECRET}
   access-token-validity: 3600000
   refresh-token-validity: 604800000
 
