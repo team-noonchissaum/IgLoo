@@ -2,6 +2,8 @@ package noonchissaum.backend.domain.wallet.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import noonchissaum.backend.domain.user.entity.User;
+import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
 import noonchissaum.backend.global.RedisKeys;
@@ -22,6 +24,7 @@ public class WalletService {
 
     private final StringRedisTemplate redisTemplate;
     private final WalletRepository walletRepository;
+    private final UserService userService;
 
     public void processBidWallet(Long userId, Long previousBidderId, BigDecimal bidAmount, BigDecimal currentPrice ,Long auctionId, String requestId) {
 
@@ -57,5 +60,12 @@ public class WalletService {
             redisTemplate.opsForValue().set(userBalanceKey, wallet.getBalance().toPlainString(), Duration.ofMinutes(30));
             redisTemplate.opsForValue().set(userLockedBalanceKey, wallet.getLockedBalance().toPlainString(), Duration.ofMinutes(30));
         }
+    }
+
+    @Transactional
+    public Wallet createWallet(Long userId) {
+        User user = userService.getUserByUserId(userId);
+        Wallet wallet = new Wallet(user);
+        return walletRepository.save(wallet);
     }
 }

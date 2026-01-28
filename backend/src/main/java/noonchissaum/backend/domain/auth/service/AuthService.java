@@ -12,6 +12,8 @@ import noonchissaum.backend.domain.auth.entity.UserAuth;
 import noonchissaum.backend.domain.auth.repository.UserAuthRepository;
 import noonchissaum.backend.domain.user.entity.*;
 import noonchissaum.backend.domain.user.repository.UserRepository;
+import noonchissaum.backend.domain.wallet.entity.Wallet;
+import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.config.JwtTokenProvider;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
@@ -28,6 +30,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
+    private final WalletService walletService;
 
     /**로컬 회원가입*/
     public SignupRes signup(SignupReq signupReq) {
@@ -43,7 +46,7 @@ public class AuthService {
                 UserRole.USER,
                 UserStatus.ACTIVE
         );
-        userRepository.save(user);
+        User saved = userRepository.save(user);
 
         UserAuth userAuth = UserAuth.createLocal(
                 user,
@@ -51,6 +54,9 @@ public class AuthService {
                 passwordEncoder.encode(signupReq.getPassword())
         );
         userAuthRepository.save(userAuth);
+
+        Wallet wallet = walletService.createWallet(saved.getId());
+        saved.registWallet(wallet);
 
         return new SignupRes(
                 user.getId(),
@@ -150,10 +156,13 @@ public class AuthService {
                 UserStatus.ACTIVE
         );
 
-        userRepository.save(user);
+        User saved = userRepository.save(user);
 
         UserAuth userAuth = UserAuth.oauth(user, req.getAuthType(), identifier);
         userAuthRepository.save(userAuth);
+
+        Wallet wallet = walletService.createWallet(saved.getId());
+        saved.registWallet(wallet);
 
         return new LoginResult(userAuth, true);
     }

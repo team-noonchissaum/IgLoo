@@ -130,4 +130,8 @@ public class User extends BaseTimeEntity {
         this.blockedAt = null;
         this.blockReason = null;
     }
+
+    public void registWallet(Wallet wallet) {
+        this.wallet = wallet;
+    }
 }
