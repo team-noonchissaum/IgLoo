@@ -71,7 +71,7 @@ dependencies {
     // 4. WebSocket (실시간 중계 담당 핵심)
     implementation 'org.springframework.boot:spring-boot-starter-websocket' // STOMP 프로토콜 포함
 
-    // 5. Security & Auth (회원관리 담당 핵심)
+//     5. Security & Auth (회원관리 담당 핵심)
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client' // 구글/카카오 로그인
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5' // JWT 생성 및 검증

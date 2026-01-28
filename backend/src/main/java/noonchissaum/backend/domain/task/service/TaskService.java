@@ -2,7 +2,6 @@ package noonchissaum.backend.domain.task.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import noonchissaum.backend.domain.task.entity.AsyncTask;
 import noonchissaum.backend.domain.task.repository.AsyncTaskRepository;
 import noonchissaum.backend.global.RedisKeys;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -17,6 +16,7 @@ public class TaskService {
     private final AsyncTaskRepository taskRepository;
     private final StringRedisTemplate redisTemplate;
 
+    @Transactional(readOnly = true)
     public boolean checkTasks(Long userId) {
 
         Long pendingCount = redisTemplate.opsForSet().size(RedisKeys.pendingUser(userId));

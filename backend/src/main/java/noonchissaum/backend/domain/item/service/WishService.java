@@ -36,7 +36,7 @@ public class WishService {
                     return false;
                 })
                 .orElseGet(() -> {
-                    User user = userService.getUser(userId);
+                    User user = userService.getUserByUserId(userId);
                     Item item = itemService.getActiveById(itemId);
 
                     try {
