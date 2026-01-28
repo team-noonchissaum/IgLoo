@@ -9,8 +9,8 @@ import noonchissaum.backend.domain.user.dto.response.ProfileRes;
 import noonchissaum.backend.domain.user.dto.response.ProfileUpdateUserRes;
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.global.dto.ApiResponse;
+import noonchissaum.backend.global.security.UserPrincipal;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,9 +26,9 @@ public class UserController {
      */
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<ProfileRes>> myProfile(Authentication authentication) {
-        Long userId = Long.valueOf(authentication.getName());
-        ProfileRes response = userService.getMyProfile(userId);
+    public ResponseEntity<ApiResponse<ProfileRes>> myProfile(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        ProfileRes response = userService.getMyProfile(principal.getUserId());
         return ResponseEntity.ok(ApiResponse.success("요청 성공", response));
     }
 
@@ -37,8 +37,8 @@ public class UserController {
      * GET /api/users/me/mypage
      */
     @GetMapping("/me/mypage")
-    public ResponseEntity<ApiResponse<MyPageRes>> getMyPage(@AuthenticationPrincipal Long userId) {
-        MyPageRes response = userService.getMyPage(userId);
+    public ResponseEntity<ApiResponse<MyPageRes>> getMyPage(@AuthenticationPrincipal UserPrincipal principal) {
+        MyPageRes response = userService.getMyPage(principal.getUserId());
         return ResponseEntity.ok(ApiResponse.success("요청 성공", response));
 
     }
@@ -60,20 +60,21 @@ public class UserController {
      * PATCH /api/users/me
      */
     @PatchMapping("/me")
-    public ResponseEntity<ApiResponse<ProfileUpdateUserRes>> updateProfile(@AuthenticationPrincipal Long userId,
+    public ResponseEntity<ApiResponse<ProfileUpdateUserRes>> updateProfile(
+            @AuthenticationPrincipal UserPrincipal principal,
             @RequestBody ProfileUpdateUserReq request) {
-        ProfileUpdateUserRes response = userService.updateProfile(userId, request);
+        ProfileUpdateUserRes response = userService.updateProfile(principal.getUserId(), request);
         return ResponseEntity.ok(ApiResponse.success("수정 성공", response));
     }
 
     /**
      * 회원 탈퇴
-     * DELETE /api/users/me-현재 hardDelete여서 삭제시 db에서 바로 날려버림.
+     * DELETE /api/users/me  - 현재 hardDelete
      */
     @DeleteMapping("/me")
-    public ResponseEntity<ApiResponse> deleteUser(@AuthenticationPrincipal Long userId) {
-        userService.deleteUser(userId);
-
+    public ResponseEntity<ApiResponse<Void>> deleteUser(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        userService.deleteUser(principal.getUserId());
         return ResponseEntity.ok(ApiResponse.success("회원 탈퇴 완료"));
     }
 

@@ -2,6 +2,7 @@ package noonchissaum.backend.global.config;
 
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.auth.oauth2.OAuth2SuccessHandler;
+import noonchissaum.backend.domain.auth.oauth2.service.CustomOAuth2UserService;
 import noonchissaum.backend.global.handler.JwtAccessDeniedHandler;
 import noonchissaum.backend.global.handler.JwtAuthenticationEntryPoint;
 import noonchissaum.backend.global.security.JwtAuthenticationFilter;
@@ -33,7 +34,8 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final noonchissaum.backend.domain.auth.oauth2.OAuth2SuccessHandler oAuth2SuccessHandler;
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;   // ← 추가
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
 
@@ -41,6 +43,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http, OAuth2SuccessHandler oAuth2SuccessHandler) throws Exception {
 
         http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .formLogin(form->form.disable())
                 .httpBasic(basic->basic.disable())
@@ -84,6 +87,7 @@ public class SecurityConfig {
                 )
                 .oauth2Login(oauth->oauth.authorizationEndpoint(auth->
                         auth.baseUri("/api/oauth2/login"))
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                         .successHandler(oAuth2SuccessHandler))
                 .addFilterBefore(
                         jwtAuthenticationFilter,

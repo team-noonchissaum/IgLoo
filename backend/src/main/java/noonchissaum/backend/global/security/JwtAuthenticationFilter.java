@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import noonchissaum.backend.domain.user.entity.UserRole;
 import noonchissaum.backend.global.config.JwtTokenProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -34,13 +35,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (jwtTokenProvider.validateToken(token)) {
                 Long userId = jwtTokenProvider.getUserId(token);
-                String role = jwtTokenProvider.getRole(token);
+                String roleStr = jwtTokenProvider.getRole(token);
+
+                UserRole role = UserRole.valueOf(roleStr);
+
+                UserPrincipal principal = UserPrincipal.of(userId, role);
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
-                                userId,
+                                principal,
                                 null,
-                                List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                                principal.getAuthorities()
                         );
 
                 SecurityContextHolder.getContext()

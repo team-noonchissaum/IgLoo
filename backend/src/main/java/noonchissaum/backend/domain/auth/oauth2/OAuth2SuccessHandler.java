@@ -4,8 +4,10 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import noonchissaum.backend.domain.auth.service.RefreshTokenService;
 import noonchissaum.backend.global.config.JwtTokenProvider;
 import noonchissaum.backend.domain.auth.oauth2.principal.CustomOAuth2User;
+import noonchissaum.backend.global.security.UserPrincipal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -18,6 +20,7 @@ import java.io.IOException;
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenService refreshTokenService;
 
     @Value("${app.oauth2.redirect-url:http://localhost:3000/oauth/callback}")
     private String redirectUrl;
@@ -29,11 +32,18 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             Authentication authentication
     ) throws IOException, ServletException {
 
-        CustomOAuth2User principal = (CustomOAuth2User) authentication.getPrincipal();
+        // UserPrincipal로 캐스팅
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
 
 
         String accessToken = jwtTokenProvider.createAccessToken(principal.getUserId(), principal.getRole());
         String refreshToken = jwtTokenProvider.createRefreshToken(principal.getUserId());
+
+        refreshTokenService.save(
+                principal.getUserId(),
+                refreshToken,
+                60L * 60 * 24 * 7  // 7일
+        );
 
         //  시연 방식: redirect query로 전달
         // 프론트에서 token 저장 후 Authorization: Bearer 로 호출

@@ -11,8 +11,11 @@ import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.entity.UserRole;
 import noonchissaum.backend.domain.user.entity.UserStatus;
 import noonchissaum.backend.domain.user.repository.UserRepository;
+import noonchissaum.backend.global.security.UserPrincipal;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,7 +52,14 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .map(UserAuth::getUser)
                 .orElseGet(() -> createNewOAuthUser(authType, identifier, info));
 
-        return new CustomOAuth2User(user.getId(), user.getRole(), oAuth2User.getAttributes());
+        // 차단된 사용자 체크
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            throw new OAuth2AuthenticationException(
+                    new OAuth2Error("user_blocked", "차단된 사용자입니다. 관리자에게 문의하세요.", null)
+            );
+        }
+
+        return UserPrincipal.from(user, oAuth2User.getAttributes());
     }
 
     private User createNewOAuthUser(AuthType authType, String identifier, OAuth2UserInfo info) {
