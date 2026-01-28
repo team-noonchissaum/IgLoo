@@ -52,4 +52,7 @@ public class Payment extends BaseTimeEntity {
 
     @Column(name = "failure_reason")
     private String failureReason;
+
+    @OneToOne(mappedBy = "payment")
+    private ChargeCheck chargeCheck;
 }

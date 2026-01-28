@@ -1,17 +1,21 @@
 spring:
-  autoconfigure:
-    exclude:
-      - org.redisson.spring.starter.RedissonAutoConfigurationV2
+  #profiles:
+  #  active: dev
+  
   data:
     redis:
-      host: localhost
-      port: 6379
-
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+      redisson:
+        connection-pool-size: 1000
+        connection-minimum-idle-size: 20
+        timeout: 3000
 
   datasource:
-    url: jdbc:mysql://localhost:3307/noonchissaum?serverTimezone=Asia/Seoul&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true
-    username: root
-    password: root1234
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    url: ${DB_URL}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -24,17 +28,19 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
     open-in-view: false
 
-
-
   batch:
     jdbc:
-      initialize-schema: never
+      initialize-schema: always # 매번 실행 시 스케줄러용 테이블 생성 시도
+    job:
+      enabled: false
 
   cloud:
     compatibility-verifier:
       enabled: false
     aws:
       s3:
+        region:
+          static: ap-northeast-2
         enabled: false
 
   security:
@@ -77,14 +83,7 @@ jwt:
   access-token-validity: 3600000
   refresh-token-validity: 604800000
 
-server:
-  port: 8080
-
 logging:
   level:
     org.hibernate.SQL: debug
-
-management:
-  health:
-    redis:
-      enabled: false
+    org.hibernate.orm.jdbc.bind: trace

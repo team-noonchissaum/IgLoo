@@ -147,4 +147,19 @@ public class UserService {
 
         reportRepository.save(report);
     }
+
+    public User getUserByUserId(Long userId) {
+        return userRepository.findById(userId).
+                orElseThrow(() -> new RuntimeException("user not found"));
+    }
+
+    public User getSeller(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    }
+
+    public User getUser(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    }
 }
