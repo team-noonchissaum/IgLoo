@@ -46,7 +46,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
 
     /**
      *스케줄 관련 상태값 변경쿼리
-     * RUNNING -> ENDED
+     * deadline -> ended
      */
     @Modifying
     @Query("""
@@ -83,5 +83,19 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
                     "and (a.status = noonchissaum.backend.domain.auction.entity.AuctionStatus.RUNNING " +
                     "or a.status = noonchissaum.backend.domain.auction.entity.AuctionStatus.DEADLINE)")
     Optional<Auction> findByIdWithStatus(@Param("auctionId") Long auctionId);
+
+    @Modifying
+    @Query("""
+    update Auction a
+    set a.status = :toStatus
+    where a.id = :auctionId
+    and a.status = :fromStatus
+    """)
+    int finalizeAuctionStatus(
+            @Param("auctionId") Long auctionId,
+            @Param("fromStatus") AuctionStatus fromStatus,
+            @Param("toStatus") AuctionStatus toStatus
+    );
+
 }
 

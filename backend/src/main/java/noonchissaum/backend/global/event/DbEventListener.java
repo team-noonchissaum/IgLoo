@@ -2,6 +2,7 @@ package noonchissaum.backend.global.event;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import noonchissaum.backend.domain.auction.service.AuctionRecordService;
 import noonchissaum.backend.domain.auction.service.BidRecordService;
 import noonchissaum.backend.domain.auction.service.BidService;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
@@ -25,6 +26,7 @@ public class DbEventListener {
     private final BidRecordService bidRecordService;
     private final BidService bidService;
     private final RedisTemplate<Object, Object> redisTemplate;
+    private final AuctionRecordService auctionRecordService;
 
     @Async("DBTaskExcutor")
     @EventListener
@@ -46,7 +48,7 @@ public class DbEventListener {
         walletRecordService.saveWalletRecord(event.userId(),event.bidAmount(),event.previousBidderId(),event.refundAmount());
 
         //추후 auction 저장 로직 추가
-
+        auctionRecordService.saveAuction(event.auctionId(), event.userId(),event.bidAmount());
     }
 
     // 재시도 3번 후에도 안됬을 경우

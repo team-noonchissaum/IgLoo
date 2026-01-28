@@ -22,6 +22,7 @@ public interface BidRepository extends JpaRepository<Bid,Long> {
 
     Page<Bid> findByAuctionIdOrderByCreatedAtDesc(Long auctionId, Pageable pageable);
 
+    Optional<Bid> findFirstByAuctionIdOrderByBidPriceDesc(Long auctionId);
 
 
     // 내가 한 번이라도 입찰한 경매 목록
@@ -54,6 +55,8 @@ public interface BidRepository extends JpaRepository<Bid,Long> {
     // 입찰 횟수
     int countByAuctionId(Long auctionId);
     Optional<Bid> findByAuctionAndBidder(Auction auction, User user);
+
+
 }
 
 

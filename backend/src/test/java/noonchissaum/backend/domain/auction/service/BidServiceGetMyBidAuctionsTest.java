@@ -1,12 +1,10 @@
 package noonchissaum.backend.domain.auction.service;
 
 import jakarta.persistence.EntityManager;
-import noonchissaum.backend.domain.auction.dto.MyBidAuctionRes;
+import noonchissaum.backend.domain.auction.dto.res.MyBidAuctionRes;
 import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.entity.Bid;
-import noonchissaum.backend.domain.auction.repository.AuctionRepository;
-import noonchissaum.backend.domain.auction.repository.BidRepository;
 import noonchissaum.backend.domain.category.entity.Category;
 import noonchissaum.backend.domain.item.entity.Item;
 import noonchissaum.backend.domain.user.entity.User;
@@ -29,7 +27,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 

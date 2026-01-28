@@ -1,4 +1,4 @@
-package noonchissaum.backend.domain.auction.dto;
+package noonchissaum.backend.domain.auction.dto.res;
 
 import noonchissaum.backend.domain.auction.entity.Bid;
 
