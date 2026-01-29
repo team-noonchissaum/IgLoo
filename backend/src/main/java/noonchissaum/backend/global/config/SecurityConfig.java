@@ -65,6 +65,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         //  preflight OPTIONS 허용
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                        // auction,wish test
+                        .requestMatchers(
+                                "/api/auctions/**",
+                                "/api/item/**"
+                        ).permitAll()
+
+
 
                         //  actuator 전부 허용
                         .requestMatchers("/actuator/**").permitAll()
