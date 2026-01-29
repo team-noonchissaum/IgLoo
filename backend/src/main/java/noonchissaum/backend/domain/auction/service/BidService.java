@@ -27,7 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -53,7 +55,7 @@ public class BidService {
         }
 
         RLock lock = redissonClient.getLock(RedisKeys.auctionLock(auctionId));
-
+        List<RLock> userLocks = new ArrayList<>();
         try{
             boolean available = lock.tryLock(5, 2, TimeUnit.SECONDS);
             // 입찰 조건 확인 로직
@@ -81,6 +83,24 @@ public class BidService {
 
             Long previousBidderId = !rawPreviousBidderId.isBlank() ? Long.parseLong(rawPreviousBidderId) : -1L;
             BigDecimal currentPrice = new BigDecimal(rawPrice);
+
+            //유저락 추가 - 이전 입찰자가 충전하는 도중 타 경매의
+            List<Long> lockUserIds = new ArrayList<>();
+            lockUserIds.add(userId);
+            if (previousBidderId != null && previousBidderId != -1L) {
+                lockUserIds.add(previousBidderId);
+            }
+
+            // 데드락 방지: 항상 작은 id부터 락
+            lockUserIds.sort(Long::compareTo);
+
+            for (Long uid : lockUserIds) {
+                RLock userLock = redissonClient.getLock(RedisKeys.userLock(uid));
+                boolean isSuccess = userLock.tryLock(5, 10, TimeUnit.SECONDS);
+                if (!isSuccess)
+                    throw new ApiException(ErrorCode.BID_LOCK_ACQUISITION);
+                userLocks.add(userLock);
+            }
 
             walletService.getBalance(userId);
 
@@ -123,9 +143,11 @@ public class BidService {
             redisTemplate.opsForValue().set(requestId, bidAmount+"");
 
             String userPendingKey = RedisKeys.pendingUser(userId);
-            String prevUserPendingKey = RedisKeys.pendingUser(previousBidderId);
             redisTemplate.opsForSet().add(userPendingKey, requestId);
-            redisTemplate.opsForSet().add(prevUserPendingKey, requestId);
+            if (previousBidderId != null && previousBidderId != -1L) {
+                String prevUserPendingKey = RedisKeys.pendingUser(previousBidderId);
+                redisTemplate.opsForSet().add(prevUserPendingKey, requestId);
+            }
 
         }
         catch (InterruptedException e){
@@ -136,6 +158,10 @@ public class BidService {
             throw e;
         } finally {
             // 락 해제
+            for (int i = userLocks.size() - 1; i >= 0; i--) {
+                RLock ul = userLocks.get(i);
+                if (ul.isHeldByCurrentThread()) ul.unlock();
+            }
             if (lock.isHeldByCurrentThread()){
                 lock.unlock();
             }
