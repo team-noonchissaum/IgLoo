@@ -8,4 +8,4 @@
 ###
 /db/**
 /redis-data/**
-.idea
+.idea/
