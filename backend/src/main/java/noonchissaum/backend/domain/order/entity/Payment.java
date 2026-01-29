@@ -67,4 +67,29 @@ public class Payment extends BaseTimeEntity {
         this.pgProvider = pgProvider;
         this.pgOrderId = pgOrderId;
     }
+
+    public void approve(String paymentKey){
+        if (this.status != PaymentStatus.REQUEST){
+            throw new IllegalStateException("CREATED 상태에서만 결제 승인 가능");
+        }
+        this.paymentKey = paymentKey;
+        this.status = PaymentStatus.APPROVED;
+        this.approvedAt = LocalDateTime.now();
+    }
+
+    public void abort(String reason){
+        if (this.status != PaymentStatus.REQUEST){
+            throw new IllegalStateException("CREATED 상태에서만 결제 승인 가능");
+        }
+        this.status = PaymentStatus.FAILED;
+        this.failureReason = reason;
+    }
+
+    public void cancel(){
+        if (this.status != PaymentStatus.APPROVED){
+            throw new IllegalStateException("DONE 상태에서만 결제 승인 가능");
+        }
+        this.status = PaymentStatus.CANCELED;
+        this.canceledAt = LocalDateTime.now();
+    }
 }
