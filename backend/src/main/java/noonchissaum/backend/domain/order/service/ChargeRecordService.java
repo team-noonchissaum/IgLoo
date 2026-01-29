@@ -4,8 +4,11 @@ import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.order.entity.ChargeCheck;
 import noonchissaum.backend.domain.order.entity.CheckStatus;
 import noonchissaum.backend.domain.order.repositroy.ChargeCheckRepository;
+import noonchissaum.backend.domain.wallet.entity.TransactionType;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
+import noonchissaum.backend.domain.wallet.entity.WalletTransaction;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
+import noonchissaum.backend.domain.wallet.service.WalletTransactionRecordService;
 import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
@@ -25,6 +28,7 @@ public class ChargeRecordService {
     private final WalletRepository walletRepository;
     private final StringRedisTemplate redisTemplate;
     private final PaymentService paymentService;
+    private final WalletTransactionRecordService walletTransactionRecordService;
     // DB 트랜잭션 영역
     @Transactional
     public void confirmChargeTx(Long chargeCheckId, Long userId) {
@@ -56,6 +60,9 @@ public class ChargeRecordService {
         //DB 커밋 성공 후 Redis 잔액 반영 (afterCommit)
         registerAfterCommitRedisCharge(userId, amount);
         chargeCheck.confirm();
+
+        //walletTransaction 기록 저장
+        walletTransactionRecordService.record(wallet, TransactionType.CHARGE,amount,chargeCheckId);
     }
 
 

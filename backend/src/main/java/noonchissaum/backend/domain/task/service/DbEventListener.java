@@ -6,6 +6,7 @@ import noonchissaum.backend.domain.auction.service.AuctionRecordService;
 import noonchissaum.backend.domain.auction.service.BidRecordService;
 import noonchissaum.backend.domain.auction.service.BidService;
 import noonchissaum.backend.domain.wallet.service.WalletRecordService;
+import noonchissaum.backend.domain.wallet.service.WalletTransactionRecordService;
 import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.domain.task.dto.DbUpdateEvent;
 import org.springframework.context.event.EventListener;
@@ -50,7 +51,7 @@ public class DbEventListener {
         }
 
         //wallet 저장
-        walletRecordService.saveWalletRecord(event.userId(),event.bidAmount(),event.previousBidderId(),event.refundAmount());
+        walletRecordService.saveWalletRecord(event.userId(),event.bidAmount(),event.previousBidderId(),event.refundAmount(),event.auctionId());
 
         //추후 auction 저장 로직 추가
         auctionRecordService.saveAuction(event.auctionId(), event.userId(),event.bidAmount());
