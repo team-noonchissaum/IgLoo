@@ -34,18 +34,71 @@ Content-Type: application/json
   "password": "1234",
   "authType": "LOCAL"
 }
-### 내 정보 조회
-GET http://localhost:8080/api/users/me
-Authorization: Bearer {{accessToken}}
-
-### 로그아웃
-POST http://localhost:8080/api/auth/logout
-Authorization: Bearer {{accessToken}}
-
-### 토큰 재발급
-POST http://localhost:8080/api/auth/refresh
+### 2. 새로운 유저 신고 - 성공 (user_id=4 신고)
+POST http://localhost:8080/api/reports
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3Njk2NzQ3NDQsImV4cCI6MTc2OTY3NjU0NH0.5wMcLlllSigcp7dLtht1MbpptMDVAeoR1UBqZgBAS5M
 Content-Type: application/json
 
 {
-  "refreshToken": "{{refreshToken}}"
+  "targetType": "USER",
+  "targetId": 4,
+  "reason": "부적절한 언어 사용",
+  "description": "채팅에서 욕설을 사용했습니다"
+}
+### 3. 중복 신고 - 실패 (user_id=3 다시 신고, ALREADY_REPORTED)
+POST http://localhost:8080/api/reports
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3Njk2NzQ3NDQsImV4cCI6MTc2OTY3NjU0NH0.5wMcLlllSigcp7dLtht1MbpptMDVAeoR1UBqZgBAS5M
+Content-Type: application/json
+
+{
+  "targetType": "USER",
+  "targetId": 3,
+  "reason": "다른 이유",
+  "description": "중복 신고 테스트"
+}
+### 4. 경매 신고 - 성공 (item_id=100 맥북 신고)
+POST http://localhost:8080/api/reports
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3Njk2NzQ3NDQsImV4cCI6MTc2OTY3NjU0NH0.5wMcLlllSigcp7dLtht1MbpptMDVAeoR1UBqZgBAS5M
+Content-Type: application/json
+
+{
+  "targetType": "AUCTION",
+  "targetId": 100,
+  "reason": "허위 매물",
+  "description": "실제 상품과 다릅니다"
+}
+### 5. 경매 신고 - 성공 (item_id=101 아이폰 신고)
+POST http://localhost:8080/api/reports
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3Njk2NzQ3NDQsImV4cCI6MTc2OTY3NjU0NH0.5wMcLlllSigcp7dLtht1MbpptMDVAeoR1UBqZgBAS5M
+Content-Type: application/json
+
+{
+  "targetType": "AUCTION",
+  "targetId": 101,
+  "reason": "사기 의심",
+  "description": "비정상적으로 낮은 가격입니다"
+}
+
+### 6. 존재하지 않는 경매 신고 - 실패 (ITEM_NOT_FOUND)
+POST http://localhost:8080/api/reports
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3Njk2NzQ3NDQsImV4cCI6MTc2OTY3NjU0NH0.5wMcLlllSigcp7dLtht1MbpptMDVAeoR1UBqZgBAS5M
+Content-Type: application/json
+
+{
+  "targetType": "AUCTION",
+  "targetId": 99999,
+  "reason": "테스트",
+  "description": "존재하지 않는 아이템"
+}
+
+### 7. 존재하지 않는 유저 신고 - 실패 (USER_NOT_FOUND)
+POST http://localhost:8080/api/reports
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3Njk2NzQ3NDQsImV4cCI6MTc2OTY3NjU0NH0.5wMcLlllSigcp7dLtht1MbpptMDVAeoR1UBqZgBAS5M
+Content-Type: application/json
+
+{
+  "targetType": "USER",
+  "targetId": 99999,
+  "reason": "테스트",
+  "description": "존재하지 않는 유저"
 }

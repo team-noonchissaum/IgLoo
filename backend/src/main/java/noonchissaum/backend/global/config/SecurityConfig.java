@@ -8,6 +8,7 @@ import noonchissaum.backend.global.handler.JwtAuthenticationEntryPoint;
 import noonchissaum.backend.global.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -81,19 +82,18 @@ public class SecurityConfig {
                                 "/api/oauth2/login/**", //OAuth2 API진입점
                                 "/health"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/reports").hasAnyRole("USER", "ADMIN")//신고는 유저까지 가능
+                        .requestMatchers(HttpMethod.GET, "/api/reports/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/reports/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/reports/**").hasRole("ADMIN")
                         //관리자 전용
-                        .requestMatchers("/api/admin/**")
-                        .hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         //OAuth2 내부 엔드포인트
                         .requestMatchers("/oauth2/authorization/**",
                                 "/login/oauth2/code/**").permitAll()
 
                         //로그인 유저(USER,ADMIN)
-                        .requestMatchers(
-                                "/api/users/**",
-                                "/api/reports"
-                        ).hasAnyRole("USER", "ADMIN")
-
+                        .requestMatchers("/api/users/**").hasAnyRole("USER", "ADMIN")
                         //그 외 모두 차단
                         .anyRequest().authenticated()
                 )
