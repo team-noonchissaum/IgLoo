@@ -72,7 +72,10 @@ public enum ErrorCode {
     CHARGE_CONFIRMED(HttpStatus.CONFLICT,"C004","이미 충전 처리된 충전금입니다"),
     NOT_FOUND_CHARGE(HttpStatus.NOT_FOUND,"C005","이미 충전 처리된 충전금입니다"),
     //Task Error
-    PENDING_TASK_EXISTS(HttpStatus.CONFLICT,"T001","처리에 실패했습니다. 다시 시도해주세요");
+    PENDING_TASK_EXISTS(HttpStatus.CONFLICT,"T001","처리에 실패했습니다. 다시 시도해주세요"),
+
+    // Payment Error
+    INVALID_PAYMENT_REQUEST(HttpStatus.BAD_REQUEST, "P001", "충전 금액이 올바르지 않습니다.");
 
     private final HttpStatus status;
     private final String code;
