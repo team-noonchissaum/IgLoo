@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ChargeCheckRepository extends JpaRepository<ChargeCheck, Long> {
+    boolean existsByPaymentId(Long paymentId);
 }

@@ -2,6 +2,7 @@ package noonchissaum.backend.domain.order.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import noonchissaum.backend.domain.user.entity.User;
@@ -33,10 +34,10 @@ public class Payment extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private PaymentStatus status;
+    private PaymentStatus status = PaymentStatus.REQUEST;
 
     @Column(name = "paid_at")
-    private LocalDateTime paidAt;
+    private LocalDateTime paidAt = LocalDateTime.now();
 
     @Column(name = "pg_order_id")
     private String pgOrderId;
@@ -53,6 +54,17 @@ public class Payment extends BaseTimeEntity {
     @Column(name = "failure_reason")
     private String failureReason;
 
+    @Column(name = "pg_provider")
+    private PgProvider pgProvider = PgProvider.TOSS;
+
     @OneToOne(mappedBy = "payment")
     private ChargeCheck chargeCheck;
+
+    @Builder
+    public Payment(User user, BigDecimal amount, PgProvider pgProvider, String pgOrderId) {
+        this.user = user;
+        this.amount = amount;
+        this.pgProvider = pgProvider;
+        this.pgOrderId = pgOrderId;
+    }
 }
