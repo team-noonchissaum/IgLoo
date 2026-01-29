@@ -49,6 +49,7 @@ public enum ErrorCode {
 
     // ========== ITEM (상품/게시글 에러) ==========
     ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다.", "ITEM-001"),
+
   
     // Bid Error
     LOW_BID_AMOUNT(HttpStatus.BAD_REQUEST, "B001", "현재가보다 같거나 낮은 가격에 입찰할 수 없습니다."),

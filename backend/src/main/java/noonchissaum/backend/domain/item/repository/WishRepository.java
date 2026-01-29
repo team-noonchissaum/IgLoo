@@ -22,10 +22,16 @@ public interface WishRepository extends JpaRepository<Wish, Long> {
     List<Item> findItemsByUserId(Long userId);
     boolean existsByUserIdAndItemId(Long userId, Long itemId);
 
-    @Query("select w.item from Wish w "+
-            "where w.user.id = :userId " +
-            "and w.item.id in :itemIds ")
-    List<Long> findWishedItemIds(@Param("userId") Long userId,
-                                 @Param("itemIds") List<Long> itemIds);
+    @Query("""
+    select i.id
+    from Wish w
+    join w.item i
+    where w.user.id = :userId
+      and i.id in :itemIds
+""")
+    List<Long> findWishedItemIds(
+            @Param("userId") Long userId,
+            @Param("itemIds") List<Long> itemIds
+    );
 
 }
