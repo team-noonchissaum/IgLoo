@@ -1,6 +1,5 @@
-package noonchissaum.backend.domain.auth.oauth2;
+package noonchissaum.backend.domain.auth.oauth2.handler;
 
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +28,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             HttpServletRequest request,
             HttpServletResponse response,
             Authentication authentication
-    ) throws IOException, ServletException {
+    ) throws IOException {
 
         // UserPrincipal로 캐스팅
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();

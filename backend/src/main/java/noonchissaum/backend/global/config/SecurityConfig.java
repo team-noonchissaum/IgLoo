@@ -1,7 +1,8 @@
 package noonchissaum.backend.global.config;
 
 import lombok.RequiredArgsConstructor;
-import noonchissaum.backend.domain.auth.oauth2.OAuth2SuccessHandler;
+import noonchissaum.backend.domain.auth.oauth2.handler.OAuth2FailureHandler;
+import noonchissaum.backend.domain.auth.oauth2.handler.OAuth2SuccessHandler;
 import noonchissaum.backend.domain.auth.oauth2.service.CustomOAuth2UserService;
 import noonchissaum.backend.global.handler.JwtAccessDeniedHandler;
 import noonchissaum.backend.global.handler.JwtAuthenticationEntryPoint;
@@ -36,25 +37,24 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final noonchissaum.backend.domain.auth.oauth2.OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final OAuth2FailureHandler oAuth2FailureHandler;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, OAuth2SuccessHandler oAuth2SuccessHandler) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
-                .formLogin(form->form.disable())
-                .httpBasic(basic->basic.disable())
+                .csrf(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
 
                 // 인증/인가 예외 처리 (JSON 응답)
                 .exceptionHandling(exception -> exception
@@ -100,7 +100,8 @@ public class SecurityConfig {
                 .oauth2Login(oauth->oauth.authorizationEndpoint(auth->
                         auth.baseUri("/api/oauth2/login"))
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-                        .successHandler(oAuth2SuccessHandler))
+                        .successHandler(oAuth2SuccessHandler)
+                        .failureHandler(oAuth2FailureHandler))
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class);

@@ -30,6 +30,8 @@ public enum ErrorCode {
     /** 차단된 사용자 - 로그인 불가능 */
     USER_BLOCKED(HttpStatus.FORBIDDEN, "차단된 사용자입니다. 관리자에게 문의하세요.", "AUTH-007"),
 
+    OAUTH2_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "소셜 로그인에 실패했습니다.", "AUTH-008"),
+
     // ========== USER (사용자 에러) ==========
     /** 이메일 중복 */
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다.", "USER-001"),
