@@ -24,10 +24,10 @@ public class ChargeRecordService {
     private final ChargeCheckRepository chargeCheckRepository;
     private final WalletRepository walletRepository;
     private final StringRedisTemplate redisTemplate;
-    // DB 트랜잭션 영역 (여기서 DB 락이 실제로 걸림)
+    // DB 트랜잭션 영역
     @Transactional
     protected void confirmChargeTx(Long chargeCheckId, Long userId) {
-        // ChargeCheck DB 락 (PESSIMISTIC_WRITE)
+        // ChargeCheck DB 락
         ChargeCheck chargeCheck = chargeCheckRepository.findWithLockById(chargeCheckId)
                 .orElseThrow(() -> new ApiException(ErrorCode.CHARGE_CHECK_NOT_FOUND));
 
@@ -52,16 +52,13 @@ public class ChargeRecordService {
 
         // DB 반영
         wallet.charge(amount);
-
-        // =========================
-        // 4) DB 커밋 성공 후 Redis 잔액 반영 (afterCommit)
-        // =========================
+        //DB 커밋 성공 후 Redis 잔액 반영 (afterCommit)
         registerAfterCommitRedisCharge(userId, amount);
     }
 
     private void registerAfterCommitRedisCharge(Long userId, BigDecimal amount) {
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            // 방어적 처리 (원래는 @Transactional 안이라 active여야 함)
+            // 방어적 처리
             redisTemplate.opsForValue().increment(RedisKeys.userBalance(userId), amount.longValue());
             return;
         }
@@ -69,9 +66,7 @@ public class ChargeRecordService {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                // =========================
-                // Redis 반영 (이건 DB 락/트랜잭션과 별개, 단 afterCommit이라 "DB 확정 후" 실행)
-                // =========================
+                // Redis 반영
                 redisTemplate.opsForValue().increment(RedisKeys.userBalance(userId), amount.longValue());
             }
         });

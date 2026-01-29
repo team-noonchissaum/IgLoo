@@ -16,6 +16,10 @@ public class ChargeController {
 
     private final ChargeCheckService chargeCheckService;
 
+    /**
+     * 충전 승인
+     * - userLock 획득 후 checkTasks 를 통해 정합성 체크.
+     */
     @PostMapping("/{chargeCheckId}/confirm")
     public void confirm(@PathVariable Long chargeCheckId,
                         @AuthenticationPrincipal UserPrincipal user) {
