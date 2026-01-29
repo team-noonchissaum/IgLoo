@@ -26,4 +26,15 @@ public class ChargeController {
         Long userId = user.getUserId();
         chargeCheckService.confirmCharge(chargeCheckId, userId);
     }
+
+    /**
+     * 충전 취소(환불)
+     * - userLock 획득 후 checkTasks 를 통해 정합성 체크.
+     */
+    @PostMapping("/{chargeCheckId}/cancel")
+    public void cancel(@PathVariable Long chargeCheckId,
+                        @AuthenticationPrincipal UserPrincipal user) {
+        Long userId = user.getUserId();
+        chargeCheckService.cancelCharge(chargeCheckId, userId);
+    }
 }

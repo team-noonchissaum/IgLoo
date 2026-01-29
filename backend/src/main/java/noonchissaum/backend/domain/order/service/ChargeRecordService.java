@@ -33,7 +33,7 @@ public class ChargeRecordService {
 
         // 권한 체크
         if (!chargeCheck.getUser().getId().equals(userId)) {
-            throw new ApiException(ErrorCode.ACCESS_DENIED);
+            throw new ApiException(ErrorCode.NOT_FOUND_CHARGE);
         }
 
         // 멱등 처리
@@ -57,6 +57,28 @@ public class ChargeRecordService {
         chargeCheck.confirm();
     }
 
+
+    public void cancelChargeTx(Long chargeCheckId, Long userId) {
+        ChargeCheck chargeCheck = chargeCheckRepository.findWithLockById(chargeCheckId)
+                .orElseThrow(() -> new ApiException(ErrorCode.CHARGE_LOCK_ACQUISITION));
+
+        if(!chargeCheck.getUser().getId().equals(userId)){
+            throw new ApiException(ErrorCode.NOT_FOUND_CHARGE);
+        }
+        if(chargeCheck.getStatus().equals(CheckStatus.CANCELED)){
+            return ;
+        }
+        if(chargeCheck.getStatus().equals(CheckStatus.CHECKED)){
+            throw new ApiException(ErrorCode.CHARGE_CONFIRMED);
+        }
+        // todo: pg사에 환불 요청 로직 필요
+
+
+        chargeCheck.cancel();
+    }
+
+
+
     private void registerAfterCommitRedisCharge(Long userId, BigDecimal amount) {
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
             // 방어적 처리
@@ -72,4 +94,6 @@ public class ChargeRecordService {
             }
         });
     }
+
+
 }
