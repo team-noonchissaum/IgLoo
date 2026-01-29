@@ -22,27 +22,49 @@ public class AuctionRedisService {
     private final AuctionRepository auctionRepository;
     private final StringRedisTemplate redisTemplate;
 
-    @Transactional(readOnly = true)
     public void setRedis(Long auctionId) {
-        Auction auction = auctionRepository.findByIdWithStatus(auctionId)
-                .orElseThrow(() -> new IllegalArgumentException("Auction not found"));
-
-        Duration redisTTL = Duration.between(LocalDateTime.now(), auction.getEndAt().plusMinutes(10));
-
-        redisTemplate.opsForValue().set(RedisKeys.auctionCurrentPrice(auction.getId()), auction.getCurrentPrice().toString(), redisTTL);
-        redisTemplate.opsForValue().set(RedisKeys.auctionCurrentBidder(auction.getId()), auction.getCurrentBidder().toString(), redisTTL);
-        redisTemplate.opsForValue().set(RedisKeys.auctionCurrentBidCount(auction.getId()), auction.getBidCount().toString(), redisTTL);
-        redisTemplate.opsForValue().set(RedisKeys.auctionEndTime(auction.getId()), auction.getEndAt().toString(), redisTTL);
-        redisTemplate.opsForValue().set(RedisKeys.auctionImminentMinutes(auction.getId()), auction.getImminentMinutes().toString(), redisTTL);
-        redisTemplate.opsForValue().set(RedisKeys.auctionIsExtended(auction.getId()), auction.getIsExtended().toString(), redisTTL);
-    }
-
-
-    @Transactional(readOnly = true)
-    public void cancelAuction(Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new IllegalArgumentException("Auction not found"));
 
+        // TTL: endAt + 10분까지 유지, 음수면 최소 1분
+        Duration ttl = Duration.between(LocalDateTime.now(), auction.getEndAt().plusMinutes(10));
+        if (ttl.isNegative() || ttl.isZero()) {
+            ttl = Duration.ofMinutes(1);
+        }
+
+        String currentPrice = auction.getCurrentPrice() == null
+                ? "0"
+                : auction.getCurrentPrice().toPlainString();
+
+        String bidderId = auction.getCurrentBidder() == null
+                ? "" // 또는 "0"
+                : String.valueOf(auction.getCurrentBidder().getId());
+
+        String bidCount = auction.getBidCount() == null
+                ? "0"
+                : String.valueOf(auction.getBidCount());
+
+        String endAt = auction.getEndAt() == null
+                ? ""
+                : auction.getEndAt().toString();
+
+        String imminentMinutes = auction.getImminentMinutes() == null
+                ? "0"
+                : String.valueOf(auction.getImminentMinutes());
+
+        String isExtended = auction.getIsExtended() == null
+                ? "false"
+                : String.valueOf(auction.getIsExtended());
+
+        redisTemplate.opsForValue().set(RedisKeys.auctionCurrentPrice(auctionId), currentPrice, ttl);
+        redisTemplate.opsForValue().set(RedisKeys.auctionCurrentBidder(auctionId), bidderId, ttl);
+        redisTemplate.opsForValue().set(RedisKeys.auctionCurrentBidCount(auctionId), bidCount, ttl);
+        redisTemplate.opsForValue().set(RedisKeys.auctionEndTime(auctionId), endAt, ttl);
+        redisTemplate.opsForValue().set(RedisKeys.auctionImminentMinutes(auctionId), imminentMinutes, ttl);
+        redisTemplate.opsForValue().set(RedisKeys.auctionIsExtended(auctionId), isExtended, ttl);
+    }
+
+    public void cancelAuction(Long auctionId) {
         redisTemplate.delete(List.of(
                 RedisKeys.auctionCurrentPrice(auctionId),
                 RedisKeys.auctionCurrentBidder(auctionId),
@@ -52,5 +74,4 @@ public class AuctionRedisService {
                 RedisKeys.auctionIsExtended(auctionId)
         ));
     }
-
 }

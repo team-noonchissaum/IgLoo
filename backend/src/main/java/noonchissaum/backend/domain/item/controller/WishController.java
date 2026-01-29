@@ -6,8 +6,10 @@ import noonchissaum.backend.domain.item.dto.WishToggleRes;
 import noonchissaum.backend.domain.item.service.WishService;
 import noonchissaum.backend.global.dto.ApiResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.Reader;
 import java.util.List;
 
 @RestController
@@ -25,8 +27,9 @@ public class WishController {
         );
     }
 
+    @Transactional(readOnly = true)
     @GetMapping("/wish")
-    public ResponseEntity<ApiResponse<List<WishItemRes>>> getMyWishlist(){
+    public ResponseEntity<ApiResponse<List<WishItemRes>>> getMyWishlist(Reader reader){
         Long userId = 1L;
         List<WishItemRes> result = wishService.getMyWishedItems(userId).stream()
                 .map(WishItemRes::from)
