@@ -54,6 +54,7 @@ public class ChargeRecordService {
         wallet.charge(amount);
         //DB 커밋 성공 후 Redis 잔액 반영 (afterCommit)
         registerAfterCommitRedisCharge(userId, amount);
+        chargeCheck.confirm();
     }
 
     private void registerAfterCommitRedisCharge(Long userId, BigDecimal amount) {

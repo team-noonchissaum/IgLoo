@@ -23,4 +23,11 @@ public class ChargeCheck {
 
     @Enumerated(EnumType.STRING)
     private CheckStatus status = CheckStatus.UNCHECKED;
+
+    public void confirm(){
+        this.status = CheckStatus.CHECKED;
+    }
+    public void cancel(){
+        this.status = CheckStatus.CANCELED;
+    }
 }
