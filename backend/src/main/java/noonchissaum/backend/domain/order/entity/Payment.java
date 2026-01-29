@@ -2,6 +2,7 @@ package noonchissaum.backend.domain.order.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import noonchissaum.backend.domain.user.entity.User;
@@ -33,10 +34,10 @@ public class Payment extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private PaymentStatus status;
+    private PaymentStatus status = PaymentStatus.REQUEST;
 
     @Column(name = "paid_at")
-    private LocalDateTime paidAt;
+    private LocalDateTime paidAt = LocalDateTime.now();
 
     @Column(name = "pg_order_id")
     private String pgOrderId;
@@ -53,6 +54,42 @@ public class Payment extends BaseTimeEntity {
     @Column(name = "failure_reason")
     private String failureReason;
 
+    @Column(name = "pg_provider")
+    private PgProvider pgProvider = PgProvider.TOSS;
+
     @OneToOne(mappedBy = "payment")
     private ChargeCheck chargeCheck;
+
+    @Builder
+    public Payment(User user, BigDecimal amount, PgProvider pgProvider, String pgOrderId) {
+        this.user = user;
+        this.amount = amount;
+        this.pgProvider = pgProvider;
+        this.pgOrderId = pgOrderId;
+    }
+
+    public void approve(String paymentKey){
+        if (this.status != PaymentStatus.REQUEST){
+            throw new IllegalStateException("CREATED 상태에서만 결제 승인 가능");
+        }
+        this.paymentKey = paymentKey;
+        this.status = PaymentStatus.APPROVED;
+        this.approvedAt = LocalDateTime.now();
+    }
+
+    public void abort(String reason){
+        if (this.status != PaymentStatus.REQUEST){
+            throw new IllegalStateException("CREATED 상태에서만 결제 승인 가능");
+        }
+        this.status = PaymentStatus.FAILED;
+        this.failureReason = reason;
+    }
+
+    public void cancel(){
+        if (this.status != PaymentStatus.APPROVED){
+            throw new IllegalStateException("DONE 상태에서만 결제 승인 가능");
+        }
+        this.status = PaymentStatus.CANCELED;
+        this.canceledAt = LocalDateTime.now();
+    }
 }

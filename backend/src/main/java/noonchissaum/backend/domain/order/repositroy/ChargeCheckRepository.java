@@ -12,6 +12,9 @@ import java.util.Optional;
 
 @Repository
 public interface ChargeCheckRepository extends JpaRepository<ChargeCheck, Long> {
+
+    boolean existsByPaymentId(Long paymentId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select cc from ChargeCheck cc " +
             "join fetch cc.user " +

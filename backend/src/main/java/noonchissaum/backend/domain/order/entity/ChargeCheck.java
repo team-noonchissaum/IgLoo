@@ -1,14 +1,15 @@
 package noonchissaum.backend.domain.order.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import noonchissaum.backend.domain.user.entity.User;
+import noonchissaum.backend.global.entity.BaseTimeEntity;
 
 @Entity
 @Table(name = "charge_checks")
 @Getter
-public class ChargeCheck {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class ChargeCheck extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -29,5 +30,15 @@ public class ChargeCheck {
     }
     public void cancel(){
         this.status = CheckStatus.CANCELED;
+    }
+
+    @Builder
+    public ChargeCheck(Payment payment) {
+        this.user = payment.getUser();
+        this.payment = payment;
+    }
+
+    public void changeStatus(CheckStatus status){
+        this.status = status;
     }
 }
