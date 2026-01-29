@@ -27,13 +27,10 @@ public class WishController {
         );
     }
 
-    @Transactional(readOnly = true)
     @GetMapping("/wish")
     public ResponseEntity<ApiResponse<List<WishItemRes>>> getMyWishlist(Reader reader){
         Long userId = 1L;
-        List<WishItemRes> result = wishService.getMyWishedItems(userId).stream()
-                .map(WishItemRes::from)
-                .toList();
+        List<WishItemRes> result = wishService.getMyWishedItems(userId);
         return ResponseEntity.ok(
                 ApiResponse.success("찜한 상품 목록 조회 성공", result)
         );

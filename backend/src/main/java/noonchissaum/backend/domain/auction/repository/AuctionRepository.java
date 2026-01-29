@@ -23,6 +23,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
 
     @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
     Page<Auction> findAll(Pageable pageable);
+
     /**
      *스케줄 관련 상태값 변경쿼리
      * READY->RUNNING

@@ -1,6 +1,7 @@
 package noonchissaum.backend.domain.item.service;
 
 import lombok.RequiredArgsConstructor;
+import noonchissaum.backend.domain.item.dto.WishItemRes;
 import noonchissaum.backend.domain.item.entity.Item;
 import noonchissaum.backend.domain.item.entity.Wish;
 import noonchissaum.backend.domain.item.repository.ItemRepository;
@@ -66,8 +67,13 @@ public class WishService {
         return new HashSet<>(wishRepository.findWishedItemIds(userId, itemIds));
     }
 
-    public List<Item> getMyWishedItems(Long userId) {
-        return wishRepository.findItemsByUserId(userId);
+    @Transactional(readOnly = true)
+    public List<WishItemRes> getMyWishedItems(Long userId) {
+        List<Item> items = wishRepository.findItemsByUserId(userId);
+
+        return items.stream()
+                .map(WishItemRes::from)
+                .toList();
     }
 
 
