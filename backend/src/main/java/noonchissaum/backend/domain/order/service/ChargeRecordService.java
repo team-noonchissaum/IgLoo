@@ -27,7 +27,7 @@ public class ChargeRecordService {
     private final PaymentService paymentService;
     // DB 트랜잭션 영역
     @Transactional
-    protected void confirmChargeTx(Long chargeCheckId, Long userId) {
+    public void confirmChargeTx(Long chargeCheckId, Long userId) {
         // ChargeCheck DB 락
         ChargeCheck chargeCheck = chargeCheckRepository.findWithLockById(chargeCheckId)
                 .orElseThrow(() -> new ApiException(ErrorCode.CHARGE_CHECK_NOT_FOUND));

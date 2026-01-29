@@ -2,10 +2,13 @@ package noonchissaum.backend.domain.order.controller;
 
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.order.dto.charge.req.ChargeCancelReq;
+import noonchissaum.backend.domain.order.dto.charge.res.ChargeCheckRes;
 import noonchissaum.backend.domain.order.service.ChargeCheckService;
 import noonchissaum.backend.global.security.UserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -20,8 +23,8 @@ public class ChargeController {
      */
     @PostMapping("/{chargeCheckId}/confirm")
     public void confirm(@PathVariable Long chargeCheckId,
-                        @AuthenticationPrincipal UserPrincipal user) {
-        Long userId = user.getUserId();
+                        @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        Long userId = userPrincipal.getUserId();
         chargeCheckService.confirmCharge(chargeCheckId, userId);
     }
 
@@ -36,5 +39,11 @@ public class ChargeController {
                        ) {
         Long userId = user.getUserId();
         chargeCheckService.cancelCharge(chargeCheckId, userId,req.cancelReason());
+    }
+
+    @GetMapping("/unchecked")
+    public List<ChargeCheckRes> getUnchecked(
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        return chargeCheckService.getUncheckedList(userPrincipal.getUserId());
     }
 }
