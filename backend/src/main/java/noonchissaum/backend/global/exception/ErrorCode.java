@@ -46,11 +46,12 @@ public enum ErrorCode {
     /** 신고 조회 실패 */
     REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "신고를 찾을 수 없습니다.", "REPORT-001"),
     REPORT_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "이미 처리된 신고입니다.", "REPORT-002"),
+    ALREADY_REPORTED(HttpStatus.ALREADY_REPORTED,"이미 신고된 경매입니다" ,"REPORT-003" ),
+    INVALID_REPORT_TARGET(HttpStatus.NOT_FOUND,"대상 유저를 찾을 수 없습니다","REPORT-004"),
 
     // ========== ITEM (상품/게시글 에러) ==========
     ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다.", "ITEM-001"),
 
-  
     // Bid Error
     LOW_BID_AMOUNT(HttpStatus.BAD_REQUEST, "B001", "현재가보다 같거나 낮은 가격에 입찰할 수 없습니다."),
     CANNOT_BID_CONTINUOUS(HttpStatus.TOO_MANY_REQUESTS, "B002", "연속적으로 입찰할 수 없습니다."),
