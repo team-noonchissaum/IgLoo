@@ -57,7 +57,7 @@ public class ChargeCheckService {
     }
 
 
-    public void cancelCharge(Long chargeCheckId, Long userId) {
+    public void cancelCharge(Long chargeCheckId, Long userId,String cancelReason) {
         RLock userLock = redissonClient.getLock(RedisKeys.userLock(userId));
 
         try{
@@ -68,7 +68,7 @@ public class ChargeCheckService {
             if(!taskService.checkTasks(userId)){
                 throw new ApiException(ErrorCode.PENDING_TASK_EXISTS);
             }
-            chargeRecordService.cancelChargeTx(chargeCheckId,userId);
+            chargeRecordService.cancelChargeTx(chargeCheckId,userId,cancelReason);
 
         } catch (InterruptedException e) {
             throw new RuntimeException(e);

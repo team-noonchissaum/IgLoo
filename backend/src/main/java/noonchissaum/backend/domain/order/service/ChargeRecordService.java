@@ -24,6 +24,7 @@ public class ChargeRecordService {
     private final ChargeCheckRepository chargeCheckRepository;
     private final WalletRepository walletRepository;
     private final StringRedisTemplate redisTemplate;
+    private final PaymentService paymentService;
     // DB 트랜잭션 영역
     @Transactional
     protected void confirmChargeTx(Long chargeCheckId, Long userId) {
@@ -58,7 +59,7 @@ public class ChargeRecordService {
     }
 
 
-    public void cancelChargeTx(Long chargeCheckId, Long userId) {
+    public void cancelChargeTx(Long chargeCheckId, Long userId,String cancelReason) {
         ChargeCheck chargeCheck = chargeCheckRepository.findWithLockById(chargeCheckId)
                 .orElseThrow(() -> new ApiException(ErrorCode.CHARGE_LOCK_ACQUISITION));
 
@@ -72,6 +73,7 @@ public class ChargeRecordService {
             throw new ApiException(ErrorCode.CHARGE_CONFIRMED);
         }
         // todo: pg사에 환불 요청 로직 필요
+        paymentService.cancelPayment(userId,"내맴",chargeCheckId);
 
 
         chargeCheck.cancel();
