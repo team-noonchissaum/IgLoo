@@ -10,6 +10,8 @@ import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.entity.UserRole;
 import noonchissaum.backend.domain.user.entity.UserStatus;
 import noonchissaum.backend.domain.user.repository.UserRepository;
+import noonchissaum.backend.domain.wallet.entity.Wallet;
+import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.security.UserPrincipal;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -28,6 +30,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
     private final UserAuthRepository userAuthRepository;
+    private final WalletService walletService;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) {
@@ -81,10 +84,13 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         // 프로필 URL 있으면 저장 (null이면 그대로)
         newUser.updateProfile(nickname, info.getProfileUrl());
 
-        userRepository.save(newUser);
+        User saved = userRepository.save(newUser);
 
         UserAuth oauthAuth = UserAuth.oauth(newUser, authType, identifier);
         userAuthRepository.save(oauthAuth);
+
+        Wallet wallet = walletService.createWallet(saved.getId());
+        saved.registWallet(wallet);
 
         return newUser;
     }
