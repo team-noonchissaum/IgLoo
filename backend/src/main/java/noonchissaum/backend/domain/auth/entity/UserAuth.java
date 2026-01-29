@@ -1,9 +1,12 @@
-package noonchissaum.backend.domain.user.entity;
+package noonchissaum.backend.domain.auth.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import noonchissaum.backend.domain.user.entity.User;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -38,4 +41,26 @@ public class UserAuth {
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    /**계정 생성*/
+    public static UserAuth createLocal(
+            User user,
+            @NotBlank @Email String email,
+            String encode
+    ) {
+        UserAuth auth = new UserAuth();
+        auth.user = user;
+        auth.authType = AuthType.LOCAL;
+        auth.identifier = email;
+        auth.passwordHash = encode;
+        return auth;
+    }
+
+    public static UserAuth oauth(User user, AuthType authType, String identifier) {
+        UserAuth auth = new UserAuth();
+        auth.user = user;
+        auth.authType = authType;
+        auth.identifier = identifier;
+        return auth;
+    }
 }

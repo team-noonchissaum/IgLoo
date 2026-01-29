@@ -2,6 +2,7 @@ package noonchissaum.backend.domain.item.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import noonchissaum.backend.domain.auction.entity.Auction;
@@ -63,11 +64,53 @@ public class Item extends BaseTimeEntity {
     @OneToOne(mappedBy = "item", fetch = FetchType.LAZY)
     private Auction auction;
 
-    public Item(User seller, Category category, String title, BigDecimal startPrice) {
+    @Column(name = "thumbnail_url")
+    private String thumbnailUrl;
+
+    @Builder
+    public Item(User seller, Category category, String title, String description, BigDecimal startPrice) {
         this.seller = seller;
         this.category = category;
         this.title = title;
+        this.description = description;
         this.startPrice = startPrice;
         this.status = true;
+        this.wishCount = 0;
+    }
+
+    public void addImage(ItemImage image) {
+        this.images.add(image);
+        if (image.getItem() != this) {
+            // ItemImage 엔티티에 setItem 메서드가 필요할 수 있음. 혹은 생성자 시점에 처리.
+            // 여기서는 ItemImage 생성자에서 처리한다고 가정하고 add만 수행하거나,
+            // ItemImage setter가 있다면 호출. 현재 ItemImage에는 setter가 없으므로 add만 수행.
+        }
+    }
+
+    public void setThumbnailUrl(String thumbnailUrl) {
+        this.thumbnailUrl = thumbnailUrl;
+    }
+
+    /**관리자 계정용*/
+    public void delete() {
+        if (Boolean.FALSE.equals(this.status)) {
+            throw new IllegalStateException("이미 삭제된 상품입니다.");
+        }
+        this.status = false;
+    }
+
+    public void restore() {
+        if (Boolean.TRUE.equals(this.status)) {
+            throw new IllegalStateException("이미 활성 상태인 상품입니다.");
+        }
+        this.status = true;
+    }
+
+    public boolean isDeleted() {
+        return Boolean.FALSE.equals(this.status);
+    }
+
+    public boolean isActive() {
+        return Boolean.TRUE.equals(this.status);
     }
 }
