@@ -28,6 +28,7 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
     @Query("SELECT r FROM Report r JOIN FETCH r.reporter WHERE r.status = :status")
     Page<Report> findByStatusWithReporter(@Param("status") ReportStatus status, Pageable pageable);
 
+    //reporterId로 직접조회
     boolean existsByReporterIdAndTargetTypeAndTargetId(Long reporterId, ReportTargetType targetType, Long targetId);
 
 }
