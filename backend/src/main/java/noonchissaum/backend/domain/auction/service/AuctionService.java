@@ -205,13 +205,11 @@ public class AuctionService {
     ) {
         //  PRICE 정렬 → Redis ZSET 기반 QueryService로 분기
         if (sort != null && sort.isRedisPriceSort()) {
-            // 카테고리+가격정렬 정확을 원한다고 했으니, categoryId 없으면 결과를 비우거나 예외 처리(선택)
+            // categoryId 없으면 결과를 비우거나 예외 처리(선택)
             if (categoryId == null) {
                 return new PageImpl<>(List.of(), PageRequest.of(page, size), 0);
             }
-            // keyword/status까지 정확한 가격정렬은 "추가 인덱스"가 필요함.
             //category + price 정확이므로 status/keyword는 null만 허용하거나(엄격),
-            // 또는 무시(느슨). 여기서는 엄격하게 막는 버전으로 예시:
             if (status != null || (keyword != null && !keyword.isBlank())) {
                 // category+price만 정확 지원
                 return new PageImpl<>(List.of(), PageRequest.of(page, size), 0);
