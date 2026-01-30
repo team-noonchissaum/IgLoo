@@ -26,6 +26,10 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
 
     List<Auction> findAllByStatusIn(List<AuctionStatus> statuses);
 
+    // Redis id 리스트 상세 로딩용
+    @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
+    List<Auction> findByIdIn(List<Long> ids);
+
     /**
      *스케줄 관련 상태값 변경쿼리
      * READY->RUNNING

@@ -2,7 +2,9 @@ package noonchissaum.backend.domain.auction.controller;
 
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.auction.dto.req.AuctionRegisterReq;
+import noonchissaum.backend.domain.auction.dto.res.AuctionListRes;
 import noonchissaum.backend.domain.auction.dto.res.AuctionRes;
+import noonchissaum.backend.domain.auction.entity.AuctionSortType;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.service.AuctionService;
 import noonchissaum.backend.global.dto.ApiResponse;
@@ -69,5 +71,22 @@ public class AuctionController {
             @PathVariable Long auctionId) {
         auctionService.cancelAuction(userId, auctionId);
         return ResponseEntity.ok(new ApiResponse<>("Auction canceled successfully", null));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<Page<AuctionListRes>>> searchAuctions(
+            @RequestParam(required = false) AuctionStatus status,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "LATEST") AuctionSortType sort,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestHeader(value = "X-User-Id", required = false, defaultValue = "1") Long userId
+    ) {
+        Page<AuctionListRes> result = auctionService.searchAuctionList(
+                userId, status, categoryId, keyword, sort, page, size
+        );
+
+        return ResponseEntity.ok(ApiResponse.success("Auction search retrieved", result));
     }
 }

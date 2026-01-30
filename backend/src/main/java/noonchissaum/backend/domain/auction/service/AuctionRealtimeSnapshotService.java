@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -129,5 +130,22 @@ public class AuctionRealtimeSnapshotService {
         if ("1".equals(v)) return true;
         if ("0".equals(v)) return false;
         return Boolean.parseBoolean(v);
+    }
+
+    public Optional<AuctionSnapshotPayload> getSnapshotIfPresent(Long auctionId) {
+        String priceKey = RedisKeys.auctionCurrentPrice(auctionId);
+        String bidderKey = RedisKeys.auctionCurrentBidder(auctionId);
+        String bidCountKey = RedisKeys.auctionCurrentBidCount(auctionId);
+        String endTimeKey = RedisKeys.auctionEndTime(auctionId);
+        String imminentKey = RedisKeys.auctionImminentMinutes(auctionId);
+        String extendedKey = RedisKeys.auctionIsExtended(auctionId);
+
+        // 하나라도 없으면 "없다"로 처리 (복구 X)
+        if (!hasAllKeys(priceKey, bidderKey, bidCountKey, endTimeKey, imminentKey, extendedKey)) {
+            return Optional.empty();
+        }
+
+        //
+        return Optional.of(getSnapshot(auctionId));
     }
 }

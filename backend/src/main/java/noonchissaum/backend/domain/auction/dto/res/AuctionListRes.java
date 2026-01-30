@@ -71,4 +71,39 @@ public class AuctionListRes {
         res.isWished = isWished;
         return res;
     }
+
+    public AuctionListRes withRealtime(
+            Long currentPrice,
+            Integer bidCount,
+            LocalDateTime endAt
+    ) {
+        return AuctionListRes.builder()
+                .auctionId(this.auctionId)
+                .itemId(this.itemId)
+                .title(this.title)
+                .currentPrice(
+                        currentPrice != null
+                                ? BigDecimal.valueOf(currentPrice)
+                                : this.currentPrice
+                )
+                .startPrice(this.startPrice)
+                .bidCount(
+                        bidCount != null
+                                ? bidCount
+                                : this.bidCount
+                )
+                .status(this.status)
+                .endAt(
+                        endAt != null
+                                ? endAt
+                                : this.endAt
+                )
+                .sellerNickname(this.sellerNickname)
+                .thumbnailUrl(this.thumbnailUrl)
+                .categoryId(this.categoryId)
+                .categoryName(this.categoryName)
+                .wishCount(this.wishCount)
+                .isWished(this.isWished)
+                .build();
+    }
 }
