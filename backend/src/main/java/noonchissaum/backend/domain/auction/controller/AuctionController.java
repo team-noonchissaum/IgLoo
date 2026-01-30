@@ -8,11 +8,13 @@ import noonchissaum.backend.domain.auction.entity.AuctionSortType;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.service.AuctionService;
 import noonchissaum.backend.global.dto.ApiResponse;
+import noonchissaum.backend.global.security.UserPrincipal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -33,8 +35,9 @@ public class AuctionController {
      */
     @PostMapping
     public ResponseEntity<ApiResponse<Long>> registerAuction(
-            @RequestHeader(value = "X-User-Id", required = false, defaultValue = "1") Long userId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
             @RequestBody AuctionRegisterReq request) {
+        Long userId = userPrincipal.getUserId();
         Long auctionId = auctionService.registerAuction(userId, request);
         return ResponseEntity.created(URI.create("/api/auctions/" + auctionId))
                 .body(new ApiResponse<>("Auction registered successfully", auctionId));
@@ -46,8 +49,9 @@ public class AuctionController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<AuctionRes>>> getAuctions(
             @PageableDefault(size = 10, sort = "startAt", direction = Sort.Direction.DESC) Pageable pageable,
-            @RequestParam(required = false) AuctionStatus status) {
-        Long userId = 1L;
+            @RequestParam(required = false) AuctionStatus status,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        Long userId = userPrincipal != null ? userPrincipal.getUserId() : null;
         Page<AuctionRes> auctions = auctionService.getAuctionList(userId, pageable, status);
         return ResponseEntity.ok(new ApiResponse<>("Auction list retrieved", auctions));
     }
@@ -56,8 +60,10 @@ public class AuctionController {
      * 특정 경매의 상세 정보를 조회합니다.
      */
     @GetMapping("/{auctionId}")
-    public ResponseEntity<ApiResponse<AuctionRes>> getAuctionDetail(@PathVariable Long auctionId) {
-        Long userId = 1L;
+    public ResponseEntity<ApiResponse<AuctionRes>> getAuctionDetail(
+            @PathVariable Long auctionId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        Long userId = userPrincipal != null ? userPrincipal.getUserId() : null;
         AuctionRes response = auctionService.getAuctionDetail(userId, auctionId);
         return ResponseEntity.ok(new ApiResponse<>("Auction detail retrieved", response));
     }
@@ -67,8 +73,9 @@ public class AuctionController {
      */
     @DeleteMapping("/{auctionId}")
     public ResponseEntity<ApiResponse<Void>> cancelAuction(
-            @RequestHeader(value = "X-User-Id", required = false, defaultValue = "1") Long userId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable Long auctionId) {
+        Long userId = userPrincipal.getUserId();
         auctionService.cancelAuction(userId, auctionId);
         return ResponseEntity.ok(new ApiResponse<>("Auction canceled successfully", null));
     }
@@ -81,8 +88,9 @@ public class AuctionController {
             @RequestParam(defaultValue = "LATEST") AuctionSortType sort,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestHeader(value = "X-User-Id", required = false, defaultValue = "1") Long userId
+            @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
+        Long userId = userPrincipal != null ? userPrincipal.getUserId() : null;
         Page<AuctionListRes> result = auctionService.searchAuctionList(
                 userId, status, categoryId, keyword, sort, page, size
         );

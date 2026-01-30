@@ -102,11 +102,10 @@ public class AuctionService {
      * 경매 상세 정보를 조회합니다.
      */
     public AuctionRes getAuctionDetail(Long userId, Long auctionId) {
-        User user = userService.getUserByUserId(userId);
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new IllegalArgumentException("Auction not found"));
         boolean isWished = wishService.isWished(userId, auction.getItem().getId());
-        return AuctionRes.from(auction); // <-- iswished?
+        return AuctionRes.from(auction, isWished);
     }
 
     /**

@@ -9,6 +9,8 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
+import java.security.Principal;
+
 @Controller
 @RequiredArgsConstructor
 public class AuctionWsController {
@@ -17,12 +19,11 @@ public class AuctionWsController {
     private final SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/auctions/{auctionId}/snapshot")
-    public void snapshot(@DestinationVariable Long auctionId) {
+    public void snapshot(@DestinationVariable Long auctionId, Principal principal) {
 
         AuctionSnapshotPayload payload = snapshotService.getSnapshot(auctionId);
-        Long userId = 1L;
         messagingTemplate.convertAndSendToUser(
-                String.valueOf(userId),
+                principal.getName(),
                 "/queue/auctions/" + auctionId + "/snapshot",
                 payload
         );

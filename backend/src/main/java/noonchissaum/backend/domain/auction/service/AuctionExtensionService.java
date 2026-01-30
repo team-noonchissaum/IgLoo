@@ -16,9 +16,9 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class AuctionExtensionService {
     private final AuctionRepository auctionRepository;
-    private final StringRedisTemplate stringRedisTemplate;
+    private final StringRedisTemplate redisTemplate;
     private final AuctionMessageService auctionMessageService;
-    private final RedisTemplate<Object, Object> redisTemplate;
+
 
     /**
     * 입찰 성공 이후 호출.
