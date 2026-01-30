@@ -57,6 +57,15 @@ public class Payment extends BaseTimeEntity {
     @Column(name = "pg_provider")
     private PgProvider pgProvider = PgProvider.TOSS;
 
+    @Column(name = "bank")
+    private String bank;
+
+    @Column(name = "account_number")
+    private String accountNumber;
+
+    @Column(name = "due_date")
+    private String dueDate;
+
     @OneToOne(mappedBy = "payment")
     private ChargeCheck chargeCheck;
 
@@ -69,7 +78,7 @@ public class Payment extends BaseTimeEntity {
     }
 
     public void approve(String paymentKey){
-        if (this.status != PaymentStatus.REQUEST){
+        if (this.status != PaymentStatus.REQUEST && this.status != PaymentStatus.WAITING_FOR_DEPOSIT){
             throw new IllegalStateException("CREATED 상태에서만 결제 승인 가능");
         }
         this.paymentKey = paymentKey;
@@ -91,5 +100,13 @@ public class Payment extends BaseTimeEntity {
         }
         this.status = PaymentStatus.CANCELED;
         this.canceledAt = LocalDateTime.now();
+    }
+
+    public void waitDeposit(String paymentKey, String bank, String accountNumber, String dueDate) {
+        this.paymentKey = paymentKey;
+        this.status = PaymentStatus.WAITING_FOR_DEPOSIT;
+        this.bank = bank;
+        this.accountNumber = accountNumber;
+        this.dueDate = dueDate;
     }
 }
