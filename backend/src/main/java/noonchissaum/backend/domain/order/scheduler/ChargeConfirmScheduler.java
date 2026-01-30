@@ -7,6 +7,7 @@ import noonchissaum.backend.domain.order.repositroy.ChargeCheckRepository;
 import noonchissaum.backend.domain.order.service.ChargeRecordService;
 import noonchissaum.backend.domain.task.service.TaskService;
 import noonchissaum.backend.global.RedisKeys;
+import noonchissaum.backend.global.util.UserLockExecutor;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +27,7 @@ public class ChargeConfirmScheduler {
     private final ChargeRecordService chargeRecordService;
     private final TaskService taskService;
     private final RedissonClient redissonClient;
+    private final UserLockExecutor userLockExecutor;
 
     private static final int BATCH_SIZE = 100;
 

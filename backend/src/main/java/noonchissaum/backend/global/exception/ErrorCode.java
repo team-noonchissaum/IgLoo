@@ -75,7 +75,10 @@ public enum ErrorCode {
     PENDING_TASK_EXISTS(HttpStatus.CONFLICT,"T001","처리에 실패했습니다. 다시 시도해주세요"),
 
     // Payment Error
-    INVALID_PAYMENT_REQUEST(HttpStatus.BAD_REQUEST, "P001", "충전 금액이 올바르지 않습니다.");
+    INVALID_PAYMENT_REQUEST(HttpStatus.BAD_REQUEST, "P001", "충전 금액이 올바르지 않습니다."),
+
+    //Lock
+    LOCK_ACQUISITION(HttpStatus.TOO_MANY_REQUESTS, "L001", "락 획득에 실패했습니다. 다시 시도해주세요");
 
     private final HttpStatus status;
     private final String code;
