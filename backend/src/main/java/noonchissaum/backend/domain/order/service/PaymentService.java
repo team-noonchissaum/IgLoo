@@ -2,7 +2,9 @@ package noonchissaum.backend.domain.order.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import noonchissaum.backend.domain.order.dto.payment.req.TossWebhookReq;
 import noonchissaum.backend.domain.order.dto.payment.res.PaymentPrepareRes;
+import noonchissaum.backend.domain.order.dto.payment.res.VirtualAccountInfo;
 import noonchissaum.backend.domain.order.entity.*;
 import noonchissaum.backend.domain.order.repositroy.ChargeCheckRepository;
 import noonchissaum.backend.domain.order.repositroy.PaymentRepository;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpStatusCodeException;
 
+import java.time.LocalDateTime;
 import java.math.BigDecimal;
 import java.util.UUID;
 
@@ -63,7 +66,7 @@ public class PaymentService {
      * 결제 성공 시 보관함(ChargeCheck에 저장)
      */
     @Transactional
-    public void confirmPayment(String pgOrderId, String paymentKey, Integer amount) {
+    public VirtualAccountInfo confirmPayment(String pgOrderId, String paymentKey, Integer amount) {
         log.info("결제 승인 시작: pgOrderId={}, paymentKey={}", pgOrderId, paymentKey);
 
         Payment payment = paymentRepository.findByPgOrderId(pgOrderId)
@@ -92,6 +95,17 @@ public class PaymentService {
 
             tossRes = tossPaymentsClient.confirm(paymentKey, pgOrderId, amount);
 
+            if ("가상계좌".equals(tossRes.method())) {
+                // 1. 가상계좌: 입금 대기 상태로 변경하고 계좌 정보를 저장합니다.
+                // ChargeCheck(포인트 적립 등)는 생성하지 않습니다.
+                payment.waitDeposit(paymentKey,
+                        tossRes.virtualAccount().bank(),
+                        tossRes.virtualAccount().accountNumber(),
+                        tossRes.virtualAccount().dueDate());
+                log.info("가상계좌 발급 완료: 입금 대기 상태 pgOrderId={}", pgOrderId);
+                return VirtualAccountInfo.from(tossRes.virtualAccount());
+            }
+
         } catch (HttpStatusCodeException e) {
 
             String errorBody = e.getResponseBodyAsString();
@@ -116,7 +130,7 @@ public class PaymentService {
                 // 이미 승인되었으면 성공으로 처리
                 if (refreshedPayment.getStatus() == PaymentStatus.APPROVED) {
                     log.info("Payment가 이미 승인됨. 성공으로 처리");
-                    return; // 이미 처리되었으므로 종료
+                    return null;
                 }
             }
 
@@ -143,7 +157,7 @@ public class PaymentService {
 
         ChargeCheck check = ChargeCheck.builder().payment(payment).build();
         chargeCheckRepository.save(check);
-
+        return null;
     }
 
     /**
@@ -170,7 +184,7 @@ public class PaymentService {
         }
 
         // 일주일 이내인지 체크
-        if (check.getCreatedAt().isAfter(check.getCreatedAt().plusDays(7))) {
+        if (check.getCreatedAt().plusDays(7).isBefore(LocalDateTime.now())) {
             throw new ApiException(ErrorCode.INVALID_PAYMENT_REQUEST);
         }
 
@@ -199,5 +213,35 @@ public class PaymentService {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new ApiException(ErrorCode.INVALID_PAYMENT_REQUEST));
         payment.abort("TOSS_ABORT_FAILED" + reason);
+    }
+
+    /**
+     * 입금 완료 웹훅을 받은 뒤 충전 처리
+     * */
+    @Transactional
+    public void processDepositDone(String paymentKey, String orderId, Long amount) {
+        log.info("가상계좌 웹훅 처리 시작: pgOrderId={}, amount={}", orderId, amount);
+
+        // 비관적 락을 통해 연속된 요청이 오면 대기
+        Payment payment = paymentRepository.findByPgOrderIdWithLock(orderId)
+                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_PAYMENT_REQUEST));
+
+        // 멱등성 체크
+        if (payment.getStatus() != PaymentStatus.WAITING_FOR_DEPOSIT) {
+            log.warn("이미 처리되었거나 유효하지 않은 상태의 웹훅 요청: status={}, pgOrderId={}",
+                    payment.getStatus(), orderId);
+            return;
+        }
+
+        // 결제 금액 확인
+        if (amount != payment.getAmount().longValue()) {
+            log.error("결제 금액 불일치: DB={}, Webhook={}", payment.getAmount(), amount);
+            return;
+        }
+
+        payment.approve(paymentKey);
+        ChargeCheck check = ChargeCheck.builder().payment(payment).build();
+        chargeCheckRepository.save(check);
+        log.info("가상계좌 입금 확인 및 충전 완료: paymentId={}", payment.getId());
     }
 }
