@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.auction.dto.res.BidHistoryItemRes;
 import noonchissaum.backend.domain.auction.dto.res.MyBidAuctionRes;
+import noonchissaum.backend.domain.auction.dto.ws.BidSuccessedPayload;
+import noonchissaum.backend.domain.auction.dto.ws.OutbidPayload;
 import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.entity.Bid;
@@ -43,6 +45,7 @@ public class BidService {
     private final AuctionRepository auctionRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final AuctionRedisService auctionRedisService;
+    private final AuctionMessageService auctionMessageService;
 
     public void placeBid(Long auctionId, Long userId, BigDecimal bidAmount, String requestId) {
         // 1. 멱등성 체크 (락 획득 전 수행하여 불필요한 대기 방지)
@@ -108,6 +111,25 @@ public class BidService {
 
             // Stomp 메세지 발행 로직
             // messageService.sendPriceUpdate(auctionId, bidAmount);
+            BidSuccessedPayload bidSuccessedPayload = BidSuccessedPayload
+                    .builder()
+                    .auctionId(auctionId)
+                    .currentPrice(bidAmount.longValueExact())
+                    .currentBidderId(userId)
+                    .build();
+            auctionMessageService.sendBidSuccessed(auctionId, bidSuccessedPayload);
+
+            if (previousBidderId != -1L){
+                OutbidPayload outbidPayload = OutbidPayload
+                        .builder()
+                        .auctionId(auctionId)
+                        .myBidPrice(currentPrice)
+                        .newCurrentPrice(bidAmount)
+                        .message("누군가 더 높은 금액으로 입찰했습니다.")
+                        .build();
+                auctionMessageService.sendOutbid(previousBidderId, outbidPayload);
+            }
+
 
 
             //검증용 데이터 (Bid,Wallet 재저장용 데이터)
