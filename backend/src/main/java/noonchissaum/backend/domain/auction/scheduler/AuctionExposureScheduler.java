@@ -15,6 +15,14 @@ public class AuctionExposureScheduler {
     private final AuctionSchedulerService auctionSchedulerService;
 
     /**
+     * 진행 중인 모든 경매의 실시간 정보를 1초마다 중계합니다.
+     */
+    @Scheduled(fixedRate = 1000)
+    public void broadcastAuctions() {
+        auctionSchedulerService.broadcastActiveAuctions();
+    }
+
+    /**
      * 5분뒤 READY상태에서 RUNNING으로 전환
      */
     @Scheduled(fixedRate = 300_000)

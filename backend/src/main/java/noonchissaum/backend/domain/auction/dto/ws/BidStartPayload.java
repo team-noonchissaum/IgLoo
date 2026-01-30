@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 
 @NoArgsConstructor
 @Getter
-@Builder
 public class BidStartPayload {
     private Long userId;
     private Long auctionId;

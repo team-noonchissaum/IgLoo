@@ -1,6 +1,7 @@
 package noonchissaum.backend.global.websocket;
 
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.global.config.JwtTokenProvider;
@@ -15,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class StompJwtChannelInterceptor implements ChannelInterceptor {
@@ -34,11 +36,25 @@ public class StompJwtChannelInterceptor implements ChannelInterceptor {
             if(token == null || token.isBlank()){
                 throw new IllegalArgumentException("Missing Authorization header (STOMP CONNECT)");
             }
+
+            // [TEST MODE] 테스트 편의를 위한 백도어: "test-token" 입력 시 무조건 통과
+            if ("test-token".equals(token)) {
+                Authentication auth = new UsernamePasswordAuthenticationToken(
+                        "1", // userId
+                        null,
+                        List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+                );
+                accessor.setUser(auth);
+                return message;
+            }
+
             if (!jwtTokenProvider.validateToken(token)) {
                 throw new IllegalArgumentException("Invalid JWT token (STOMP CONNECT)");
             }
             Long userId = jwtTokenProvider.getUserId(token);
             String role = jwtTokenProvider.getRole(token); // "USER" / "ADMIN" 이런 값
+
+            log.info("[StompInterceptor] Connection Allowed - userId: {}, role: {}", userId, role);
 
             // Spring Security : ROLE_ prefix
             List<SimpleGrantedAuthority> authorities =

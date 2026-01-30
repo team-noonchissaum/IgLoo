@@ -25,6 +25,26 @@ public class AuctionSchedulerService {
     private final AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
     private final OrderService orderService;
+    private final AuctionRealtimeSnapshotService snapshotService;
+    private final AuctionMessageService auctionMessageService;
+
+    /**
+     * 진행 중인 모든 경매의 상태를 실시간으로 중계합니다. (1초 주기)
+     */
+    @Transactional(readOnly = true)
+    public void broadcastActiveAuctions() {
+        List<AuctionStatus> activeStatuses = List.of(AuctionStatus.RUNNING, AuctionStatus.DEADLINE);
+        List<Auction> activeAuctions = auctionRepository.findAllByStatusIn(activeStatuses);
+
+        for (Auction auction : activeAuctions) {
+            try {
+                var snapshot = snapshotService.getSnapshot(auction.getId());
+                auctionMessageService.sendAuctionSnapshot(auction.getId(), snapshot);
+            } catch (Exception e) {
+                log.error("Failed to broadcast auction snapshot for auctionId: {}", auction.getId(), e);
+            }
+        }
+    }
 
     /**
      * READY -> RUNNING
