@@ -37,17 +37,6 @@ public class StompJwtChannelInterceptor implements ChannelInterceptor {
                 throw new IllegalArgumentException("Missing Authorization header (STOMP CONNECT)");
             }
 
-            // [TEST MODE] 테스트 편의를 위한 백도어: "test-token" 입력 시 무조건 통과
-            if ("test-token".equals(token)) {
-                Authentication auth = new UsernamePasswordAuthenticationToken(
-                        "1", // userId
-                        null,
-                        List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
-                );
-                accessor.setUser(auth);
-                return message;
-            }
-
             if (!jwtTokenProvider.validateToken(token)) {
                 throw new IllegalArgumentException("Invalid JWT token (STOMP CONNECT)");
             }
