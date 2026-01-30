@@ -2,7 +2,6 @@ package noonchissaum.backend.domain.toss.dto.confirm;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
-import noonchissaum.backend.domain.order.dto.payment.VirtualAccount;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record TossConfirmRes(
