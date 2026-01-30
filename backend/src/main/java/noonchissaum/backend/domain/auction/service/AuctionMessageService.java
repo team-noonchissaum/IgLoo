@@ -1,6 +1,7 @@
 package noonchissaum.backend.domain.auction.service;
 
 import lombok.RequiredArgsConstructor;
+import noonchissaum.backend.domain.auction.dto.ws.AuctionExtendedPayload;
 import noonchissaum.backend.domain.auction.dto.ws.BidSuccessedPayload;
 import noonchissaum.backend.domain.auction.dto.ws.OutbidPayload;
 import noonchissaum.backend.global.dto.SocketMessageType;
@@ -41,6 +42,9 @@ public class AuctionMessageService {
     // 이전 최고 입찰자에게 OUTBID 알림
     public void sendOutbid(Long userId, OutbidPayload payload) {
         sendToUserQueue(userId, SocketMessageType.OUTBID, payload);
+    }
+    public void sendAuctionExtended(Long auctionId, AuctionExtendedPayload payload){
+        sendToAuctionTopic(auctionId, SocketMessageType.AUCTION_EXTENDED, payload);
     }
 
 

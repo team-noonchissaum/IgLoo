@@ -114,9 +114,9 @@ public class Auction extends BaseTimeEntity {
      * 마감 임박 시 단 한 번만 3분 연장
      * 입찰 시점에서 호출
      */
-    public void extendIfNeeded(LocalDateTime now) {
-        if (Boolean.TRUE.equals(this.isExtended)) return;
-        if (now.isAfter(this.endAt)) return;
+    public boolean extendIfNeeded(LocalDateTime now) {
+        if (Boolean.TRUE.equals(this.isExtended)) return false;
+        if (now.isAfter(this.endAt)) return false;
 
         long remainSeconds = Duration.between(now, this.endAt).getSeconds();
 
@@ -126,7 +126,9 @@ public class Auction extends BaseTimeEntity {
         if (remainSeconds <= windowSeconds) {
             this.endAt = this.endAt.plusMinutes(3);
             this.isExtended = true;
+            return true;
         }
+        return true;
     }
 
     /**

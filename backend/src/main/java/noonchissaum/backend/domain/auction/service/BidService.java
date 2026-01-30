@@ -46,6 +46,7 @@ public class BidService {
     private final ApplicationEventPublisher eventPublisher;
     private final AuctionRedisService auctionRedisService;
     private final AuctionMessageService auctionMessageService;
+    private final AuctionExtensionService auctionExtensionService;
 
     public void placeBid(Long auctionId, Long userId, BigDecimal bidAmount, String requestId) {
         // 1. 멱등성 체크 (락 획득 전 수행하여 불필요한 대기 방지)
@@ -108,6 +109,7 @@ public class BidService {
             redisTemplate.opsForValue().set(bidCount, String.valueOf(++bidCountInt));
 
             // 마감 시간에 대한 정보 확인 후 변경
+            auctionExtensionService.extension(auctionId);
 
             // Stomp 메세지 발행 로직
             // messageService.sendPriceUpdate(auctionId, bidAmount);
