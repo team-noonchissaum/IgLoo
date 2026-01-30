@@ -52,35 +52,17 @@ public class ChargeConfirmScheduler {
                 Long userId = chargeCheckRepository.findUser_IdById(chargeCheckId);
                 if (userId == null) continue;
 
-                // Redis 락
-                RLock userLock = redissonClient.getLock(RedisKeys.userLock(userId));
-                boolean locked = false;
-
                 try {
-                    locked = userLock.tryLock(1, 10, TimeUnit.SECONDS);
-                    if (!locked) {
-                        // 락 못잡으면 다음 스케줄에 다시 시도
-                        continue;
-                    }
+                    userLockExecutor.withUserLock(userId, () -> {
+                        // 정합성 게이트
+                        if (!taskService.checkTasks(userId)) return;
 
-                    // 정합성 체크
-                    if (!taskService.checkTasks(userId)) {
-                        continue;
-                    }
-
-                    chargeRecordService.confirmChargeTx(chargeCheckId, userId);
-
-                } finally {
-                    if (locked && userLock.isHeldByCurrentThread()) {
-                        userLock.unlock();
-                    }
+                        // DB 트랜잭션 + DB 락
+                        chargeRecordService.confirmChargeTx(chargeCheckId, userId);
+                    });
+                } catch (Exception e) {
+                    continue;
                 }
-
-            } catch (InterruptedException e) {
-                // tryLock 대기 중 인터럽트 발생 시
-                Thread.currentThread().interrupt();
-                log.warn("[AutoConfirm] interrupted chargeCheckId={}", chargeCheckId, e);
-                return;
 
             } catch (Exception e) {
                 log.error("[AutoConfirm] failed chargeCheckId={}", chargeCheckId, e);
