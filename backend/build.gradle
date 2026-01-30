@@ -1,7 +1,7 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.5.9'
-	id 'io.spring.dependency-management' version '1.1.7'
+    id 'java'
+    id 'org.springframework.boot' version '3.4.1'
+    id 'io.spring.dependency-management' version '1.1.7'
 }
 
 group = 'noonchissaum'
@@ -23,6 +23,35 @@ configurations {
 repositories {
 	mavenCentral()
 }
+ext {
+    set('springCloudVersion', "2024.0.0")
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+
+ext {
+    set('springCloudVersion', "2024.0.0")
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+
+ext {
+    set('springCloudVersion', "2024.0.2")
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
 
 dependencies {
 // 1. Web & Common
@@ -37,12 +66,12 @@ dependencies {
 
     // 3. Redis & Concurrency (입찰 담당 핵심)
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-    implementation 'org.redisson:redisson-spring-boot-starter:3.24.3' // 분산 락 구현용
+    implementation 'org.redisson:redisson-spring-boot-starter:3.27.0' // 분산 락 구현용
 
     // 4. WebSocket (실시간 중계 담당 핵심)
     implementation 'org.springframework.boot:spring-boot-starter-websocket' // STOMP 프로토콜 포함
 
-    // 5. Security & Auth (회원관리 담당 핵심)
+//     5. Security & Auth (회원관리 담당 핵심)
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client' // 구글/카카오 로그인
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5' // JWT 생성 및 검증
@@ -53,13 +82,15 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-batch' // 경매 상태 자동 업데이트
 
     // 7. Infra & External API
-    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign' // 토스페이먼츠 API 호출용
-    implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3:3.0.0' // 상품 이미지 S3 업로드
+//    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign' // 토스페이먼츠 API 호출용
+//    implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3:3.0.0' // 상품 이미지 S3 업로드
 
     // 8. Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.springframework.batch:spring-batch-test'
+
+
 }
 
 tasks.named('test') {
