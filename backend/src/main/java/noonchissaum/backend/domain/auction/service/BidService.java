@@ -99,6 +99,7 @@ public class BidService {
             final String initialBidCount = rawBidCount;
 
             userLockExecutor.withUserLocks(lockUserIds, ()->{
+
                 walletService.getBalance(userId);
 
                 // 이전 입찰자가 있을 때만 getBalance 실행
