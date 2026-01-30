@@ -98,7 +98,8 @@ public class BidService {
 
             final String initialBidCount = rawBidCount;
 
-            userLockExecutor.withUserLock(userId, ()->{
+            userLockExecutor.withUserLocks(lockUserIds, ()->{
+
                 walletService.getBalance(userId);
 
                 // 이전 입찰자가 있을 때만 getBalance 실행
@@ -156,10 +157,6 @@ public class BidService {
             throw e;
         } finally {
             // 락 해제
-            for (int i = userLocks.size() - 1; i >= 0; i--) {
-                RLock ul = userLocks.get(i);
-                if (ul.isHeldByCurrentThread()) ul.unlock();
-            }
             if (lock.isHeldByCurrentThread()){
                 lock.unlock();
             }

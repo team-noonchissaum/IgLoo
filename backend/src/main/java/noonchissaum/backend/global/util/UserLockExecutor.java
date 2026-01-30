@@ -8,6 +8,8 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -16,25 +18,44 @@ public class UserLockExecutor {
 
     private final RedissonClient redissonClient;
 
+    /**
+     * 단일 유저 락
+     */
     public void withUserLock(Long userId, Runnable runnable) {
-        RLock lock = redissonClient.getLock(RedisKeys.userLock(userId));
-        boolean locked = false;
+        withUserLocks(List.of(userId), runnable);
+    }
 
+    /**
+     * 다중 유저 락
+     */
+    public void withUserLocks(List<Long> userIds, Runnable runnable) {
+        //null , -1 , 중복 제거
+        List<Long> ids = userIds.stream()
+                .filter(id -> id != null && id != -1L)
+                .distinct()
+                .sorted(Long::compareTo)
+                .toList();
+
+        List<RLock> locks = new ArrayList<>();
         try {
-            locked = lock.tryLock(3, 10, TimeUnit.SECONDS);
-            if (!locked) {
-                throw new ApiException(ErrorCode.LOCK_ACQUISITION);
+            for (Long uid : ids) {
+                RLock lock = redissonClient.getLock(RedisKeys.userLock(uid));
+                boolean locked = lock.tryLock(3, 5, TimeUnit.SECONDS);
+                if (!locked)
+                    throw new ApiException(ErrorCode.BID_LOCK_ACQUISITION);
+                locks.add(lock);
             }
 
             runnable.run();
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
+            throw new ApiException(ErrorCode.BID_LOCK_ACQUISITION);
 
         } finally {
-            if (locked && lock.isHeldByCurrentThread()) {
-                lock.unlock();
+            for (int i = locks.size() - 1; i >= 0; i--) {
+                RLock l = locks.get(i);
+                if (l.isHeldByCurrentThread()) l.unlock();
             }
         }
     }
