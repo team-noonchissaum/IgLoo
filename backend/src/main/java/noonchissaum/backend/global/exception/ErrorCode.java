@@ -77,6 +77,12 @@ public enum ErrorCode {
     // Payment Error
     INVALID_PAYMENT_REQUEST(HttpStatus.BAD_REQUEST, "P001", "충전 금액이 올바르지 않습니다."),
 
+    // Withdrawal Error
+    WITHDRAW_MIN_AMOUNT(HttpStatus.BAD_REQUEST, "WD001", "출금 금액은 최소 10,000원 이상이어야 합니다."),
+    WITHDRAW_NOT_FOUND(HttpStatus.NOT_FOUND, "WD002", "출금 신청 내역을 찾을 수 없습니다."),
+    WITHDRAW_NOT_REQUESTED(HttpStatus.BAD_REQUEST, "WD003", "출금 승인 대기 상태가 아닙니다."),
+    WITHDRAW_NOT_CANCELABLE(HttpStatus.BAD_REQUEST, "WD004", "취소할 수 없는 출금 상태입니다."),
+
     //Lock
     LOCK_ACQUISITION(HttpStatus.TOO_MANY_REQUESTS, "L001", "락 획득에 실패했습니다. 다시 시도해주세요");
 

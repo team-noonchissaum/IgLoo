@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 @Component
 @RequiredArgsConstructor
@@ -22,14 +23,35 @@ public class UserLockExecutor {
      * 단일 유저 락
      */
     public void withUserLock(Long userId, Runnable runnable) {
-        withUserLocks(List.of(userId), runnable);
+        withUserLocks(List.of(userId), () -> {
+            runnable.run();
+            return null;
+        });
     }
 
     /**
      * 다중 유저 락
      */
     public void withUserLocks(List<Long> userIds, Runnable runnable) {
-        //null , -1 , 중복 제거
+        withUserLocks(userIds, () -> {
+            runnable.run();
+            return null;
+        });
+    }
+
+    /**
+     * Lock 안에서 작업한 값을 반환받아야 할 경우
+     */
+
+    public <T> T withUserLock(Long userId, Supplier<T> supplier) {
+        return withUserLocks(List.of(userId), supplier);
+    }
+
+    /**
+     * 다중 유저 락
+     */
+    public <T> T withUserLocks(List<Long> userIds, Supplier<T> supplier) {
+        //
         List<Long> ids = userIds.stream()
                 .filter(id -> id != null && id != -1L)
                 .distinct()
@@ -41,16 +63,14 @@ public class UserLockExecutor {
             for (Long uid : ids) {
                 RLock lock = redissonClient.getLock(RedisKeys.userLock(uid));
                 boolean locked = lock.tryLock(3, 5, TimeUnit.SECONDS);
-                if (!locked)
-                    throw new ApiException(ErrorCode.BID_LOCK_ACQUISITION);
+                if (!locked) throw new ApiException(ErrorCode.LOCK_ACQUISITION);
                 locks.add(lock);
             }
-
-            runnable.run();
+            return supplier.get();
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new ApiException(ErrorCode.BID_LOCK_ACQUISITION);
+            throw new ApiException(ErrorCode.LOCK_ACQUISITION);
 
         } finally {
             for (int i = locks.size() - 1; i >= 0; i--) {
