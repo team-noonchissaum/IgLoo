@@ -41,27 +41,26 @@ public class WithdrawalController {
     // 출금 승인
     @PostMapping("/{withdrawalId}/confirm")
     public ResponseEntity<ApiResponse<Void>> confirm(
-            @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable Long withdrawalId
     ) {
-        withdrawalService.confirmWithdrawal(userPrincipal.getUserId(), withdrawalId);
+        withdrawalService.confirmWithdrawal(withdrawalId);
         return ResponseEntity.ok(ApiResponse.success("출금 승인 성공"));
     }
 
     // 출금 거부
     @PostMapping("/{withdrawalId}/reject")
     public ResponseEntity<ApiResponse<Void>> reject(
-            @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable Long withdrawalId
     ) {
-        withdrawalService.rejectWithdrawal(userPrincipal.getUserId(), withdrawalId); 
+        withdrawalService.rejectWithdrawal(withdrawalId);
         return ResponseEntity.ok(ApiResponse.success("출금 거부 처리"));
     }
 
 
     // 승인대기 목록 조회
     @GetMapping("/requested")
-    public ResponseEntity<ApiResponse<Page<WithdrawalRes>>> requested(Pageable pageable) {
+    public ResponseEntity<ApiResponse<Page<WithdrawalRes>>> requested(
+            Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success("승인 대기 목록 조회",withdrawalService.getRequestedWithdrawals(pageable)));
     }
 

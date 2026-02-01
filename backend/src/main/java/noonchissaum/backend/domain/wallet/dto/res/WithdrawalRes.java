@@ -10,20 +10,16 @@ public record WithdrawalRes(
         Long withdrawalId,
         BigDecimal amount,
         BigDecimal feeAmount,
-        String bankName,
         WithdrawalStatus status,
-        LocalDateTime createdAt,
-        LocalDateTime processedAt
+        LocalDateTime createdAt
 ) {
     public static WithdrawalRes from(Withdrawal withdrawal) {
         return new WithdrawalRes(
                 withdrawal.getId(),
                 withdrawal.getAmount(),
                 withdrawal.getFeeAmount(),
-                withdrawal.getBankName(),
                 withdrawal.getStatus(),
-                withdrawal.getCreatedAt(),
-                withdrawal.getProcessedAt()
+                withdrawal.getCreatedAt()
         );
     }
 }

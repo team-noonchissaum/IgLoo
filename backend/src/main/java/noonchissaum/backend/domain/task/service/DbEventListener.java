@@ -6,7 +6,6 @@ import noonchissaum.backend.domain.auction.service.AuctionRecordService;
 import noonchissaum.backend.domain.auction.service.BidRecordService;
 import noonchissaum.backend.domain.auction.service.BidService;
 import noonchissaum.backend.domain.wallet.service.WalletRecordService;
-import noonchissaum.backend.domain.wallet.service.WalletTransactionRecordService;
 import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.domain.task.dto.DbUpdateEvent;
 import org.springframework.context.event.EventListener;

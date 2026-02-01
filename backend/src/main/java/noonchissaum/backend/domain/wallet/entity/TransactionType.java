@@ -15,7 +15,9 @@ public enum TransactionType {
     DEPOSIT_RETURN("보증금 반환", TransactionRefType.AUCTION),
     DEPOSIT_FORFEIT("보증금 몰수", TransactionRefType.AUCTION),
 
-    WITHDRAW("출금", TransactionRefType.WITHDRAW),
+    WITHDRAW_REQUEST("출금 신청", TransactionRefType.WITHDRAW),
+    WITHDRAW_REJECT("출금 거부", TransactionRefType.WITHDRAW),
+    WITHDRAW_CONFIRM("출금 성공", TransactionRefType.WITHDRAW),
 
     SETTLEMENT_IN("판매 정산금 지급", TransactionRefType.ORDER),
     SETTLEMENT_OUT("제품 구매", TransactionRefType.ORDER);

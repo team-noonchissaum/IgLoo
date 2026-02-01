@@ -53,7 +53,7 @@ public class WithdrawalService {
      * 출금 승인처리
      */
 
-    public void confirmWithdrawal(Long userId, Long withdrawalId) {
+    public void confirmWithdrawal(Long withdrawalId) {
         //
         Withdrawal withdrawal = withdrawalRepository.findById(withdrawalId)
                 .orElseThrow(() -> new ApiException(ErrorCode.WITHDRAW_NOT_FOUND));
@@ -73,7 +73,7 @@ public class WithdrawalService {
      * 출금 거부(반려)
      */
 
-    public void rejectWithdrawal(Long userId, Long withdrawalId) {
+    public void rejectWithdrawal(Long withdrawalId) {
         Withdrawal withdrawal = withdrawalRepository.findById(withdrawalId)
                 .orElseThrow(() -> new ApiException(ErrorCode.WITHDRAW_NOT_FOUND));
 

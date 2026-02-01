@@ -2,6 +2,7 @@ package noonchissaum.backend.domain.wallet.service;
 
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.wallet.dto.req.WithdrawalReq;
+import noonchissaum.backend.domain.wallet.entity.TransactionType;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.entity.Withdrawal;
 import noonchissaum.backend.domain.wallet.entity.WithdrawalStatus;
@@ -29,6 +30,7 @@ public class WithdrawalRecordService {
     private final WithdrawalRepository withdrawalRepository;
 
     private final StringRedisTemplate redisTemplate;
+    private final WalletTransactionRecordService walletTransactionRecordService;
 
     /**
      * 출금 요청
@@ -51,8 +53,12 @@ public class WithdrawalRecordService {
         Withdrawal saved = withdrawalRepository.save(
                 Withdrawal.create(wallet, req.amount(), FIXED_FEE, req.bankName(), req.accountNumber()));
 
+        //지갑 내역에 추가
+        walletTransactionRecordService.record(wallet, TransactionType.WITHDRAW_REQUEST,req.amount(), saved.getId());
+
         // Redis 반영
         registerAfterCommitRedisBalanceAndLockedDelta(userId, total.negate(), total);
+
 
         return saved.getId();
     }
@@ -82,6 +88,9 @@ public class WithdrawalRecordService {
 
         withdrawal.confirm();
 
+        //지갑 내역에 추가
+        walletTransactionRecordService.record(wallet, TransactionType.WITHDRAW_CONFIRM,total, withdrawal.getId());
+
         // Redis 반영
         registerAfterCommitRedisBalanceAndLockedDelta(userId, BigDecimal.ZERO, total.negate());
     }
@@ -110,6 +119,9 @@ public class WithdrawalRecordService {
         wallet.withdrawRollback(total);
 
         withdrawal.reject();
+
+        //지갑 내역에 추가
+        walletTransactionRecordService.record(wallet, TransactionType.WITHDRAW_REQUEST,total, withdrawal.getId());
 
         //Redis 반영
         registerAfterCommitRedisBalanceAndLockedDelta(userId, total, total.negate());
