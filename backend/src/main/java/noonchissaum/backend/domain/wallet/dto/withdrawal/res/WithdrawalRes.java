@@ -1,4 +1,4 @@
-package noonchissaum.backend.domain.wallet.dto.res;
+package noonchissaum.backend.domain.wallet.dto.withdrawal.res;
 
 import noonchissaum.backend.domain.wallet.entity.Withdrawal;
 import noonchissaum.backend.domain.wallet.entity.WithdrawalStatus;

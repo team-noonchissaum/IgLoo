@@ -2,8 +2,8 @@ package noonchissaum.backend.domain.wallet.service;
 
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.task.service.TaskService;
-import noonchissaum.backend.domain.wallet.dto.req.WithdrawalReq;
-import noonchissaum.backend.domain.wallet.dto.res.WithdrawalRes;
+import noonchissaum.backend.domain.wallet.dto.withdrawal.req.WithdrawalReq;
+import noonchissaum.backend.domain.wallet.dto.withdrawal.res.WithdrawalRes;
 import noonchissaum.backend.domain.wallet.entity.Withdrawal;
 import noonchissaum.backend.domain.wallet.entity.WithdrawalStatus;
 import noonchissaum.backend.domain.wallet.repository.WithdrawalRepository;
@@ -45,7 +45,7 @@ public class WithdrawalService {
      */
 
     public Page<WithdrawalRes> getMyWithdrawals(Long userId, Pageable pageable) {
-        return withdrawalRepository.findByWallet_User_IdOrderByCreatedAtDesc(userId, pageable)
+        return withdrawalRepository.findByWallet_User_Id(userId, pageable)
                 .map(WithdrawalRes::from);
     }
 
@@ -91,7 +91,7 @@ public class WithdrawalService {
      * 승인 대기 목록 조회
      */
     public Page<WithdrawalRes> getRequestedWithdrawals(Pageable pageable) {
-        return withdrawalRepository.findByStatusOrderByCreatedAtAsc(WithdrawalStatus.REQUESTED, pageable)
+        return withdrawalRepository.findByStatus(WithdrawalStatus.REQUESTED, pageable)
                 .map(WithdrawalRes::from);
     }
 }

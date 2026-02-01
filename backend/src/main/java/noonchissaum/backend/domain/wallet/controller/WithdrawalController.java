@@ -1,13 +1,15 @@
 package noonchissaum.backend.domain.wallet.controller;
 
 import lombok.RequiredArgsConstructor;
-import noonchissaum.backend.domain.wallet.dto.req.WithdrawalReq;
-import noonchissaum.backend.domain.wallet.dto.res.WithdrawalRes;
+import noonchissaum.backend.domain.wallet.dto.withdrawal.req.WithdrawalReq;
+import noonchissaum.backend.domain.wallet.dto.withdrawal.res.WithdrawalRes;
 import noonchissaum.backend.domain.wallet.service.WithdrawalService;
 import noonchissaum.backend.global.dto.ApiResponse;
 import noonchissaum.backend.global.security.UserPrincipal;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -33,8 +35,10 @@ public class WithdrawalController {
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<Page<WithdrawalRes>>> myWithdrawals(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
-            Pageable pageable
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return ResponseEntity.ok(ApiResponse.success("내 출금신청 목록 조회",withdrawalService.getMyWithdrawals(userPrincipal.getUserId(), pageable)));
     }
 
@@ -60,7 +64,10 @@ public class WithdrawalController {
     // 승인대기 목록 조회
     @GetMapping("/requested")
     public ResponseEntity<ApiResponse<Page<WithdrawalRes>>> requested(
-            Pageable pageable) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return ResponseEntity.ok(ApiResponse.success("승인 대기 목록 조회",withdrawalService.getRequestedWithdrawals(pageable)));
     }
 

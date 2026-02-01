@@ -12,9 +12,9 @@ import java.util.Optional;
 
 public interface WithdrawalRepository extends JpaRepository<Withdrawal, Long> {
 
-    Page<Withdrawal> findByWallet_User_IdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+    Page<Withdrawal> findByWallet_User_Id(Long userId, Pageable pageable);
 
-    Page<Withdrawal> findByStatusOrderByCreatedAtAsc(WithdrawalStatus status, Pageable pageable);
+    Page<Withdrawal> findByStatus(WithdrawalStatus status, Pageable pageable);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Withdrawal> findWithLockById(Long id);

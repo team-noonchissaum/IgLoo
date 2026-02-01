@@ -1,4 +1,4 @@
-package noonchissaum.backend.domain.wallet.dto.req;
+package noonchissaum.backend.domain.wallet.dto.withdrawal.req;
 
 import java.math.BigDecimal;
 

@@ -1,7 +1,7 @@
 package noonchissaum.backend.domain.wallet.service;
 
 import lombok.RequiredArgsConstructor;
-import noonchissaum.backend.domain.wallet.dto.req.WithdrawalReq;
+import noonchissaum.backend.domain.wallet.dto.withdrawal.req.WithdrawalReq;
 import noonchissaum.backend.domain.wallet.entity.TransactionType;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.entity.Withdrawal;
