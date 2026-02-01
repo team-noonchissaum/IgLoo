@@ -15,6 +15,9 @@ import noonchissaum.backend.global.exception.ErrorCode;
 import noonchissaum.backend.global.util.UserLockExecutor;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,9 +61,10 @@ public class ChargeCheckService {
     }
 
     @Transactional(readOnly = true)
-    public List<ChargeCheckRes> getUncheckedList(Long userId) {
+    public List<ChargeCheckRes> getUncheckedList(Long userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
         return chargeCheckRepository
-                .findAllByUserIdAndStatusFetchPayment(userId, CheckStatus.UNCHECKED)
+                .findAllByUserIdAndStatusFetchPayment(userId, CheckStatus.UNCHECKED, pageable)
                 .stream()
                 .map(ChargeCheckRes::from)
                 .toList();

@@ -3,7 +3,9 @@ package noonchissaum.backend.domain.order.repositroy;
 import jakarta.persistence.LockModeType;
 import noonchissaum.backend.domain.order.entity.ChargeCheck;
 import noonchissaum.backend.domain.order.entity.CheckStatus;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -31,11 +33,13 @@ public interface ChargeCheckRepository extends JpaRepository<ChargeCheck, Long> 
 
     //UNCHECKED 목록 조회
     @Query("select cc from ChargeCheck cc " +
-            "join fetch cc.payment p " +
+            "join cc.payment p " + // 'fetch' removed
             "where cc.user.id = :userId and cc.status = :status " +
             "order by cc.id desc")
-    List<ChargeCheck> findAllByUserIdAndStatusFetchPayment(@Param("userId") Long userId,
-                                                           @Param("status") CheckStatus status);
+    @EntityGraph(attributePaths = {"payment"})
+    Page<ChargeCheck> findAllByUserIdAndStatusFetchPayment(@Param("userId") Long userId,
+                                                           @Param("status") CheckStatus status,
+                                                           Pageable pageable);
 
     // 7일 지난 UNCHECKED id 목록
 

@@ -67,6 +67,15 @@ public class Wallet extends BaseTimeEntity {
         this.balance = this.balance.subtract(amount);
         this.lockedBalance = this.lockedBalance.add(amount);
     }
+
+    public void auctionDeposit(BigDecimal amount) {
+        this.balance = this.balance.subtract(amount);
+    }
+
+    public void auctionRefund(BigDecimal amount) {
+        this.balance = this.balance.add(amount);
+    }
+
     public void charge(BigDecimal amount){
         this.balance = this.balance.add(amount);
     }
