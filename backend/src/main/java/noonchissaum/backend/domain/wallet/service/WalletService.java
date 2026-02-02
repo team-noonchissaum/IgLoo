@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.service.UserService;
+import noonchissaum.backend.domain.wallet.dto.wallet.res.WalletRes;
 import noonchissaum.backend.domain.wallet.entity.TransactionType;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
@@ -97,5 +98,11 @@ public class WalletService {
                 default -> {}
             }
         });
+    }
+
+    public WalletRes getMyWallet(Long userId) {
+        Wallet wallet = walletRepository.findByUserId(userId)
+                .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+        return WalletRes.from(wallet);
     }
 }
