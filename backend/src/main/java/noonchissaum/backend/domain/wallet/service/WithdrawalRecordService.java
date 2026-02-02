@@ -2,11 +2,9 @@ package noonchissaum.backend.domain.wallet.service;
 
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.wallet.dto.withdrawal.req.WithdrawalReq;
-import noonchissaum.backend.domain.wallet.entity.TransactionType;
-import noonchissaum.backend.domain.wallet.entity.Wallet;
-import noonchissaum.backend.domain.wallet.entity.Withdrawal;
-import noonchissaum.backend.domain.wallet.entity.WithdrawalStatus;
+import noonchissaum.backend.domain.wallet.entity.*;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
+import noonchissaum.backend.domain.wallet.repository.WalletTransactionRepository;
 import noonchissaum.backend.domain.wallet.repository.WithdrawalRepository;
 import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.exception.ApiException;
@@ -31,6 +29,7 @@ public class WithdrawalRecordService {
 
     private final StringRedisTemplate redisTemplate;
     private final WalletTransactionRecordService walletTransactionRecordService;
+    private final WalletTransactionRepository walletTransactionRepository;
 
     /**
      * 출금 요청
@@ -57,7 +56,7 @@ public class WithdrawalRecordService {
         walletTransactionRecordService.record(wallet, TransactionType.WITHDRAW_REQUEST,req.amount().add(FIXED_FEE), saved.getId());
 
         // Redis 반영
-        registerAfterCommitRedisBalanceAndLockedDelta(userId, total.negate(), total);
+        registerAfterCommitRedisBalanceAndLockedDelta(userId, total, total);
 
 
         return saved.getId();
@@ -88,8 +87,13 @@ public class WithdrawalRecordService {
 
         withdrawal.confirm();
 
+        //지갑 내역에 승인으로 변경
+        WalletTransaction walletTransaction = walletTransactionRepository.findByTypeAndRefId(TransactionType.WITHDRAW_REQUEST, withdrawal.getId())
+                .orElseThrow(() -> new ApiException(ErrorCode.WITHDRAW_NOT_FOUND));
+        walletTransaction.confirmWithdrawal();
+
         //지갑 내역에 추가
-        walletTransactionRecordService.record(wallet, TransactionType.WITHDRAW_CONFIRM,total, withdrawal.getId());
+        //walletTransactionRecordService.record(wallet, TransactionType.WITHDRAW_CONFIRM,total, withdrawal.getId());
 
         // Redis 반영
         registerAfterCommitRedisBalanceAndLockedDelta(userId, BigDecimal.ZERO, total.negate());

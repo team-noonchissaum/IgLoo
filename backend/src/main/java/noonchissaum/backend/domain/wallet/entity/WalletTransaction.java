@@ -67,4 +67,11 @@ public class WalletTransaction {
 
         return tx;
     }
+
+    public void confirmWithdrawal(){
+        TransactionType type = TransactionType.WITHDRAW_CONFIRM;
+        this.type = type;
+        this.refType = type.getDefaultRefType();
+        this.memo = type.getMemo();
+    }
 }

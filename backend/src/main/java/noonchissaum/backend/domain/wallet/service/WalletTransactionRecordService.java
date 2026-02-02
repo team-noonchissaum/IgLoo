@@ -21,9 +21,10 @@ public class WalletTransactionRecordService {
             BigDecimal amount,
             Long refId
     ) {
+        BigDecimal delta = type.apply(amount);
         WalletTransaction tx = WalletTransaction.create(
                 wallet,
-                amount,
+                delta,
                 type,
                 refId
         );
