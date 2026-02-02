@@ -9,6 +9,9 @@ import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.entity.Bid;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.repository.BidRepository;
+import noonchissaum.backend.domain.notification.entity.NotificationType;
+import noonchissaum.backend.domain.notification.service.AuctionNotificationService;
+import noonchissaum.backend.domain.notification.service.NotificationService;
 import noonchissaum.backend.domain.order.service.OrderService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -29,6 +32,8 @@ public class AuctionSchedulerService {
     private final OrderService orderService;
     private final AuctionRealtimeSnapshotService snapshotService;
     private final AuctionMessageService auctionMessageService;
+    private final NotificationService notificationService;
+    private final AuctionNotificationService auctionNotificationService;
 
     /**
      * 진행 중인 모든 경매의 상태를 실시간으로 중계합니다. (1초 주기)
@@ -77,7 +82,14 @@ public class AuctionSchedulerService {
      */
     @Transactional
     public void markDeadLine() {
-        auctionRepository.markDeadlineAuctions(LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        List<Long> toDeadlineIds = auctionRepository.findRunningAuctionsToDeadline(now);
+
+        auctionRepository.markDeadlineAuctions(now);
+
+        for (Long auctionId : toDeadlineIds) {
+            auctionNotificationService.notifyImminent(auctionId);
+        }
     }
 
     /**
@@ -133,6 +145,64 @@ public class AuctionSchedulerService {
 
 
         for (Auction auction : endedAuctions) {
+            Optional<Bid> winningBid = bidRepository.findFirstByAuctionIdOrderByBidPriceDesc(auction.getId());
+            
+            if (winningBid.isPresent()) {
+                //낙찰 성공: 주문생성 + SUCCESS 변경
+                Bid winnerBid = winningBid.get();
+                // 주문생성
+                orderService.createOrder(auction, winnerBid.getBidder());
+                auctionRepository.finalizeAuctionStatus(auction.getId(), AuctionStatus.ENDED,AuctionStatus.SUCCESS);
+                
+                //알림 발송
+                String itemTitle = auction.getItem().getTitle();
+
+                // 1. 모든 참여자 조회 (중복 제거)
+                List<noonchissaum.backend.domain.user.entity.User> participants = bidRepository.findDistinctBiddersByAuctionId(auction.getId());
+                
+                for (noonchissaum.backend.domain.user.entity.User participant : participants) {
+                    if (participant.getId().equals(winnerBid.getBidder().getId())) {
+                        // 1-1. 낙찰자에게 성공 알림 (PURCHASED)
+                        notificationService.send(
+                                participant,
+                                NotificationType.PURCHASED,
+                                "축하합니다! '" + itemTitle + "' 경매에 낙찰되었습니다.",
+                                "AUCTION",
+                                auction.getId()
+                        );
+                    } else {
+                        // 1-2. 패찰자(나머지 참여자)에게 실패 알림 (NO_PURCHASE)
+                        notificationService.send(
+                                participant,
+                                NotificationType.NO_PURCHASE,
+                                "아쉽게도 '" + itemTitle + "' 경매 낙찰에 실패했습니다.",
+                                "AUCTION",
+                                auction.getId()
+                        );
+                    }
+                }
+
+                // 2. 판매자에게 판매 완료 알림 (PURCHASED)
+                notificationService.send(
+                        auction.getSeller(),
+                        NotificationType.PURCHASED,
+                        "등록하신 '" + itemTitle + "' 물품이 판매되었습니다.",
+                        "AUCTION",
+                        auction.getId()
+                );
+
+            } else {
+                //유찰 : failed
+                auctionRepository.finalizeAuctionStatus(auction.getId(), AuctionStatus.ENDED,AuctionStatus.FAILED);
+                
+                // 3. 판매자에게 유찰 알림 (NO_PURCHASE)
+                notificationService.send(
+                        auction.getSeller(),
+                        NotificationType.NO_PURCHASE,
+                        "아쉽게도 '" + auction.getItem().getTitle() + "' 경매가 유찰되었습니다.",
+                        "AUCTION",
+                        auction.getId()
+                );
             Long auctionId = auction.getId();
 
             try {

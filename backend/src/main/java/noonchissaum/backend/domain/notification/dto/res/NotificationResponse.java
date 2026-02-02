@@ -1,4 +1,4 @@
-package noonchissaum.backend.domain.notification.dto;
+package noonchissaum.backend.domain.notification.dto.res;
 
 import lombok.Builder;
 import lombok.Getter;

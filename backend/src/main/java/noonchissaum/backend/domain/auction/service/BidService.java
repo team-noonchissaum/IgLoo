@@ -12,6 +12,8 @@ import noonchissaum.backend.domain.auction.entity.Bid;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.repository.BidRepository;
 
+import noonchissaum.backend.domain.notification.entity.NotificationType;
+import noonchissaum.backend.domain.notification.service.NotificationService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.domain.task.dto.DbUpdateEvent;
@@ -47,6 +49,7 @@ public class BidService {
     private final AuctionRedisService auctionRedisService;
     private final AuctionMessageService auctionMessageService;
     private final AuctionExtensionService auctionExtensionService;
+    private final NotificationService notificationService;
 
     public void placeBid(Long auctionId, Long userId, BigDecimal bidAmount, String requestId) {
         // 1. 멱등성 체크 (락 획득 전 수행하여 불필요한 대기 방지)
@@ -122,15 +125,25 @@ public class BidService {
             auctionMessageService.sendBidSuccessed(auctionId, bidSuccessedPayload);
 
             if (previousBidderId != -1L){
+                String msg = "누군가 더 높은 금액으로 입찰했습니다.";
                 OutbidPayload outbidPayload = OutbidPayload
                         .builder()
                         .auctionId(auctionId)
                         .myBidPrice(currentPrice)
                         .newCurrentPrice(bidAmount)
-                        .message("누군가 더 높은 금액으로 입찰했습니다.")
+                        .message(msg)
                         .build();
                 auctionMessageService.sendOutbid(previousBidderId, outbidPayload);
+                notificationService.create(
+                        previousBidderId,
+                        NotificationType.OUTBID,
+                        msg,
+                        "AUCTION",
+                        auctionId
+                );
             }
+
+
 
 
 

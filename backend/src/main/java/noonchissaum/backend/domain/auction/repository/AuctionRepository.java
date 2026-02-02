@@ -81,6 +81,18 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
     )
     int markDeadlineAuctions(@Param("now") LocalDateTime now);
 
+    //deadline으로 바뀔 경매 찾기
+    @Query(
+            value = """
+        SELECT a.auction_id
+        FROM auctions a
+        WHERE a.status = 'RUNNING'
+          AND TIMESTAMPDIFF(MINUTE, :now, a.end_at) <= a.imminent_minutes
+    """,
+            nativeQuery = true
+    )
+    List<Long> findRunningAuctionsToDeadline(@Param("now") LocalDateTime now);
+
 
     @Query(
             "select a from Auction a where a.id = :auctionId " +
