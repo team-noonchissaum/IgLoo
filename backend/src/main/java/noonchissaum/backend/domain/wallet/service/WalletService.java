@@ -4,11 +4,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.service.UserService;
+import noonchissaum.backend.domain.wallet.dto.wallet.res.WalletRes;
+import noonchissaum.backend.domain.wallet.entity.TransactionType;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
 import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
+import noonchissaum.backend.global.util.UserLockExecutor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -25,6 +28,8 @@ public class WalletService {
     private final StringRedisTemplate redisTemplate;
     private final WalletRepository walletRepository;
     private final UserService userService;
+    private final UserLockExecutor userLockExecutor;
+    private final WalletTransactionRecordService walletTransactionRecordService;
 
     public void processBidWallet(Long userId, Long previousBidderId, BigDecimal bidAmount, BigDecimal currentPrice ,Long auctionId, String requestId) {
 
@@ -67,5 +72,37 @@ public class WalletService {
         User user = userService.getUserByUserId(userId);
         Wallet wallet = new Wallet(user);
         return walletRepository.save(wallet);
+    }
+
+    @Transactional
+    public void setAuctionDeposit(Long userId, Long auctionId, int amount, String caseName) {
+        BigDecimal depositAmount = new BigDecimal(amount);
+        userLockExecutor.withUserLock(userId, () -> {
+            Wallet wallet = walletRepository.findByUserId(userId)
+                    .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+
+            // 경매 등록 보증금 잔액 확인
+            if (wallet.getBalance().compareTo(depositAmount) < 0) {
+                throw new ApiException(ErrorCode.INSUFFICIENT_BALANCE);
+            }
+
+            switch (caseName) {
+                case "set" -> {
+                    wallet.auctionDeposit(depositAmount);
+                    walletTransactionRecordService.record(wallet, TransactionType.DEPOSIT_LOCK, depositAmount, auctionId);
+                }
+                case "refund" -> {
+                    wallet.auctionRefund(depositAmount);
+                    walletTransactionRecordService.record(wallet, TransactionType.DEPOSIT_RETURN, depositAmount, auctionId);
+                }
+                default -> {}
+            }
+        });
+    }
+
+    public WalletRes getMyWallet(Long userId) {
+        Wallet wallet = walletRepository.findByUserId(userId)
+                .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+        return WalletRes.from(wallet);
     }
 }

@@ -67,6 +67,35 @@ public enum ErrorCode {
 
     // Notification Error
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "알림을 찾을 수 없습니다.");
+    //Charge Error
+    CHARGE_LOCK_ACQUISITION(HttpStatus.TOO_MANY_REQUESTS, "C001", "처리에 실패했습니다. 다시 시도해주세요"),
+    CHARGE_CHECK_NOT_FOUND(HttpStatus.NOT_FOUND,"C002","충전금을 찾을 수 없습니다."),
+    CHARGE_CANCELED(HttpStatus.CONFLICT,"C003","이미 취소 처리된 충전금입니다."),
+    CHARGE_CONFIRMED(HttpStatus.CONFLICT,"C004","이미 충전 처리된 충전금입니다"),
+    NOT_FOUND_CHARGE(HttpStatus.NOT_FOUND,"C005","이미 충전 처리된 충전금입니다"),
+    REFUND_DATE_EXPIRED(HttpStatus.BAD_REQUEST,"C006","환불 가능 기간이 만료되었습니다."),
+
+    //Task Error
+    PENDING_TASK_EXISTS(HttpStatus.CONFLICT,"T001","처리에 실패했습니다. 다시 시도해주세요"),
+
+    // Payment Error
+    INVALID_PAYMENT_REQUEST(HttpStatus.BAD_REQUEST, "P001", "충전 금액이 올바르지 않습니다."),
+    NOT_FOUND_PAYMENT(HttpStatus.NOT_FOUND, "P002", "결제를 찾을 수 없습니다."),
+    INVALID_PAYMENT_STATUS(HttpStatus.BAD_REQUEST, "P003", "결제 상태가 올바르지 않습니다."),
+    ALREADY_EXISTS_PAYMENT(HttpStatus.CONFLICT, "P004", "이미 처리된 결제입니다."),
+    INVALID_PAYMENT_AMOUNT(HttpStatus.BAD_REQUEST, "P005", "결제 금액이 일치하지 않습니다."),
+    PAYMENTS_FAILED(HttpStatus.BAD_GATEWAY, "P006", "결제 승인에 실패했습니다."),
+    ALREADY_CANCELED_PAYMENT(HttpStatus.CONFLICT, "P007", "이미 취소된 결제입니다."),
+    REFUND_FAILED(HttpStatus.BAD_GATEWAY, "P008", "환불 처리에 실패했습니다."),
+
+    // Withdrawal Error
+    WITHDRAW_MIN_AMOUNT(HttpStatus.BAD_REQUEST, "WD001", "출금 금액은 최소 10,000원 이상이어야 합니다."),
+    WITHDRAW_NOT_FOUND(HttpStatus.NOT_FOUND, "WD002", "출금 신청 내역을 찾을 수 없습니다."),
+    WITHDRAW_NOT_REQUESTED(HttpStatus.BAD_REQUEST, "WD003", "출금 승인 대기 상태가 아닙니다."),
+    WITHDRAW_NOT_CANCELABLE(HttpStatus.BAD_REQUEST, "WD004", "취소할 수 없는 출금 상태입니다."),
+
+    //Lock
+    LOCK_ACQUISITION(HttpStatus.TOO_MANY_REQUESTS, "L001", "락 획득에 실패했습니다. 다시 시도해주세요");
 
     private final HttpStatus status;
     private final String code;

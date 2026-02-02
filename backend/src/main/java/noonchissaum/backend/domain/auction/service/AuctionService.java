@@ -18,14 +18,17 @@ import noonchissaum.backend.domain.item.service.ItemService;
 import noonchissaum.backend.domain.item.service.WishService;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.service.UserService;
+import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.RedisKeys;
 import org.springframework.data.domain.*;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -43,6 +46,7 @@ public class AuctionService {
     private final AuctionRealtimeSnapshotService snapshotService;
     private final AuctionQueryService auctionQueryService;
     private final AuctionIndexService auctionIndexService;
+    private final WalletService walletService;
 
 
     /**
@@ -65,6 +69,10 @@ public class AuctionService {
                 .endAt(LocalDateTime.now().plusHours(request.getAuctionDuration()))
                 .build();
         auctionRepository.save(auction);
+
+        int amount = (int) Math.min( auction.getCurrentPrice().longValue() * 0.05 , 1000);
+
+        walletService.setAuctionDeposit(userId, auction.getId(), amount, "set");
 
         auctionRedisService.setRedis(auction.getId());
 
@@ -139,18 +147,17 @@ public class AuctionService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime penaltyAt = auction.getCreatedAt().plusMinutes(5);
 
+        int amount = (int) Math.min( auction.getCurrentPrice().longValue() * 0.05 , 1000);
+
         if (now.isBefore(penaltyAt)) {
             // 5분 이내 취소 → 보증금 환불 처리
             auction.refundDeposit();
 
-            // TODO: 지갑팀 연동 시 여기서 DEPOSIT_REFUND 처리 호출
-            // walletService.depositRefund(userId, auctionId, amount);
+             walletService.setAuctionDeposit(userId, auctionId, amount, "refund");
         } else {
             // 5분 이후 취소 → 보증금 몰수 확정(패널티)
+            // 5분 이후 취소 -> 보증금 환불 없음
             auction.forfeitDeposit();
-
-            // TODO: 지갑팀 연동 시 여기서 DEPOSIT_FORFEIT 처리 호출
-            // walletService.depositForfeit(userId, auctionId, amount);
         }
 
 

@@ -50,7 +50,7 @@ public class DbEventListener {
         }
 
         //wallet 저장
-        walletRecordService.saveWalletRecord(event.userId(),event.bidAmount(),event.previousBidderId(),event.refundAmount());
+        walletRecordService.saveWalletRecord(event.userId(),event.bidAmount(),event.previousBidderId(),event.refundAmount(),event.auctionId());
 
         //추후 auction 저장 로직 추가
         auctionRecordService.saveAuction(event.auctionId(), event.userId(),event.bidAmount());

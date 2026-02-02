@@ -37,8 +37,7 @@ public class AuctionController {
     public ResponseEntity<ApiResponse<Long>> registerAuction(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @RequestBody AuctionRegisterReq request) {
-        Long userId = userPrincipal.getUserId();
-        Long auctionId = auctionService.registerAuction(userId, request);
+        Long auctionId = auctionService.registerAuction(userPrincipal.getUserId(), request);
         return ResponseEntity.created(URI.create("/api/auctions/" + auctionId))
                 .body(new ApiResponse<>("Auction registered successfully", auctionId));
     }
