@@ -2,6 +2,8 @@ package noonchissaum.backend.domain.auction.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import noonchissaum.backend.domain.auction.dto.ws.AuctionEndedPayload;
+import noonchissaum.backend.domain.auction.dto.ws.AuctionResultPayload;
 import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.entity.Bid;
@@ -95,18 +97,34 @@ public class AuctionSchedulerService {
      */
     @Transactional
     public int end(LocalDateTime now) {
-        long startMs = System.currentTimeMillis();
+        List<Long> toEndIds = auctionRepository.findIdsToEnd(AuctionStatus.DEADLINE, now);
+
         int updated = auctionRepository.endRunningAuctions(
                 AuctionStatus.DEADLINE,
                 AuctionStatus.ENDED,
                 now
         );
-        long elapsed = System.currentTimeMillis() - startMs;
 
-        if (updated > 0) {
-            log.info("[AuctionEnd] ended={} elapsedMs={}", updated, elapsed);
-        } else {
-            log.debug("[AuctionEnd] ended=0 elapsedMs={}", elapsed);
+        // 종료 이벤트 발송
+        for (Long auctionId : toEndIds) {
+            try {
+                // 스냅샷 기반으로 종료 payload 구성 (DB 접근 최소화)
+                var snap = snapshotService.getSnapshot(auctionId);
+
+                AuctionEndedPayload payload = AuctionEndedPayload.builder()
+                        .auctionId(auctionId)
+                        .winnerUserId(snap.getCurrentBidderId()) // 유찰이면 null일 수 있음
+                        .finalPrice(snap.getCurrentPrice())
+                        .bidCount(snap.getBidCount())
+                        .endedAt(now)
+                        .message(snap.getCurrentBidderId() == null ? "유찰되었습니다." : "경매가 종료되었습니다.")
+                        .build();
+
+                auctionMessageService.sendAuctionEnded(auctionId, payload);
+
+            } catch (Exception e) {
+                log.error("Failed to send AUCTION_ENDED for auctionId={}", auctionId, e);
+            }
         }
 
         return updated;
@@ -125,7 +143,7 @@ public class AuctionSchedulerService {
 
         List<Auction> endedAuctions = endedPage.getContent();
 
-        // 최고 입찰자 조회
+
         for (Auction auction : endedAuctions) {
             Optional<Bid> winningBid = bidRepository.findFirstByAuctionIdOrderByBidPriceDesc(auction.getId());
             
@@ -185,9 +203,81 @@ public class AuctionSchedulerService {
                         "AUCTION",
                         auction.getId()
                 );
+            Long auctionId = auction.getId();
+
+            try {
+                Optional<Bid> winningBid =
+                        bidRepository.findFirstByAuctionIdOrderByBidPriceDesc(auctionId);
+
+                if (winningBid.isPresent()) {
+                    Bid win = winningBid.get();
+
+                    // 1) ENDED -> SUCCESS 선점
+                    int changed = auctionRepository.finalizeAuctionStatus(
+                            auctionId,
+                            AuctionStatus.ENDED,
+                            AuctionStatus.SUCCESS
+                    );
+
+                    // 2) 선점 성공한 경우에만 주문 생성 + 이벤트 발송
+                    if (changed == 1) {
+                        // 주문 생성 (중복 방지 완료)
+                        orderService.createOrder(auction, win.getBidder());
+
+                        // 스냅샷 기반 payload 구성
+                        var snap = snapshotService.getSnapshot(auctionId);
+
+                        AuctionResultPayload payload = AuctionResultPayload.builder()
+                                .auctionId(auctionId)
+                                .result(AuctionStatus.SUCCESS.name())
+                                .winnerUserId(win.getBidder().getId())
+                                .finalPrice(snap.getCurrentPrice())
+                                .bidCount(snap.getBidCount())
+                                .decidedAt(LocalDateTime.now())
+                                .build();
+
+                        auctionMessageService.sendAuctionResult(auctionId, payload);
+                    } else {
+
+                        log.debug("[AuctionResult] skip duplicated success finalize auctionId={}", auctionId);
+                    }
+
+                } else {
+                    //  1) ENDED -> FAILED 선점
+                    int changed = auctionRepository.finalizeAuctionStatus(
+                            auctionId,
+                            AuctionStatus.ENDED,
+                            AuctionStatus.FAILED
+                    );
+
+                    //  2) 선점 성공한 경우에만 이벤트 발송
+                    if (changed == 1) {
+                        var snap = snapshotService.getSnapshot(auctionId);
+
+                        AuctionResultPayload payload = AuctionResultPayload.builder()
+                                .auctionId(auctionId)
+                                .result(AuctionStatus.FAILED.name())
+                                .winnerUserId(null)
+                                .finalPrice(null)
+                                .bidCount(snap.getBidCount())
+                                .decidedAt(LocalDateTime.now())
+                                .build();
+
+                        auctionMessageService.sendAuctionResult(auctionId, payload);
+                    } else {
+                        log.debug("[AuctionResult] skip duplicated failed finalize auctionId={}", auctionId);
+                    }
+                }
+
+            } catch (Exception e) {
+                // 한 건 실패해도 다음 경매 계속 처리
+                log.error("Failed to finalize result for auctionId={}", auctionId, e);
             }
         }
 
+
+
     }
+
 
 }
