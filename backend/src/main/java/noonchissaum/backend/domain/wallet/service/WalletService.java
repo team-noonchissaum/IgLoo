@@ -80,6 +80,11 @@ public class WalletService {
             Wallet wallet = walletRepository.findByUserId(userId)
                     .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
 
+            // 경매 등록 보증금 잔액 확인
+            if (wallet.getBalance().compareTo(depositAmount) < 0) {
+                throw new ApiException(ErrorCode.INSUFFICIENT_BALANCE);
+            }
+
             switch (caseName) {
                 case "set" -> {
                     wallet.auctionDeposit(depositAmount);
