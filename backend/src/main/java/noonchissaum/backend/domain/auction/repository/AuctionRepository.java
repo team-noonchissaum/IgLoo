@@ -4,10 +4,7 @@ import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -16,13 +13,19 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface AuctionRepository extends JpaRepository<Auction, Long> {
+public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpecificationExecutor<Auction> {
 
     @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
     Page<Auction> findAllByStatus(AuctionStatus status, Pageable pageable);
 
     @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
     Page<Auction> findAll(Pageable pageable);
+
+    List<Auction> findAllByStatusIn(List<AuctionStatus> statuses);
+
+    // Redis id 리스트 상세 로딩용
+    @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
+    List<Auction> findByIdIn(List<Long> ids);
 
     /**
      *스케줄 관련 상태값 변경쿼리
@@ -78,6 +81,18 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
     )
     int markDeadlineAuctions(@Param("now") LocalDateTime now);
 
+    //deadline으로 바뀔 경매 찾기
+    @Query(
+            value = """
+        SELECT a.auction_id
+        FROM auctions a
+        WHERE a.status = 'RUNNING'
+          AND TIMESTAMPDIFF(MINUTE, :now, a.end_at) <= a.imminent_minutes
+    """,
+            nativeQuery = true
+    )
+    List<Long> findRunningAuctionsToDeadline(@Param("now") LocalDateTime now);
+
 
     @Query(
             "select a from Auction a where a.id = :auctionId " +
@@ -98,5 +113,11 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
             @Param("toStatus") AuctionStatus toStatus
     );
 
+    @Query("""
+select a.id from Auction a
+where a.status = :status
+  and a.endAt <= :now
+""")
+    List<Long> findIdsToEnd(@Param("status") AuctionStatus status, @Param("now") LocalDateTime now);
 }
 

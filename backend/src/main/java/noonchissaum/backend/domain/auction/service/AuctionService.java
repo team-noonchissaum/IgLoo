@@ -2,10 +2,13 @@ package noonchissaum.backend.domain.auction.service;
 
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.auction.dto.req.AuctionRegisterReq;
+import noonchissaum.backend.domain.auction.dto.res.AuctionListRes;
 import noonchissaum.backend.domain.auction.dto.res.AuctionRes;
 import noonchissaum.backend.domain.auction.entity.Auction;
+import noonchissaum.backend.domain.auction.entity.AuctionSortType;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
+import noonchissaum.backend.domain.auction.spec.AuctionSpecs;
 import noonchissaum.backend.domain.category.entity.Category;
 
 import noonchissaum.backend.domain.category.service.CategoryService;
@@ -17,8 +20,7 @@ import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.RedisKeys;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +43,9 @@ public class AuctionService {
     private final WishService wishService;
     private final StringRedisTemplate redisTemplate;
     private final AuctionRedisService auctionRedisService;
+    private final AuctionRealtimeSnapshotService snapshotService;
+    private final AuctionQueryService auctionQueryService;
+    private final AuctionIndexService auctionIndexService;
     private final WalletService walletService;
 
 
@@ -70,6 +75,11 @@ public class AuctionService {
         walletService.setAuctionDeposit(userId, auction.getId(), amount, "set");
 
         auctionRedisService.setRedis(auction.getId());
+
+        // price index 초기값 세팅
+        Long categoryId = category.getId();
+        auctionIndexService.updatePriceIndex(auction.getId(), categoryId, auction.getCurrentPrice());
+
         return auction.getId();
     }
 
@@ -100,11 +110,10 @@ public class AuctionService {
      * 경매 상세 정보를 조회합니다.
      */
     public AuctionRes getAuctionDetail(Long userId, Long auctionId) {
-        User user = userService.getUserByUserId(userId);
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new IllegalArgumentException("Auction not found"));
         boolean isWished = wishService.isWished(userId, auction.getItem().getId());
-        return AuctionRes.from(auction);
+        return AuctionRes.from(auction, isWished);
     }
 
     /**
@@ -189,5 +198,61 @@ public class AuctionService {
 
         redisTemplate.opsForValue().set(RedisKeys.auctionEndTime(auctionId), endTime.toString());
         redisTemplate.opsForValue().set(RedisKeys.auctionIsExtended(auctionId), "true");
+    }
+    @Transactional(readOnly = true)
+    public Page<AuctionListRes> searchAuctionList(
+            Long userId,
+            AuctionStatus status,
+            Long categoryId,
+            String keyword,
+            AuctionSortType sort,
+            int page,
+            int size
+    ) {
+        //  PRICE 정렬 → Redis ZSET 기반 QueryService로 분기
+        if (sort != null && sort.isRedisPriceSort()) {
+            // categoryId 없으면 결과를 비우거나 예외 처리(선택)
+            if (categoryId == null) {
+                return new PageImpl<>(List.of(), PageRequest.of(page, size), 0);
+            }
+            //category + price 정확이므로 status/keyword는 null만 허용하거나(엄격),
+            if (status != null || (keyword != null && !keyword.isBlank())) {
+                // category+price만 정확 지원
+                return new PageImpl<>(List.of(), PageRequest.of(page, size), 0);
+            }
+
+            return auctionQueryService.searchByCategoryPriceSorted(userId, categoryId, sort, page, size);
+        }
+
+
+        Pageable pageable = PageRequest.of(page, size, sort == null ? Sort.by(Sort.Direction.DESC,
+                "startAt") : sort.toSort());
+
+        var spec = AuctionSpecs.filter(status, categoryId, keyword);
+
+        Page<Auction> auctions = auctionRepository.findAll(spec, pageable);
+
+        // 찜 여부 미리 계산
+        List<Long> itemIds = auctions.getContent().stream()
+                .map(a -> a.getItem().getId())
+                .distinct()
+                .toList();
+
+        Set<Long> wishedItemIds = wishService.getWishedItemIds(userId, itemIds);
+
+        return auctions.map(a -> {
+            boolean isWished = wishedItemIds.contains(a.getItem().getId());
+            AuctionListRes base = AuctionListRes.from(a, isWished);
+
+            return snapshotService.getSnapshotIfPresent(a.getId())
+                    .map(snap -> base.withRealtime(
+
+                            snap.getCurrentPrice(),
+                            snap.getBidCount(),
+                            snap.getEndAt()
+
+                    ))
+                    .orElse(base);
+        });
     }
 }

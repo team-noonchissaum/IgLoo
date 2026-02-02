@@ -68,7 +68,8 @@ public class SecurityConfig {
                         // auction,wish test
                         .requestMatchers(
                                 "/api/auctions/**",
-                                "/api/item/**"
+                                "/api/item/**",
+                                "/ws/**"
                         ).permitAll()
 
 
