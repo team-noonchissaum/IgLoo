@@ -9,7 +9,7 @@ public enum TransactionType {
     CHARGE("충전", TransactionRefType.CHARGE),
 
     BID_HOLD("입찰 홀딩", TransactionRefType.BID),
-    BID_RELEASE("입찰 해제/환급", TransactionRefType.BID),
+    BID_RELEASE("입찰 취소", TransactionRefType.BID),
 
     DEPOSIT_LOCK("보증금 락", TransactionRefType.AUCTION),
     DEPOSIT_RETURN("보증금 반환", TransactionRefType.AUCTION),

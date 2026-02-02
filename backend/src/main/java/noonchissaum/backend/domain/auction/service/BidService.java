@@ -138,8 +138,6 @@ public class BidService {
                 redisTemplate.expire(infoKey, Duration.ofMinutes(10));
                 redisTemplate.opsForSet().add(RedisKeys.pendingBidRequestsSet(), requestId);
 
-                redisTemplate.opsForValue().set(requestId, bidAmount+"");
-
                 String userPendingKey = RedisKeys.pendingUser(userId);
                 redisTemplate.opsForSet().add(userPendingKey, requestId);
                 if (previousBidderId != null && previousBidderId != -1L) {

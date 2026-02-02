@@ -13,6 +13,7 @@ import noonchissaum.backend.global.util.UserLockExecutor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +28,7 @@ public class WithdrawalService {
      * 출금 승인 요청
      */
 
+    @Transactional
     public WithdrawalRes requestWithdrawal(Long userId, WithdrawalReq req) {
         return userLockExecutor.withUserLock(userId, () -> {
             if (!taskService.checkTasks(userId)) {
@@ -53,6 +55,7 @@ public class WithdrawalService {
      * 출금 승인처리
      */
 
+    @Transactional
     public void confirmWithdrawal(Long withdrawalId) {
         //
         Withdrawal withdrawal = withdrawalRepository.findById(withdrawalId)
@@ -73,6 +76,7 @@ public class WithdrawalService {
      * 출금 거부(반려)
      */
 
+    @Transactional
     public void rejectWithdrawal(Long withdrawalId) {
         Withdrawal withdrawal = withdrawalRepository.findById(withdrawalId)
                 .orElseThrow(() -> new ApiException(ErrorCode.WITHDRAW_NOT_FOUND));

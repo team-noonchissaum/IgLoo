@@ -34,20 +34,28 @@ public class TestDataInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        // 유저 2명 (판매자/입찰자A)
-        User seller = ensureUser("test@email.com", "password123!");
-        User bidderA = ensureUser("test@email.com", "password123!");
+/*        // 유저 2명 (판매자 / 입찰자)
+        User seller = ensureUser(
+                "seller@test.com",
+                "seller"
+        );
+
+        User bidderA = ensureUser(
+                "bidderA@test.com",
+                "bidderA"
+        );*/
 
         // 카테고리 1개
         Category category = categoryRepository.findByName("test-category")
                 .orElseGet(() -> categoryRepository.save(new Category("test-category", null)));
 
-        // 옥션 3개 + 각 옥션마다 bidderA가 6/12/20개의 입찰 생성
+        /*// 옥션 3개 + 각 옥션마다 bidderA가 6/12/20개의 입찰 생성
         long suffix = System.currentTimeMillis();
 
         createAuctionWithBids(seller, bidderA, category, suffix, 1, 6, 10_000);
         createAuctionWithBids(seller, bidderA, category, suffix, 2, 12, 20_000);
         createAuctionWithBids(seller, bidderA, category, suffix, 3, 20, 30_000);
+        createAuctionWithBids(seller, bidderA, category, suffix, 4, 0, 30_000);*/
     }
 
     private void createAuctionWithBids(

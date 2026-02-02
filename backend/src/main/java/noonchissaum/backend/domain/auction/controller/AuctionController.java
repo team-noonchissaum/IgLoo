@@ -6,11 +6,13 @@ import noonchissaum.backend.domain.auction.dto.res.AuctionRes;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.service.AuctionService;
 import noonchissaum.backend.global.dto.ApiResponse;
+import noonchissaum.backend.global.security.UserPrincipal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -31,9 +33,9 @@ public class AuctionController {
      */
     @PostMapping
     public ResponseEntity<ApiResponse<Long>> registerAuction(
-            @RequestHeader(value = "X-User-Id", required = false, defaultValue = "1") Long userId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
             @RequestBody AuctionRegisterReq request) {
-        Long auctionId = auctionService.registerAuction(userId, request);
+        Long auctionId = auctionService.registerAuction(userPrincipal.getUserId(), request);
         return ResponseEntity.created(URI.create("/api/auctions/" + auctionId))
                 .body(new ApiResponse<>("Auction registered successfully", auctionId));
     }

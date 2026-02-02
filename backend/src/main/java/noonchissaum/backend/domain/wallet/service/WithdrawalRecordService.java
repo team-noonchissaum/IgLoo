@@ -54,7 +54,7 @@ public class WithdrawalRecordService {
                 Withdrawal.create(wallet, req.amount(), FIXED_FEE, req.bankName(), req.accountNumber()));
 
         //지갑 내역에 추가
-        walletTransactionRecordService.record(wallet, TransactionType.WITHDRAW_REQUEST,req.amount(), saved.getId());
+        walletTransactionRecordService.record(wallet, TransactionType.WITHDRAW_REQUEST,req.amount().add(FIXED_FEE), saved.getId());
 
         // Redis 반영
         registerAfterCommitRedisBalanceAndLockedDelta(userId, total.negate(), total);
