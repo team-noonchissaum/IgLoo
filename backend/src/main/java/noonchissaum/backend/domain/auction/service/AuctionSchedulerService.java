@@ -11,7 +11,6 @@ import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.repository.BidRepository;
 import noonchissaum.backend.domain.notification.entity.NotificationType;
 import noonchissaum.backend.domain.notification.service.AuctionNotificationService;
-import noonchissaum.backend.domain.notification.service.NotificationService;
 import noonchissaum.backend.domain.order.service.OrderService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -32,7 +31,6 @@ public class AuctionSchedulerService {
     private final OrderService orderService;
     private final AuctionRealtimeSnapshotService snapshotService;
     private final AuctionMessageService auctionMessageService;
-    private final NotificationService notificationService;
     private final AuctionNotificationService auctionNotificationService;
 
     /**
@@ -135,149 +133,136 @@ public class AuctionSchedulerService {
      */
     @Transactional
     public void result() {
-        // ENDED 상태인 경매를 페이지 단위로 가져옴
+        // ENDED 상태인 경매를 페이지 단위로 가져옴 (필요하면 while로 페이지 반복 가능)
         Page<Auction> endedPage = auctionRepository.findAllByStatus(
                 AuctionStatus.ENDED,
-                PageRequest.of(0,100)
+                PageRequest.of(0, 100)
         );
 
         List<Auction> endedAuctions = endedPage.getContent();
 
-
         for (Auction auction : endedAuctions) {
-            Optional<Bid> winningBid = bidRepository.findFirstByAuctionIdOrderByBidPriceDesc(auction.getId());
-            
-            if (winningBid.isPresent()) {
-                //낙찰 성공: 주문생성 + SUCCESS 변경
-                Bid winnerBid = winningBid.get();
-                // 주문생성
-                orderService.createOrder(auction, winnerBid.getBidder());
-                auctionRepository.finalizeAuctionStatus(auction.getId(), AuctionStatus.ENDED,AuctionStatus.SUCCESS);
-                
-                //알림 발송
-                String itemTitle = auction.getItem().getTitle();
-
-                // 1. 모든 참여자 조회 (중복 제거)
-                List<noonchissaum.backend.domain.user.entity.User> participants = bidRepository.findDistinctBiddersByAuctionId(auction.getId());
-                
-                for (noonchissaum.backend.domain.user.entity.User participant : participants) {
-                    if (participant.getId().equals(winnerBid.getBidder().getId())) {
-                        // 1-1. 낙찰자에게 성공 알림 (PURCHASED)
-                        notificationService.send(
-                                participant,
-                                NotificationType.PURCHASED,
-                                "축하합니다! '" + itemTitle + "' 경매에 낙찰되었습니다.",
-                                "AUCTION",
-                                auction.getId()
-                        );
-                    } else {
-                        // 1-2. 패찰자(나머지 참여자)에게 실패 알림 (NO_PURCHASE)
-                        notificationService.send(
-                                participant,
-                                NotificationType.NO_PURCHASE,
-                                "아쉽게도 '" + itemTitle + "' 경매 낙찰에 실패했습니다.",
-                                "AUCTION",
-                                auction.getId()
-                        );
-                    }
-                }
-
-                // 2. 판매자에게 판매 완료 알림 (PURCHASED)
-                notificationService.send(
-                        auction.getSeller(),
-                        NotificationType.PURCHASED,
-                        "등록하신 '" + itemTitle + "' 물품이 판매되었습니다.",
-                        "AUCTION",
-                        auction.getId()
-                );
-
-            } else {
-                //유찰 : failed
-                auctionRepository.finalizeAuctionStatus(auction.getId(), AuctionStatus.ENDED,AuctionStatus.FAILED);
-                
-                // 3. 판매자에게 유찰 알림 (NO_PURCHASE)
-                notificationService.send(
-                        auction.getSeller(),
-                        NotificationType.NO_PURCHASE,
-                        "아쉽게도 '" + auction.getItem().getTitle() + "' 경매가 유찰되었습니다.",
-                        "AUCTION",
-                        auction.getId()
-                );
             Long auctionId = auction.getId();
 
             try {
-                Optional<Bid> winningBid =
+                // 1) 최고 입찰자 조회 (한 번만)
+                Optional<Bid> winningBidOpt =
                         bidRepository.findFirstByAuctionIdOrderByBidPriceDesc(auctionId);
 
-                if (winningBid.isPresent()) {
-                    Bid win = winningBid.get();
+                String itemTitle = auction.getItem().getTitle();
 
-                    // 1) ENDED -> SUCCESS 선점
+                if (winningBidOpt.isPresent()) {
+                    // ===== 낙찰(SUCCESS) 케이스 =====
+                    Bid winnerBid = winningBidOpt.get();
+
+                    // 2) ENDED -> SUCCESS 선점 (중복 처리 방지 핵심)
                     int changed = auctionRepository.finalizeAuctionStatus(
                             auctionId,
                             AuctionStatus.ENDED,
                             AuctionStatus.SUCCESS
                     );
 
-                    // 2) 선점 성공한 경우에만 주문 생성 + 이벤트 발송
-                    if (changed == 1) {
-                        // 주문 생성 (중복 방지 완료)
-                        orderService.createOrder(auction, win.getBidder());
-
-                        // 스냅샷 기반 payload 구성
-                        var snap = snapshotService.getSnapshot(auctionId);
-
-                        AuctionResultPayload payload = AuctionResultPayload.builder()
-                                .auctionId(auctionId)
-                                .result(AuctionStatus.SUCCESS.name())
-                                .winnerUserId(win.getBidder().getId())
-                                .finalPrice(snap.getCurrentPrice())
-                                .bidCount(snap.getBidCount())
-                                .decidedAt(LocalDateTime.now())
-                                .build();
-
-                        auctionMessageService.sendAuctionResult(auctionId, payload);
-                    } else {
-
+                    if (changed != 1) {
                         log.debug("[AuctionResult] skip duplicated success finalize auctionId={}", auctionId);
+                        continue;
                     }
 
+                    // 3) 선점 성공한 경우에만 주문 생성
+                    orderService.createOrder(auction, winnerBid.getBidder());
+
+                    // 4) WS 결과 이벤트 발송
+                    var snap = snapshotService.getSnapshot(auctionId);
+
+                    AuctionResultPayload wsPayload = AuctionResultPayload.builder()
+                            .auctionId(auctionId)
+                            .result(AuctionStatus.SUCCESS.name())
+                            .winnerUserId(winnerBid.getBidder().getId())
+                            .finalPrice(snap.getCurrentPrice())
+                            .bidCount(snap.getBidCount())
+                            .decidedAt(LocalDateTime.now())
+                            .build();
+
+                    auctionMessageService.sendAuctionResult(auctionId, wsPayload);
+
+                    // 5) 알림 발송
+                    // 5-1) 참여자(입찰자) 조회 (중복 제거)
+                    List<noonchissaum.backend.domain.user.entity.User> participants =
+                            bidRepository.findDistinctBiddersByAuctionId(auctionId);
+
+                    for (noonchissaum.backend.domain.user.entity.User participant : participants) {
+                        if (participant.getId().equals(winnerBid.getBidder().getId())) {
+                            // 낙찰자 알림 (PURCHASED)
+                            auctionNotificationService.sendNotification(
+                                    participant.getId(),
+                                    NotificationType.PURCHASED,
+                                    "축하합니다! '" + itemTitle + "' 경매에 낙찰되었습니다.",
+                                    "AUCTION",
+                                    auctionId
+                            );
+                        } else {
+                            // 패찰자 알림 (NO_PURCHASE)
+                            auctionNotificationService.sendNotification(
+                                    participant.getId(),
+                                    NotificationType.NO_PURCHASE,
+                                    "아쉽게도 '" + itemTitle + "' 경매 낙찰에 실패했습니다.",
+                                    "AUCTION",
+                                    auctionId
+                            );
+                        }
+                    }
+
+                    // 5-2) 판매자 알림 (판매 완료)
+                    auctionNotificationService.sendNotification(
+                            auctionId,
+                            NotificationType.PURCHASED,
+                            "등록하신 '" + itemTitle + "' 물품이 판매되었습니다.",
+                            "AUCTION",
+                            auctionId
+                    );
+
                 } else {
-                    //  1) ENDED -> FAILED 선점
+                    // ===== 유찰(FAILED) 케이스 =====
+
+                    // 2) ENDED -> FAILED 선점
                     int changed = auctionRepository.finalizeAuctionStatus(
                             auctionId,
                             AuctionStatus.ENDED,
                             AuctionStatus.FAILED
                     );
 
-                    //  2) 선점 성공한 경우에만 이벤트 발송
-                    if (changed == 1) {
-                        var snap = snapshotService.getSnapshot(auctionId);
-
-                        AuctionResultPayload payload = AuctionResultPayload.builder()
-                                .auctionId(auctionId)
-                                .result(AuctionStatus.FAILED.name())
-                                .winnerUserId(null)
-                                .finalPrice(null)
-                                .bidCount(snap.getBidCount())
-                                .decidedAt(LocalDateTime.now())
-                                .build();
-
-                        auctionMessageService.sendAuctionResult(auctionId, payload);
-                    } else {
+                    if (changed != 1) {
                         log.debug("[AuctionResult] skip duplicated failed finalize auctionId={}", auctionId);
+                        continue;
                     }
+
+                    // 3) WS 결과 이벤트 발송 (유찰)
+                    var snap = snapshotService.getSnapshot(auctionId);
+
+                    AuctionResultPayload wsPayload = AuctionResultPayload.builder()
+                            .auctionId(auctionId)
+                            .result(AuctionStatus.FAILED.name())
+                            .winnerUserId(null)
+                            .finalPrice(null)
+                            .bidCount(snap.getBidCount())
+                            .decidedAt(LocalDateTime.now())
+                            .build();
+
+                    auctionMessageService.sendAuctionResult(auctionId, wsPayload);
+
+                    // 4) 판매자 유찰 알림 (NO_PURCHASE)
+                    auctionNotificationService.sendNotification(
+                            auctionId,
+                            NotificationType.NO_PURCHASE,
+                            "아쉽게도 '" + itemTitle + "' 경매가 유찰되었습니다.",
+                            "AUCTION",
+                            auctionId
+                    );
                 }
 
             } catch (Exception e) {
                 // 한 건 실패해도 다음 경매 계속 처리
                 log.error("Failed to finalize result for auctionId={}", auctionId, e);
-            }
+                }
+         }
         }
-
-
-
     }
-
-
-}

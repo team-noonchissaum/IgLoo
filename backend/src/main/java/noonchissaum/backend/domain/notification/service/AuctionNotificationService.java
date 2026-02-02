@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.repository.BidRepository;
 import noonchissaum.backend.domain.auction.service.AuctionMessageService;
+import noonchissaum.backend.domain.notification.dto.res.NotificationResponse;
 import noonchissaum.backend.domain.notification.dto.ws.NotificationPayload;
 import noonchissaum.backend.domain.notification.entity.Notification;
 import noonchissaum.backend.domain.notification.entity.NotificationType;
@@ -60,6 +61,21 @@ public class AuctionNotificationService {
             );
             auctionMessageService.sendToUserQueue(userId, noonchissaum.backend.global.dto.SocketMessageType.NOTIFICATION, payload);
         }
+    }
+
+    @Transactional
+    public void sendNotification(Long userId, NotificationType type,String message, String refType, Long refId) {
+        Notification saved = notificationService.create(userId,type,message,refType,refId);
+
+        NotificationPayload payload = new NotificationPayload(
+                saved.getId(),
+                saved.getType().name(),
+                saved.getMessage(),
+                saved.getRefType(),
+                saved.getRefId(),
+                saved.getCreatedAt()
+        );
+        auctionMessageService.sendToUserQueue(userId, noonchissaum.backend.global.dto.SocketMessageType.NOTIFICATION, payload);
     }
 }
 

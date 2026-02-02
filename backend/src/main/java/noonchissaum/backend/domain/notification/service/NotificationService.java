@@ -1,6 +1,7 @@
 package noonchissaum.backend.domain.notification.service;
 
 import lombok.RequiredArgsConstructor;
+import noonchissaum.backend.domain.auction.service.AuctionMessageService;
 import noonchissaum.backend.domain.notification.dto.res.NotificationResponse;
 import noonchissaum.backend.domain.notification.entity.Notification;
 import noonchissaum.backend.domain.notification.entity.NotificationType;
@@ -23,10 +24,11 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserService userService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final AuctionMessageService auctionMessageService;
 
     /**
      * 상위 입찰자 변경 알림 생성
-     * */
+     */
     @Transactional
     public Notification create(Long userId, NotificationType type, String message, String refType, Long refId){
         User user = userService.getUserByUserId(userId);
@@ -91,31 +93,4 @@ public class NotificationService {
     public long countUnread(Long userId) {
         return notificationRepository.countByUser_IdAndReadAtIsNull(userId);
     }
-
-
-
-    /**
-     * 경매 종료시 상태값에 따른 알림 발송
-     */
-    @Transactional
-    public void send(User receiver, NotificationType notificationType, String message, String refType, Long refId) {
-        //알림 저장
-        Notification notification = Notification.builder()
-                .user(receiver)
-                .type(notificationType)
-                .message(message)
-                .refType(refType)
-                .refId(refId)
-                .build();
-        notificationRepository.save(notification);
-
-        //websocket 전송
-        NotificationResponse notificationResponse = NotificationResponse.from(notification);
-        messagingTemplate.convertAndSendToUser(
-                receiver.getEmail(),
-                "/queue/notifications",
-                notificationResponse
-        );
-    }
-
 }
