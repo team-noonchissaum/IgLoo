@@ -31,12 +31,13 @@ public class AdminController {
      */
 
     @GetMapping("/reports")
-    public ResponseEntity<Page<AdminReportListRes>> getReports(
+    public ResponseEntity<ApiResponse<Page<AdminReportListRes>>> getReports(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String targetType,
             Pageable pageable
     ) {
-        return ResponseEntity.ok(adminService.getReports(status, targetType, pageable));
+        Page<AdminReportListRes> result = adminService.getReports(status, targetType, pageable);
+        return ResponseEntity.ok(ApiResponse.success("신고 목록 조회 성공", result));
     }
 
     /**
@@ -44,8 +45,9 @@ public class AdminController {
      */
 
     @GetMapping("/reports/{reportId}")
-    public ResponseEntity<AdminReportDetailRes> getReportDetail(@PathVariable Long reportId) {
-        return ResponseEntity.ok(adminService.getReportDetail(reportId));
+    public ResponseEntity<ApiResponse<AdminReportDetailRes>> getReportDetail(@PathVariable Long reportId) {
+        AdminReportDetailRes result = adminService.getReportDetail(reportId);
+        return ResponseEntity.ok(ApiResponse.success("신고 상세 조회 성공", result));
     }
 
     /**
@@ -53,12 +55,12 @@ public class AdminController {
      */
 
     @PatchMapping("/reports/{reportId}")
-    public ResponseEntity<Void> processReport(
+    public ResponseEntity<ApiResponse<Void>> processReport(
             @PathVariable Long reportId,
             @Valid @RequestBody AdminReportProcessReq req
     ) {
         adminService.processReport(reportId, req);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success("신고 처리 완료"));
     }
 
     /* ================== 통계 ====================== */
@@ -68,10 +70,11 @@ public class AdminController {
      */
 
     @GetMapping("/statistics")
-    public ResponseEntity<AdminStatisticsRes> getStatistics(
+    public ResponseEntity<ApiResponse<AdminStatisticsRes>> getStatistics(
             @RequestParam(required = false) String date
     ) {
-        return ResponseEntity.ok(adminService.getDailyStatistics(date));
+        AdminStatisticsRes result = adminService.getDailyStatistics(date);
+        return ResponseEntity.ok(ApiResponse.success("통계 조회 성공", result));
     }
 
     /* ================= 사용자 관리 ================= */
@@ -81,12 +84,13 @@ public class AdminController {
      */
 
     @GetMapping("/users")
-    public ResponseEntity<Page<AdminUserListRes>> getUsers(
+    public ResponseEntity<ApiResponse<Page<AdminUserListRes>>> getUsers(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String keyword,
             Pageable pageable
     ) {
-        return ResponseEntity.ok(adminService.getUsers(status, keyword, pageable));
+        Page<AdminUserListRes> result = adminService.getUsers(status, keyword, pageable);
+        return ResponseEntity.ok(ApiResponse.success("사용자 목록 조회 성공", result));
     }
 
     /**
@@ -94,11 +98,12 @@ public class AdminController {
      */
 
     @PatchMapping("/users/{userId}/block")
-    public ResponseEntity<AdminBlockUserRes> blockUser(
+    public ResponseEntity<ApiResponse<AdminBlockUserRes>> blockUser(
             @PathVariable Long userId,
             @Valid @RequestBody AdminBlockUserReq req
     ) {
-        return ResponseEntity.ok(adminService.blockUser(userId, req.getReason()));
+        AdminBlockUserRes result = adminService.blockUser(userId, req.getReason());
+        return ResponseEntity.ok(ApiResponse.success("사용자 차단 완료", result));
     }
 
     /**
@@ -106,7 +111,7 @@ public class AdminController {
      */
 
     @PatchMapping("/users/{userId}/unblock")
-    public ResponseEntity<ApiResponse> unblockUser(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponse<Void>> unblockUser(@PathVariable Long userId) {
         adminService.unblockUser(userId);
         return ResponseEntity.ok(ApiResponse.success("사용자 차단 해제 완료"));
     }
@@ -118,17 +123,17 @@ public class AdminController {
      */
 
     @GetMapping("/items/blocked")
-    public ResponseEntity<Page<AdminItemListRes>> getBlockedItems(Pageable pageable) {
-        return ResponseEntity.ok(adminService.getBlockedItems(pageable));
+    public ResponseEntity<ApiResponse<Page<AdminItemListRes>>> getBlockedItems(Pageable pageable) {
+        Page<AdminItemListRes> result = adminService.getBlockedItems(pageable);
+        return ResponseEntity.ok(ApiResponse.success("차단된 게시글 목록 조회 성공", result));
     }
 
     /**
      * 차단된 게시글 복구
      */
     @PatchMapping("/items/{itemId}/restore")
-    public ResponseEntity<ApiResponse> restoreItem(@PathVariable Long itemId) {
+    public ResponseEntity<ApiResponse<Void>> restoreItem(@PathVariable Long itemId) {
         adminService.restoreItem(itemId);
         return ResponseEntity.ok(ApiResponse.success("차단된 게시글 복구 완료"));
     }
-
 }
