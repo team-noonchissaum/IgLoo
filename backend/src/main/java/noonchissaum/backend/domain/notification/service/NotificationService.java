@@ -25,7 +25,7 @@ public class NotificationService {
     private final UserService userService;
 
     /**
-     * 상위 입찰자 변경 알림 생성
+     * 알림 생성
      */
     @Transactional
     public Notification create(Long userId, NotificationType type, String message, String refType, Long refId){
