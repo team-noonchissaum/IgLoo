@@ -1,0 +1,71 @@
+@baseUrl = http://localhost:8080
+
+# 1. 로그인
+# username과 password를 실제 테스트 계정 정보로 변경해주세요.
+### 로컬 로그인 (토큰 저장)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "1234",
+  "authType": "LOCAL"
+}
+
+> {%
+    client.global.set("accessToken", response.body.accessToken);
+    client.global.set("refreshToken", response.body.refreshToken);
+%}
+
+### 충전 준비
+# 충전 승인을 테스트하기 위해 미리 충전 요청을 생성합니다.
+POST {{baseUrl}}/api/payments/prepare
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "amount": 10000,
+  "provider": "TOSS"
+}
+
+###
+# 2. (충전 전) 내 정보 조회 (잔액 확인)
+GET {{baseUrl}}/api/users/me/mypage
+Authorization: Bearer {{accessToken}}
+
+###
+
+# 3. 미확인 충전 내역 조회
+# 이 요청을 통해 확인 할 chargeCheckId를 얻습니다.
+# 응답이 비어있다면, 먼저 Toss Payments를 통해 충전 요청을 생성해야 합니다.
+GET {{baseUrl}}/api/charges/unchecked
+Authorization: Bearer {{accessToken}}
+
+
+###
+
+# 4. 충전 승인
+# 이전 단계에서 얻은 chargeCheckId를 사용합니다.
+POST {{baseUrl}}/api/charges/2/confirm
+Authorization: Bearer {{accessToken}}
+
+###
+
+# 5. (충전 후) 내 정보 조회 (잔액 확인)
+# 충전 승인 후 잔액이 증가했는지 확인합니다.
+GET {{baseUrl}}/api/users/me/mypage
+Authorization: Bearer {{accessToken}}
+
+###
+# 6. 충전 후 레디스에 잘 보관되었는지 확인
+# 레디스에 확인하기 위해 bid 참여를 통해 redis에 정보 저장
+
+POST {{baseUrl}}/api/bid
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "auctionId": 1,
+  "requestId": "123qweasd",
+  "bidAmount": 20000
+}
