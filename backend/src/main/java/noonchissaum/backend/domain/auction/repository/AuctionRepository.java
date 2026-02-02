@@ -101,5 +101,11 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
             @Param("toStatus") AuctionStatus toStatus
     );
 
+    @Query("""
+select a.id from Auction a
+where a.status = :status
+  and a.endAt <= :now
+""")
+    List<Long> findIdsToEnd(@Param("status") AuctionStatus status, @Param("now") LocalDateTime now);
 }
 

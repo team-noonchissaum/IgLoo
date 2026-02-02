@@ -1,9 +1,7 @@
 package noonchissaum.backend.domain.auction.service;
 
 import lombok.RequiredArgsConstructor;
-import noonchissaum.backend.domain.auction.dto.ws.AuctionExtendedPayload;
-import noonchissaum.backend.domain.auction.dto.ws.BidSuccessedPayload;
-import noonchissaum.backend.domain.auction.dto.ws.OutbidPayload;
+import noonchissaum.backend.domain.auction.dto.ws.*;
 import noonchissaum.backend.global.dto.SocketMessageType;
 import noonchissaum.backend.global.dto.WsMessage;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -33,6 +31,7 @@ public class AuctionMessageService {
         );
     }
 
+
     // 입찰 성공 브로드캐스트
     public void sendBidSuccessed(Long auctionId, BidSuccessedPayload payload) {
         sendToAuctionTopic(auctionId, SocketMessageType.BID_SUCCESSED, payload);
@@ -51,4 +50,14 @@ public class AuctionMessageService {
     public void sendAuctionSnapshot(Long auctionId, Object payload) {
         sendToAuctionTopic(auctionId, SocketMessageType.NOTIFICATION, payload);
     }
+
+    // 경매 종료 브로드 캐스트
+    public void sendAuctionEnded(Long auctionId, AuctionEndedPayload payload) {
+        sendToAuctionTopic(auctionId, SocketMessageType.AUCTION_ENDED, payload);
+    }
+
+    public void sendAuctionResult(Long auctionId, AuctionResultPayload payload) {
+        sendToAuctionTopic(auctionId, SocketMessageType.AUCTION_RESULT, payload);
+    }
+
 }

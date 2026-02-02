@@ -9,5 +9,6 @@ public enum SocketMessageType {
     AUCTION_EXTENDED,
     AUCTION_CANCELLED,
     AUCTION_ENDED,
+    AUCTION_RESULT,
     NOTIFICATION, //알람
 }
