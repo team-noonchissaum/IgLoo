@@ -294,7 +294,7 @@ public class BidService {
         //경매 상태 체크
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new RuntimeException("해당 경매는 존재하지 않습니다."));
-        if (!auction.getStatus().equals(AuctionStatus.RUNNING)) {
+        if (!auction.getStatus().equals(AuctionStatus.RUNNING) && !auction.getStatus().equals(AuctionStatus.DEADLINE)) {
             throw new ApiException(ErrorCode.NOT_FOUND_AUCTIONS);
         }
 
