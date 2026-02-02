@@ -15,6 +15,7 @@ import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.domain.task.dto.DbUpdateEvent;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
+import noonchissaum.backend.global.util.UserLockExecutor;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.context.ApplicationEventPublisher;
@@ -27,7 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -43,6 +46,7 @@ public class BidService {
     private final AuctionRepository auctionRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final AuctionRedisService auctionRedisService;
+    private final UserLockExecutor userLockExecutor;
 
     public void placeBid(Long auctionId, Long userId, BigDecimal bidAmount, String requestId) {
         // 1. 멱등성 체크 (락 획득 전 수행하여 불필요한 대기 방지)
@@ -53,7 +57,7 @@ public class BidService {
         }
 
         RLock lock = redissonClient.getLock(RedisKeys.auctionLock(auctionId));
-
+        List<RLock> userLocks = new ArrayList<>();
         try{
             boolean available = lock.tryLock(5, 2, TimeUnit.SECONDS);
             // 입찰 조건 확인 로직
@@ -82,51 +86,66 @@ public class BidService {
             Long previousBidderId = !rawPreviousBidderId.isBlank() ? Long.parseLong(rawPreviousBidderId) : -1L;
             BigDecimal currentPrice = new BigDecimal(rawPrice);
 
-            walletService.getBalance(userId);
-
-            // 이전 입찰자가 있을 때만 getBalance 실행
-            if (previousBidderId != -1){
-                walletService.getBalance(previousBidderId);
+            //유저락 추가 - 이전 입찰자가 충전하는 도중 타 경매의
+            List<Long> lockUserIds = new ArrayList<>();
+            lockUserIds.add(userId);
+            if (previousBidderId != null && previousBidderId != -1L) {
+                lockUserIds.add(previousBidderId);
             }
 
-            // 입찰 조건 확인 후 이상 없으면 입찰 진행
-            validateBidConditions(auctionId,userId, bidAmount);
+            // 데드락 방지: 항상 작은 id부터 락
+            lockUserIds.sort(Long::compareTo);
 
-            // 이전 비더 유저 돈 환불 + 신규 비더 돈 Lock
-            // previousBidderId가 null인 경우에는 신규 입찰자이므로 walletService에서 처리 필요
-            walletService.processBidWallet(userId, previousBidderId, bidAmount, currentPrice,auctionId,requestId);
+            final String initialBidCount = rawBidCount;
 
-            eventPublisher.publishEvent(new DbUpdateEvent(userId, previousBidderId, bidAmount, currentPrice, auctionId, requestId));
+            userLockExecutor.withUserLocks(lockUserIds, ()->{
 
-            Integer bidCountInt = Integer.parseInt(rawBidCount);
-            // Redis 새로운 1등 정보 저장
-            redisTemplate.opsForValue().set(priceKey, String.valueOf(bidAmount));
-            redisTemplate.opsForValue().set(bidderKey, String.valueOf(userId));
-            redisTemplate.opsForValue().set(bidCount, String.valueOf(++bidCountInt));
+                walletService.getBalance(userId);
 
-            // 마감 시간에 대한 정보 확인 후 변경
+                // 이전 입찰자가 있을 때만 getBalance 실행
+                if (previousBidderId != -1){
+                    walletService.getBalance(previousBidderId);
+                }
 
-            // Stomp 메세지 발행 로직
-            // messageService.sendPriceUpdate(auctionId, bidAmount);
+                // 입찰 조건 확인 후 이상 없으면 입찰 진행
+                validateBidConditions(auctionId,userId, bidAmount);
+
+                // 이전 비더 유저 돈 환불 + 신규 비더 돈 Lock
+                // previousBidderId가 null인 경우에는 신규 입찰자이므로 walletService에서 처리 필요
+                walletService.processBidWallet(userId, previousBidderId, bidAmount, currentPrice,auctionId,requestId);
+
+                eventPublisher.publishEvent(new DbUpdateEvent(userId, previousBidderId, bidAmount, currentPrice, auctionId, requestId));
+
+                Integer bidCountInt = Integer.parseInt(initialBidCount);
+                // Redis 새로운 1등 정보 저장
+                redisTemplate.opsForValue().set(priceKey, String.valueOf(bidAmount));
+                redisTemplate.opsForValue().set(bidderKey, String.valueOf(userId));
+                redisTemplate.opsForValue().set(bidCount, String.valueOf(++bidCountInt));
+
+                // 마감 시간에 대한 정보 확인 후 변경
+
+                // Stomp 메세지 발행 로직
+                // messageService.sendPriceUpdate(auctionId, bidAmount);
 
 
-            //검증용 데이터 (Bid,Wallet 재저장용 데이터)
-            Map<String, String> bidInfo = getStringStringMap(auctionId, userId, bidAmount, requestId, previousBidderId, currentPrice);
+                //검증용 데이터 (Bid,Wallet 재저장용 데이터)
+                Map<String, String> bidInfo = getStringStringMap(auctionId, userId, bidAmount, requestId, previousBidderId, currentPrice);
 
 
-            String infoKey = RedisKeys.pendingBidInfo(requestId);
+                String infoKey = RedisKeys.pendingBidInfo(requestId);
 
-            redisTemplate.opsForHash().putAll(infoKey, bidInfo);
-            redisTemplate.expire(infoKey, Duration.ofMinutes(10));
-            redisTemplate.opsForSet().add(RedisKeys.pendingBidRequestsSet(), requestId);
+                redisTemplate.opsForHash().putAll(infoKey, bidInfo);
+                redisTemplate.expire(infoKey, Duration.ofMinutes(10));
+                redisTemplate.opsForSet().add(RedisKeys.pendingBidRequestsSet(), requestId);
 
-            redisTemplate.opsForValue().set(requestId, bidAmount+"");
+                String userPendingKey = RedisKeys.pendingUser(userId);
+                redisTemplate.opsForSet().add(userPendingKey, requestId);
+                if (previousBidderId != null && previousBidderId != -1L) {
+                    String prevUserPendingKey = RedisKeys.pendingUser(previousBidderId);
+                    redisTemplate.opsForSet().add(prevUserPendingKey, requestId);
+                }
 
-            String userPendingKey = RedisKeys.pendingUser(userId);
-            String prevUserPendingKey = RedisKeys.pendingUser(previousBidderId);
-            redisTemplate.opsForSet().add(userPendingKey, requestId);
-            redisTemplate.opsForSet().add(prevUserPendingKey, requestId);
-
+            });
         }
         catch (InterruptedException e){
             Thread.currentThread().interrupt();

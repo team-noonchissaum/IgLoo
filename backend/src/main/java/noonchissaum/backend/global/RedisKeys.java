@@ -7,6 +7,9 @@ public final class RedisKeys {
     /**
      * user
      */
+    public static String userLock(Long userId) {
+        return "lock:user:" + userId;
+    }
     public static String userBalance(Long userId) {
         return "user:" + userId + ":balance";
     }
