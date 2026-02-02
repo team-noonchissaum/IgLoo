@@ -10,7 +10,7 @@ export interface Auction {
   currentPrice: number;
   startPrice: number;
   bidCount: number;
-  status: 'WAITING' | 'PROGRESSING' | 'ENDED' | 'CANCELED';
+  status: 'WAITING' | 'READY' | 'RUNNING' | 'ENDED' | 'CANCELED';
   startAt: string;
   endAt: string;
   sellerNickname: string;

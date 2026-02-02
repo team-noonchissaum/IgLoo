@@ -1,6 +1,7 @@
 import { fetchAuctionDetail } from '@/lib/api';
 import { ApiResponse, Auction } from '@/lib/types';
-import CancelButton from './CancelButton'; // Client Component separation
+import CancelButton from './CancelButton'; 
+import BidSection from './BidSection';
 
 export default async function AuctionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -32,9 +33,10 @@ export default async function AuctionDetailPage({ params }: { params: Promise<{ 
           <div className="flex justify-between items-start">
              <h1 className="text-3xl font-bold mb-4">{auction.title}</h1>
              <span className={`px-3 py-1 rounded ${
-                  auction.status === 'WAITING' ? 'bg-yellow-100 text-yellow-800' :
+                  auction.status === 'RUNNING' ? 'bg-green-100 text-green-800' :
+                  auction.status === 'READY' || auction.status === 'WAITING' ? 'bg-yellow-100 text-yellow-800' :
                   auction.status === 'CANCELED' ? 'bg-red-100 text-red-800' :
-                  'bg-green-100 text-green-800'
+                  'bg-gray-100 text-gray-800'
                 }`}>
                {auction.status}
              </span>
@@ -64,6 +66,12 @@ export default async function AuctionDetailPage({ params }: { params: Promise<{ 
               <span>{new Date(auction.endAt).toLocaleString()}</span>
             </div>
           </div>
+
+          <BidSection 
+            auctionId={auction.auctionId} 
+            currentPrice={auction.currentPrice} 
+            status={auction.status} 
+          />
 
           <div className="mt-8 space-y-4">
             {/* Seller Actions */}

@@ -4,12 +4,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.auction.dto.res.BidHistoryItemRes;
 import noonchissaum.backend.domain.auction.dto.res.MyBidAuctionRes;
+import noonchissaum.backend.domain.auction.dto.ws.BidSuccessedPayload;
+import noonchissaum.backend.domain.auction.dto.ws.OutbidPayload;
 import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.entity.Bid;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.repository.BidRepository;
 
+import noonchissaum.backend.domain.notification.entity.NotificationType;
+import noonchissaum.backend.domain.notification.service.NotificationService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.domain.task.dto.DbUpdateEvent;
@@ -46,6 +50,9 @@ public class BidService {
     private final AuctionRepository auctionRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final AuctionRedisService auctionRedisService;
+    private final AuctionMessageService auctionMessageService;
+    private final AuctionExtensionService auctionExtensionService;
+    private final NotificationService notificationService;
     private final UserLockExecutor userLockExecutor;
 
     public void placeBid(Long auctionId, Long userId, BigDecimal bidAmount, String requestId) {
@@ -115,6 +122,40 @@ public class BidService {
                 walletService.processBidWallet(userId, previousBidderId, bidAmount, currentPrice,auctionId,requestId);
 
                 eventPublisher.publishEvent(new DbUpdateEvent(userId, previousBidderId, bidAmount, currentPrice, auctionId, requestId));
+
+            // 마감 시간에 대한 정보 확인 후 변경
+            auctionExtensionService.extension(auctionId);
+
+            // Stomp 메세지 발행 로직
+            // messageService.sendPriceUpdate(auctionId, bidAmount);
+            BidSuccessedPayload bidSuccessedPayload = BidSuccessedPayload
+                    .builder()
+                    .auctionId(auctionId)
+                    .currentPrice(bidAmount.longValueExact())
+                    .currentBidderId(userId)
+                    .build();
+            auctionMessageService.sendBidSuccessed(auctionId, bidSuccessedPayload);
+
+            if (previousBidderId != -1L){
+                String msg = "누군가 더 높은 금액으로 입찰했습니다.";
+                OutbidPayload outbidPayload = OutbidPayload
+                        .builder()
+                        .auctionId(auctionId)
+                        .myBidPrice(currentPrice)
+                        .newCurrentPrice(bidAmount)
+                        .message(msg)
+                        .build();
+                auctionMessageService.sendOutbid(previousBidderId, outbidPayload);
+                notificationService.create(
+                        previousBidderId,
+                        NotificationType.OUTBID,
+                        msg,
+                        "AUCTION",
+                        auctionId
+                );
+            }
+
+
 
                 Integer bidCountInt = Integer.parseInt(initialBidCount);
                 // Redis 새로운 1등 정보 저장
