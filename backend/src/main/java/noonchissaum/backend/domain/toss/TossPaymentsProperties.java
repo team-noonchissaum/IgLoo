@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Getter
 @Setter
-@ConfigurationProperties(prefix = "popeye.toss")
+@ConfigurationProperties(prefix = "spring.toss")
 public class TossPaymentsProperties {
     private String secretKey;
     private String baseUrl = "https://api.tosspayments.com";

@@ -1,6 +1,7 @@
 package noonchissaum.backend.domain.toss;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.toss.dto.cancel.TossCancelReq;
 import noonchissaum.backend.domain.toss.dto.cancel.TossCancelRes;
 import noonchissaum.backend.domain.toss.dto.confirm.TossConfirmReq;
@@ -17,6 +18,7 @@ import java.util.Base64;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class TossPaymentsClient {
 
     private final TossPaymentsProperties props;

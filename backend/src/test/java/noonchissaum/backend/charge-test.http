@@ -46,7 +46,7 @@ Authorization: Bearer {{accessToken}}
 
 # 4. 충전 승인
 # 이전 단계에서 얻은 chargeCheckId를 사용합니다.
-POST {{baseUrl}}/api/charges/2/confirm
+POST {{baseUrl}}/api/charges/3/confirm
 Authorization: Bearer {{accessToken}}
 
 ###

@@ -134,6 +134,7 @@ public class PaymentService {
             }
 
             payment.abort("TOSS_CONFIRM_FAILED" + errorBody);
+            log.error(e.getMessage());
             throw new ApiException(ErrorCode.PAYMENTS_FAILED);
 
         } catch (Exception e) {
