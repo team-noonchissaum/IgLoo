@@ -144,14 +144,11 @@ public class AuctionService {
             // 5분 이내 취소 → 보증금 환불 처리
             auction.refundDeposit();
 
-            // TODO: 지갑팀 연동 시 여기서 DEPOSIT_REFUND 처리 호출
              walletService.setAuctionDeposit(userId, auctionId, amount, "refund");
         } else {
             // 5분 이후 취소 → 보증금 몰수 확정(패널티)
+            // 5분 이후 취소 -> 보증금 환불 없음
             auction.forfeitDeposit();
-
-            // TODO: 지갑팀 연동 시 여기서 DEPOSIT_FORFEIT 처리 호출
-            // walletService.depositForfeit(userId, auctionId, amount);
         }
 
 

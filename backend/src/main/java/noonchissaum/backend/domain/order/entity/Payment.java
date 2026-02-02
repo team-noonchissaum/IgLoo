@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
+import noonchissaum.backend.global.exception.ApiException;
+import noonchissaum.backend.global.exception.ErrorCode;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -88,7 +90,7 @@ public class Payment extends BaseTimeEntity {
 
     public void abort(String reason){
         if (this.status != PaymentStatus.REQUEST){
-            throw new IllegalStateException("CREATED 상태에서만 결제 승인 가능");
+            throw new ApiException(ErrorCode.INVALID_PAYMENT_STATUS);
         }
         this.status = PaymentStatus.FAILED;
         this.failureReason = reason;

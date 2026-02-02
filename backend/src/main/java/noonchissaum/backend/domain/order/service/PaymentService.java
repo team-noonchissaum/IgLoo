@@ -2,7 +2,6 @@ package noonchissaum.backend.domain.order.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import noonchissaum.backend.domain.order.dto.payment.req.TossWebhookReq;
 import noonchissaum.backend.domain.order.dto.payment.res.PaymentPrepareRes;
 import noonchissaum.backend.domain.order.dto.payment.res.VirtualAccountInfo;
 import noonchissaum.backend.domain.order.entity.*;
@@ -70,23 +69,23 @@ public class PaymentService {
         log.info("결제 승인 시작: pgOrderId={}, paymentKey={}", pgOrderId, paymentKey);
 
         Payment payment = paymentRepository.findByPgOrderId(pgOrderId)
-                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_PAYMENT_REQUEST));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_PAYMENT));
 
         // 멱등성: REQUEST 상태 체크
         if (payment.getStatus() != PaymentStatus.REQUEST) {
-            throw new ApiException(ErrorCode.INVALID_PAYMENT_REQUEST);
+            throw new ApiException(ErrorCode.INVALID_PAYMENT_STATUS);
         }
 
         // 멱등성
         if (chargeCheckRepository.existsByPaymentId(payment.getId())) {
             log.info("이미 charge 생성된 결제: paymentId={}", payment.getId());
-            throw new ApiException(ErrorCode.INVALID_PAYMENT_REQUEST);
+            throw new ApiException(ErrorCode.ALREADY_EXISTS_PAYMENT);
         }
 
         // amount 체크 변조 방지
         int serverAmount = payment.getAmount().intValue();
         if (amount == null || amount != serverAmount) {
-            throw new ApiException(ErrorCode.INVALID_PAYMENT_REQUEST);
+            throw new ApiException(ErrorCode.INVALID_PAYMENT_AMOUNT);
         }
 
         // 체크 완료 후 승인 api 호출
@@ -125,7 +124,7 @@ public class PaymentService {
 
                 // Payment 상태 재확인
                 Payment refreshedPayment = paymentRepository.findByPgOrderId(pgOrderId)
-                        .orElseThrow(() -> new ApiException(ErrorCode.INVALID_PAYMENT_REQUEST));
+                        .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_PAYMENT));
 
                 // 이미 승인되었으면 성공으로 처리
                 if (refreshedPayment.getStatus() == PaymentStatus.APPROVED) {
@@ -135,12 +134,12 @@ public class PaymentService {
             }
 
             payment.abort("TOSS_CONFIRM_FAILED" + errorBody);
-            throw new ApiException(ErrorCode.INVALID_PAYMENT_REQUEST);
+            throw new ApiException(ErrorCode.PAYMENTS_FAILED);
 
         } catch (Exception e) {
 
             payment.abort("TOSS_CONFIRM_FAILED" + e.getMessage());
-            throw new RuntimeException(e);
+            throw new ApiException(ErrorCode.PAYMENTS_FAILED);
 
         }
 
@@ -149,7 +148,7 @@ public class PaymentService {
             log.error("Toss 응답 검증 실패: tossRes={}, totalAmount={}, expected={}",
                     tossRes, tossRes != null ? tossRes.totalAmount() : "null", serverAmount);
             payment.abort("TOSS_AMOUNT_MISMATCH");
-            throw new ApiException(ErrorCode.INVALID_PAYMENT_REQUEST);
+            throw new ApiException(ErrorCode.INVALID_PAYMENT_AMOUNT);
         }
 
         // 승인 반영 후 보관함 저장
@@ -175,29 +174,29 @@ public class PaymentService {
 
         // 유저 같은지 체크
         if (userId != check.getUser().getId()) {
-            throw new ApiException(ErrorCode.INVALID_PAYMENT_REQUEST);
+            throw new ApiException(ErrorCode.REFUND_FAILED);
         }
 
         // 수령 완료 상태인지 체크
         if (!check.getStatus().equals(CheckStatus.UNCHECKED)) {
-            throw new ApiException(ErrorCode.INVALID_PAYMENT_REQUEST);
+            throw new ApiException(ErrorCode.CHARGE_CONFIRMED);
         }
 
         // 일주일 이내인지 체크
         if (check.getCreatedAt().plusDays(7).isBefore(LocalDateTime.now())) {
-            throw new ApiException(ErrorCode.INVALID_PAYMENT_REQUEST);
+            throw new ApiException(ErrorCode.REFUND_DATE_EXPIRED);
         }
 
         // payment에서 환불이 이미 이뤄졌는지 체크
         if (payment.getStatus() == PaymentStatus.CANCELED) {
-            throw new ApiException(ErrorCode.INVALID_PAYMENT_REQUEST);
+            throw new ApiException(ErrorCode.ALREADY_CANCELED_PAYMENT);
         }
 
         try {
             tossPaymentsClient.cancel(payment.getPaymentKey(), cancelReason);
         } catch (HttpStatusCodeException e) {
             payment.abort("TOSS_CANCEL_FAILED" + e.getMessage());
-            throw new ApiException(ErrorCode.INVALID_PAYMENT_REQUEST);
+            throw new ApiException(ErrorCode.REFUND_FAILED);
         }
 
         // 결제 취소 후 로컬 상태 변경
@@ -211,7 +210,7 @@ public class PaymentService {
     @Transactional
     public void abortPayment(Long paymentId, String reason) {
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_PAYMENT_REQUEST));
+                .orElseThrow(() -> new ApiException(ErrorCode.PAYMENTS_FAILED));
         payment.abort("TOSS_ABORT_FAILED" + reason);
     }
 
@@ -224,7 +223,7 @@ public class PaymentService {
 
         // 비관적 락을 통해 연속된 요청이 오면 대기
         Payment payment = paymentRepository.findByPgOrderIdWithLock(orderId)
-                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_PAYMENT_REQUEST));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_PAYMENT));
 
         // 멱등성 체크
         if (payment.getStatus() != PaymentStatus.WAITING_FOR_DEPOSIT) {
