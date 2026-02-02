@@ -4,10 +4,11 @@ import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.repository.BidRepository;
 import noonchissaum.backend.domain.auction.service.AuctionMessageService;
+import noonchissaum.backend.domain.notification.constants.NotificationConstants;
 import noonchissaum.backend.domain.notification.dto.res.NotificationResponse;
-import noonchissaum.backend.domain.notification.dto.ws.NotificationPayload;
 import noonchissaum.backend.domain.notification.entity.Notification;
 import noonchissaum.backend.domain.notification.entity.NotificationType;
+import noonchissaum.backend.global.dto.SocketMessageType;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,19 @@ public class AuctionNotificationService {
     private final AuctionMessageService auctionMessageService;
 
     /**
+     * 알림 생성 및 전송 (공통 메서드)
+     */
+    @Transactional
+    public void sendNotification(Long userId, NotificationType type, String message, String refType, Long refId) {
+        // 1. DB 저장 (NotificationService 위임)
+        Notification saved = notificationService.create(userId, type, message, refType, refId);
+
+        // 2. WebSocket 전송 (AuctionMessageService 활용)
+        NotificationResponse response = NotificationResponse.from(saved);
+        auctionMessageService.sendToUserQueue(userId, SocketMessageType.NOTIFICATION, response);
+    }
+
+    /**
      * 마감 임박 알림 (1:N)
      * 참여자 전원에게 알림 저장 후 WS 푸시
      */
@@ -39,43 +53,15 @@ public class AuctionNotificationService {
         List<Long> participantIds = bidRepository.findDistinctBidderIdsByAuctionId(auctionId);
         if (participantIds.isEmpty()) return;
 
-        String msg = "경매 마감이 임박했습니다.";
-
         for (Long userId : participantIds) {
-            Notification saved = notificationService.create(
+            sendNotification(
                     userId,
                     NotificationType.IMMINENT,
-                    msg,
-                    "AUCTION",
+                    NotificationConstants.MSG_AUCTION_IMMINENT,
+                    NotificationConstants.REF_TYPE_AUCTION,
                     auctionId
             );
-
-            //WS 푸시
-            NotificationPayload payload = new NotificationPayload(
-                    saved.getId(),
-                    saved.getType().name(),
-                    saved.getMessage(),
-                    saved.getRefType(),
-                    saved.getRefId(),
-                    saved.getCreatedAt()
-            );
-            auctionMessageService.sendToUserQueue(userId, noonchissaum.backend.global.dto.SocketMessageType.NOTIFICATION, payload);
         }
-    }
-
-    @Transactional
-    public void sendNotification(Long userId, NotificationType type,String message, String refType, Long refId) {
-        Notification saved = notificationService.create(userId,type,message,refType,refId);
-
-        NotificationPayload payload = new NotificationPayload(
-                saved.getId(),
-                saved.getType().name(),
-                saved.getMessage(),
-                saved.getRefType(),
-                saved.getRefId(),
-                saved.getCreatedAt()
-        );
-        auctionMessageService.sendToUserQueue(userId, noonchissaum.backend.global.dto.SocketMessageType.NOTIFICATION, payload);
     }
 }
 

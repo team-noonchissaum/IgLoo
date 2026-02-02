@@ -23,8 +23,6 @@ import java.util.stream.Collectors;
 public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserService userService;
-    private final SimpMessagingTemplate messagingTemplate;
-    private final AuctionMessageService auctionMessageService;
 
     /**
      * 상위 입찰자 변경 알림 생성
