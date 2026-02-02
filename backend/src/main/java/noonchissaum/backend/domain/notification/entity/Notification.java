@@ -2,6 +2,7 @@ package noonchissaum.backend.domain.notification.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import noonchissaum.backend.domain.user.entity.User;
@@ -39,4 +40,18 @@ public class Notification extends BaseTimeEntity {
 
     @Column(name = "read_at")
     private LocalDateTime readAt;
+
+    @Builder
+    private Notification(User user, NotificationType type, String message, String refType, Long refId, LocalDateTime readAt) {
+        this.user = user;
+        this.type = type;
+        this.message = message;
+        this.refType = refType;
+        this.refId = refId;
+    }
+    public void markAsRead(LocalDateTime now) {
+        if(this.readAt == null) {
+            this.readAt = now;
+        }
+    }
 }
