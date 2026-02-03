@@ -42,6 +42,9 @@ public enum ErrorCode {
     /** 차단되지 않은 사용자 해제 시도 */
     USER_NOT_BLOCKED(HttpStatus.BAD_REQUEST, "차단되지 않은 사용자입니다.", "USER-005"),
 
+    // ===== FILE 관련 =====
+    FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "F001", "파일 업로드에 실패했습니다."),
+
     // ========== REPORT (신고 에러) ==========
     /** 신고 조회 실패 */
     REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "신고를 찾을 수 없습니다.", "REPORT-001"),

@@ -1,6 +1,10 @@
 spring:
   #profiles:
   #  active: dev
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
   
   data:
     redis:
@@ -38,10 +42,14 @@ spring:
     compatibility-verifier:
       enabled: false
     aws:
+      credentials:
+        access-key: ${AWS_ACCESS_KEY}
+        secret-key: ${AWS_SECRET_KEY}
       s3:
-        region:
-          static: ap-northeast-2
-        enabled: false
+        bucket: ${AWS_S3_BUCKET}
+        region: ap-northeast-2
+      region:
+        static: ap-northeast-2
 
   security:
     oauth2:
