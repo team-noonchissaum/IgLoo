@@ -56,6 +56,8 @@
 ## 시나리오 흐름 (Mermaid)
 ```mermaid
 flowchart TB
+  %% layout settings
+  classDef big font-size:16px;
   %% Scenario 1: auction_flow
   subgraph S1[입찰/경매 진행]
     S1_root(["어떤 도움이 필요하신가요?"])
@@ -86,4 +88,10 @@ flowchart TB
     S2_guide -->|로그인 페이지로 이동| S2_link_login
     S2_guide -->|처음으로| S2_root
   end
+
+  %% stack layout: S1 above S2
+  S1 --- S2
+
+  %% apply larger font to all nodes
+  class S1_root,S1_bid,S1_reg,S1_link_auctions,S1_link_register,S2_root,S2_guide,S2_link_login,S2_api_payments big;
 ```
