@@ -102,18 +102,47 @@ Content-Type: application/json
 
 ### 2. 첫 번째 탈퇴 시도
 POST http://localhost:8080/api/users/me/delete-attempt
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcwMDg1NDExLCJleHAiOjE3NzAwODcyMTF9.tGkThxwQvgRIN0BtW6ZxmDw2ZCsxo0QSH0vfn5eOgmQ
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcwMTA3MjE5LCJleHAiOjE3NzAxMDkwMTl9._6WBROmvg7pQlYr_lrwTtAKAhbodtwUJPTkb8M83K3U
 
 ### 3. 두 번째 탈퇴 시도
 POST http://localhost:8080/api/users/me/delete-attempt
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcwMDg1NDExLCJleHAiOjE3NzAwODcyMTF9.tGkThxwQvgRIN0BtW6ZxmDw2ZCsxo0QSH0vfn5eOgmQ
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcwMTA3MjE5LCJleHAiOjE3NzAxMDkwMTl9._6WBROmvg7pQlYr_lrwTtAKAhbodtwUJPTkb8M83K3U
 
 ### 4. 강제 탈퇴 (확인 후)
 DELETE http://localhost:8080/api/users/me/force
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI3Iiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzAwODIxMDQsImV4cCI6MTc3MDA4MzkwNH0.bmbStLNh6681E4nSyES29ocwDKP-_3C_NW0f1-OVgRE
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcwMTA3MjE5LCJleHAiOjE3NzAxMDkwMTl9._6WBROmvg7pQlYr_lrwTtAKAhbodtwUJPTkb8M83K3U
 
 # 응답:
 # {
 #   "success": true,
 #   "message": "회원 탈퇴 완료"
 # }
+
+
+### 회원가입
+POST http://localhost:8080/api/auth/signup
+Content-Type: application/json
+
+{
+  "email": "bidder@example.com",
+  "password": "1234",
+  "nickname": "입찰중인유저"
+}
+
+### 로그인
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "bidder@example.com",
+  "password": "1234",
+  "authType": "LOCAL"
+}
+
+### 마이페이지 조회
+GET http://localhost:8080/api/mypage
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxNCIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcwMTA3MzM5LCJleHAiOjE3NzAxMDkxMzl9.81qX3-ObXOZohUq5xOhoRZZHWfYJCT9oMeF9pin8K08
+
+### 지갑정보조회
+GET http://localhost:8080/api/mypage/wallet
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxNCIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcwMTA3MzM5LCJleHAiOjE3NzAxMDkxMzl9.81qX3-ObXOZohUq5xOhoRZZHWfYJCT9oMeF9pin8K08

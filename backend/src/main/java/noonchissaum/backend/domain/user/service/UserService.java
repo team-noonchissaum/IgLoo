@@ -12,6 +12,7 @@ import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.report.repository.ReportRepository;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 
+import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.CustomException;
@@ -35,10 +36,7 @@ public class UserService {
     private final WalletService walletService;
 //    private final StringRedisTemplate redisTemplate;
 
-    /**
-     * 본인 프로필 조회
-     */
-
+    /**본인 프로필 조회*/
     public ProfileRes getMyProfile(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         return new ProfileRes(
@@ -51,29 +49,23 @@ public class UserService {
         );
     }
 
-    /**
-     * 마이페이지 조회
-     */
+//    /**마이페이지 조회*/
+//    public MyPageRes getMyPage(Long userId) {
+//        User user = userRepository.findByIdWithWallet(userId).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+//
+//        BigDecimal balance =
+//                user.getWallet() != null ? user.getWallet().getBalance() : BigDecimal.ZERO;
+//
+//        return new MyPageRes(
+//                user.getId(),
+//                user.getEmail(),
+//                user.getNickname(),
+//                user.getProfileUrl(),
+//                balance
+//        );
+//    }
 
-    public MyPageRes getMyPage(Long userId) {
-        User user = userRepository.findByIdWithWallet(userId).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        BigDecimal balance =
-                user.getWallet() != null ? user.getWallet().getBalance() : BigDecimal.ZERO;
-
-        return new MyPageRes(
-                user.getId(),
-                user.getEmail(),
-                user.getNickname(),
-                user.getProfileUrl(),
-                balance
-        );
-    }
-
-    /**
-     * 다른 유저 프로필 조회
-     */
-
+    /**다른 유저 프로필 조회*/
     public OtherUserProfileRes getOtherUserProfile(Long userId) {
 
         User user = userRepository.findById(userId)
@@ -86,11 +78,7 @@ public class UserService {
 //                user.getLocation()
         );
     }
-
-    /**
-     * 프로필 수정
-     */
-
+    /**프로필 수정*/
     @Transactional
     public ProfileUpdateUserRes updateProfile(Long userId, ProfileUpdateUserReq request) {
 
@@ -117,9 +105,7 @@ public class UserService {
         );
     }
 
-    /**
-     * 탈퇴 시도 (첫 클릭)
-     */
+    /**탈퇴 시도 (첫 클릭)*/
     @Transactional(readOnly = true)
     public UserDeleteAttemptRes attemptDelete(Long userId) {
         User user = userRepository.findById(userId)
@@ -144,12 +130,7 @@ public class UserService {
             return UserDeleteAttemptRes.confirmRequired(balance);
         }
     }
-
-
-
-    /**
-     * 잔액 포기하고 강제 탈퇴
-     */
+    /**잔액 포기하고 강제 탈퇴*/
     @Transactional
     public void userDelete(Long userId) {
         User user = userRepository.findById(userId)
@@ -168,8 +149,6 @@ public class UserService {
             log.info("회원 탈퇴 완료 - userId: {}", userId);
         }
     }
-
-
     /**회원 신고*/
     @Transactional
     public void createReport(Long reporterId, ReportReq request) {
