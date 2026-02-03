@@ -51,7 +51,7 @@ public class BidService {
     private final ApplicationEventPublisher eventPublisher;
     private final AuctionRedisService auctionRedisService;
     private final AuctionMessageService auctionMessageService;
-    private final AuctionExtensionService auctionExtensionService;
+    private final AuctionRecordService auctionRecordService;
     private final NotificationService notificationService;
     private final UserLockExecutor userLockExecutor;
 
@@ -123,8 +123,8 @@ public class BidService {
 
                 eventPublisher.publishEvent(new DbUpdateEvent(userId, previousBidderId, bidAmount, currentPrice, auctionId, requestId));
 
-            // 마감 시간에 대한 정보 확인 후 변경
-            auctionExtensionService.extension(auctionId);
+                // 경매 정보 및 시간 연장은 동기적으로 즉시 업데이트 (데이터 정합성 유지)
+                auctionRecordService.updateAuctionWithExtension(auctionId, userId, bidAmount);
 
             // Stomp 메세지 발행 로직
             // messageService.sendPriceUpdate(auctionId, bidAmount);

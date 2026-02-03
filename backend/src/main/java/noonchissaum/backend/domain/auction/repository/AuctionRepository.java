@@ -86,7 +86,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
             value = """
         SELECT a.auction_id
         FROM auctions a
-        WHERE a.status = 'RUNNING'
+        WHERE a.status IN ('RUNNING', 'DEADLINE')
           AND TIMESTAMPDIFF(MINUTE, :now, a.end_at) <= a.imminent_minutes
     """,
             nativeQuery = true

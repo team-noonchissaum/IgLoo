@@ -123,12 +123,12 @@ public class Auction extends BaseTimeEntity {
         int windowMinutes = (this.imminentMinutes == null ? 5 : this.imminentMinutes);
         long windowSeconds = windowMinutes * 60L;
 
-        if (remainSeconds <= windowSeconds) {
+        if (remainSeconds <= windowSeconds && remainSeconds >= 0) {
             this.endAt = this.endAt.plusMinutes(3);
             this.isExtended = true;
             return true;
         }
-        return true;
+        return false;
     }
 
     /**

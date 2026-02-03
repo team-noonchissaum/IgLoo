@@ -47,12 +47,22 @@ public class AuctionNotificationService {
 
         //중복 방지 키
         String dedupKey = "notify:auction:" + auctionId + ":imminent";
-        Boolean first = redisTemplate.opsForValue().setIfAbsent(dedupKey, "1", Duration.ofHours(1));
+        Boolean first = redisTemplate.opsForValue().setIfAbsent(dedupKey, "1", Duration.ofMinutes(5));
         if (Boolean.FALSE.equals(first)) return;
 
-        List<Long> participantIds = bidRepository.findDistinctBidderIdsByAuctionId(auctionId);
-        if (participantIds.isEmpty()) return;
+        // 1. 판매자에게 알림
+        auctionRepository.findById(auctionId).ifPresent(auction -> {
+            sendNotification(
+                    auction.getSeller().getId(),
+                    NotificationType.IMMINENT,
+                    NotificationConstants.MSG_AUCTION_IMMINENT,
+                    NotificationConstants.REF_TYPE_AUCTION,
+                    auctionId
+            );
+        });
 
+        // 2. 참여자 전원에게 알림
+        List<Long> participantIds = bidRepository.findDistinctBidderIdsByAuctionId(auctionId);
         for (Long userId : participantIds) {
             sendNotification(
                     userId,

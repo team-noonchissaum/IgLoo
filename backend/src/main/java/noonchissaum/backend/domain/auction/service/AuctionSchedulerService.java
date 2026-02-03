@@ -16,6 +16,7 @@ import noonchissaum.backend.domain.order.service.OrderService;
 import noonchissaum.backend.domain.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +35,7 @@ public class AuctionSchedulerService {
     private final AuctionRealtimeSnapshotService snapshotService;
     private final AuctionMessageService auctionMessageService;
     private final AuctionNotificationService auctionNotificationService;
+    private final StringRedisTemplate redisTemplate;
 
     /**
      * 진행 중인 모든 경매의 상태를 실시간으로 중계합니다. (1초 주기)
@@ -83,6 +85,16 @@ public class AuctionSchedulerService {
     @Transactional
     public void markDeadLine() {
         LocalDateTime now = LocalDateTime.now();
+
+        //테스트용 임시 코드
+//        List<Long> testIds = List.of(1L, 2L, 3L, 4L, 5L);
+//        for (Long id : testIds) {
+//            redisTemplate.delete("notify:auction:" + id + ":imminent");
+//        }
+//        log.info("[Test] 1~5번 경매의 Redis 중복 방지 키를 삭제했습니다.");
+        // [테스트용 임시 코드 끝]
+
+
         List<Long> toDeadlineIds = auctionRepository.findRunningAuctionsToDeadline(now);
 
         auctionRepository.markDeadlineAuctions(now);
