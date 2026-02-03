@@ -12,8 +12,6 @@ import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.report.repository.ReportRepository;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 
-import noonchissaum.backend.domain.wallet.entity.Wallet;
-import noonchissaum.backend.domain.wallet.repository.WalletRepository;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
@@ -23,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -32,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 public class UserService {
     private final UserRepository userRepository;
     private final ReportRepository reportRepository;
-    private final WalletRepository walletRepository;
     private final WalletService walletService;
 //    private final StringRedisTemplate redisTemplate;
 
