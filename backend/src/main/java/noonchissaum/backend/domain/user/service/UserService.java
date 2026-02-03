@@ -149,12 +149,12 @@ public class UserService {
     @Transactional
     public void createReport(Long reporterId, ReportReq request) {
         User reporter=userRepository.findById(reporterId)
-                .orElseThrow(()->new IllegalArgumentException("유저 없음"));
+                .orElseThrow(()->new CustomException(ErrorCode.USER_NOT_FOUND));
 
         //중복 신고 방지
         if (reportRepository.existsByReporterIdAndTargetTypeAndTargetId(
                 reporterId, request.getTargetType(), request.getTargetId())) {
-            throw new IllegalStateException("이미 신고한 대상입니다.");
+            throw new CustomException(ErrorCode.ALREADY_REPORTED);
         }
 
         Report report = Report.builder()
@@ -171,7 +171,7 @@ public class UserService {
 
     public User getUserByUserId(Long userId) {
         return userRepository.findById(userId).
-                orElseThrow(() -> new RuntimeException("user not found"));
+                orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 
     @Transactional
