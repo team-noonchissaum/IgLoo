@@ -71,7 +71,7 @@ public class AdminController {
 
     @GetMapping("/statistics")
     public ResponseEntity<ApiResponse<AdminStatisticsRes>> getStatistics(
-            @RequestParam(required = false) String date
+            @RequestParam(required = false) String date // 날짜 파라미터
     ) {
         AdminStatisticsRes result = adminService.getDailyStatistics(date);
         return ResponseEntity.ok(ApiResponse.success("통계 조회 성공", result));

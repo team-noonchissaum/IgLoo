@@ -4,18 +4,21 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.service.UserService;
+import noonchissaum.backend.domain.wallet.entity.TransactionType;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
 import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.context.ApplicationEventPublisher;
+import noonchissaum.backend.domain.wallet.repository.WalletTransactionRepository;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +28,7 @@ public class WalletService {
     private final StringRedisTemplate redisTemplate;
     private final WalletRepository walletRepository;
     private final UserService userService;
+    private final WalletTransactionRepository walletTransactionRepository;
 
     public void processBidWallet(Long userId, Long previousBidderId, BigDecimal bidAmount, BigDecimal currentPrice ,Long auctionId, String requestId) {
 
@@ -68,4 +72,38 @@ public class WalletService {
         Wallet wallet = new Wallet(user);
         return walletRepository.save(wallet);
     }
+
+    /**
+     * 관리자 통계용 - 날짜별 충전 금액 합계
+     */
+    public long sumChargeByDate(LocalDate date) {
+        return walletTransactionRepository.findAll().stream()
+                .filter(t -> t.getType() == TransactionType.CHARGE)
+                .filter(t -> t.getCreatedAt().toLocalDate().equals(date))
+                .map(t -> t.getAmount().longValue())
+                .reduce(0L, Long::sum);
+    }
+
+    /**
+     * 관리자 통계용 - 날짜별 사용 금액 합계
+     */
+    public long sumUsedByDate(LocalDate date) {
+        return walletTransactionRepository.findAll().stream()
+                .filter(t -> t.getType() == TransactionType.BID_HOLD)
+                .filter(t -> t.getCreatedAt().toLocalDate().equals(date))
+                .map(t -> t.getAmount().longValue())
+                .reduce(0L, Long::sum);
+    }
+
+    /**
+     * 관리자 통계용 - 날짜별 출금 금액 합계
+     */
+    public long sumWithdrawnByDate(LocalDate date) {
+        return walletTransactionRepository.findAll().stream()
+                .filter(t -> t.getType() == TransactionType.WITHDRAW)
+                .filter(t -> t.getCreatedAt().toLocalDate().equals(date))
+                .map(t -> t.getAmount().longValue())
+                .reduce(0L, Long::sum);
+    }
+
 }
