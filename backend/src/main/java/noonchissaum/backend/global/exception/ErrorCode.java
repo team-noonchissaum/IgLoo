@@ -94,6 +94,11 @@ public enum ErrorCode {
     WITHDRAW_NOT_REQUESTED(HttpStatus.BAD_REQUEST, "WD003", "출금 승인 대기 상태가 아닙니다."),
     WITHDRAW_NOT_CANCELABLE(HttpStatus.BAD_REQUEST, "WD004", "취소할 수 없는 출금 상태입니다."),
 
+    // Chatbot Error
+    CHAT_SCENARIO_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT-001", "Chat scenario not found."),
+    CHAT_NODE_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT-002", "Chat node not found."),
+    CHAT_OPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT-003", "Chat option not found."),
+
     //Lock
     LOCK_ACQUISITION(HttpStatus.TOO_MANY_REQUESTS, "L001", "락 획득에 실패했습니다. 다시 시도해주세요");
 

@@ -69,7 +69,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auctions/**",
                                 "/api/item/**",
-                                "/ws/**"
+                                "/ws/**",
+                                "/api/chat/**"
                         ).permitAll()
 
 
