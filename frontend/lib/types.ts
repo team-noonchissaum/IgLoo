@@ -28,3 +28,38 @@ export interface AuctionRegisterRequest {
   endAt: string;
   imageUrls: string[];
 }
+
+export type ChatActionType = 'NONE' | 'LINK' | 'API';
+
+export interface ChatScenarioSummary {
+  scenarioId: number;
+  title: string;
+  description?: string;
+}
+
+export interface ChatOption {
+  optionId: number;
+  label: string;
+  nextNodeId?: number | null;
+  actionType: ChatActionType;
+  actionTarget?: string | null;
+}
+
+export interface ChatNode {
+  nodeId: number;
+  scenarioId: number;
+  text: string;
+  terminal: boolean;
+  options: ChatOption[];
+}
+
+export interface ChatAction {
+  actionType: ChatActionType;
+  actionTarget?: string | null;
+}
+
+export interface ChatNext {
+  type: 'NODE' | 'ACTION';
+  node?: ChatNode | null;
+  action?: ChatAction | null;
+}

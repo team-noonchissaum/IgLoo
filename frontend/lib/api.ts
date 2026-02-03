@@ -96,3 +96,34 @@ export async function login(email: string, password: string) {
   }
   return data;
 }
+
+export async function fetchChatScenarios() {
+  const res = await fetch(`${BASE_URL}/chat/scenarios`, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Failed to fetch chat scenarios');
+  return res.json();
+}
+
+export async function startChatScenario(scenarioId: number) {
+  const res = await fetch(`${BASE_URL}/chat/scenarios/${scenarioId}/start`, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Failed to start chat scenario');
+  return res.json();
+}
+
+export async function chatNext(nodeId: number, optionId: number) {
+  const res = await fetch(`${BASE_URL}/chat/nodes/next`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ nodeId, optionId }),
+  });
+  if (!res.ok) throw new Error('Failed to resolve next chat node');
+  return res.json();
+}
+
+export async function callChatAction(target: string) {
+  const url = target.startsWith('http') ? target : `${BASE_URL}${target}`;
+  const res = await fetch(url, { method: 'GET' });
+  if (!res.ok) throw new Error('Failed to call chat action');
+  return res.json().catch(() => ({}));
+}
