@@ -1,10 +1,7 @@
 package noonchissaum.backend.domain.wallet.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
 import noonchissaum.backend.global.exception.ApiException;
@@ -17,6 +14,7 @@ import java.util.List;
 @Entity
 @Table(name = "wallets")
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Wallet extends BaseTimeEntity {
 
@@ -66,5 +64,8 @@ public class Wallet extends BaseTimeEntity {
         }
         this.balance = this.balance.subtract(amount);
         this.lockedBalance = this.lockedBalance.add(amount);
+    }
+    public void setLockedBalance(BigDecimal lockedBalance) {
+        this.lockedBalance = lockedBalance;
     }
 }

@@ -61,12 +61,17 @@ public enum ErrorCode {
     // ========== REPORT (신고 에러) ==========
     /** 신고 조회 실패 */
     REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "신고를 찾을 수 없습니다.", "REPORT-001"),
+    /**이미 처리된 신고*/
     REPORT_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "이미 처리된 신고입니다.", "REPORT-002"),
+    /**이미 신고했던 기록이 있는 경매*/
     ALREADY_REPORTED(HttpStatus.ALREADY_REPORTED,"이미 신고된 경매입니다" ,"REPORT-003" ),
+    /**옳지 않은 신고 대상*/
     INVALID_REPORT_TARGET(HttpStatus.NOT_FOUND,"대상 유저를 찾을 수 없습니다","REPORT-004"),
 
     // ========== ITEM (상품/게시글 에러) ==========
+    /**게시글 없음*/
     ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다.", "ITEM-001"),
+    /**이미 삭제된 게시글 재 삭제 시도*/
     ITEM_ALREADY_DELETED(HttpStatus.NOT_FOUND, "이미 삭제된 게시글입니다", "ITEM-002"),
 
     // Bid Error
@@ -79,6 +84,7 @@ public enum ErrorCode {
     // Wallet Error
     INSUFFICIENT_BALANCE(HttpStatus.PAYMENT_REQUIRED, "W001", "잔액이 부족합니다."),
     CANNOT_FIND_WALLET(HttpStatus.NOT_FOUND, "W002", "지갑을 찾을 수 없습니다."),
+    INSUFFICIENT_LOCKED_BALANCE(HttpStatus.BAD_REQUEST,"W003","잠긴 잔액이 부족합니다."),
 
     // Auction Error
     NOT_FOUND_AUCTIONS(HttpStatus.NOT_FOUND, "A001", "경매를 찾을 수 없습니다.");

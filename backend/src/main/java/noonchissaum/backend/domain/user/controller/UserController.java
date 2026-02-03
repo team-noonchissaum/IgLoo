@@ -32,28 +32,14 @@ public class UserController {
     }
 
     /**
-     * 마이페이지 조회
-     * GET /api/users/me/mypage
-     */
-    @GetMapping("/me/mypage")
-    public ResponseEntity<ApiResponse<MyPageRes>> getMyPage(@AuthenticationPrincipal UserPrincipal principal) {
-        MyPageRes response = userService.getMyPage(principal.getUserId());
-        return ResponseEntity.ok(ApiResponse.success("요청 성공", response));
-
-    }
-
-    /**
      * 다른 유저 프로필 조회
      * GET /api/users/{userId}
      */
-
     @GetMapping("/{userId}")
     public ResponseEntity<ApiResponse<OtherUserProfileRes>> getUserProfile(@PathVariable Long userId) {
         OtherUserProfileRes response = userService.getOtherUserProfile(userId);
         return ResponseEntity.ok(ApiResponse.success("요청 성공", response));
-
     }
-
     /**
      * 프로필 수정
      * PATCH /api/users/me
@@ -65,33 +51,6 @@ public class UserController {
         ProfileUpdateUserRes response = userService.updateProfile(principal.getUserId(), request);
         return ResponseEntity.ok(ApiResponse.success("수정 성공", response));
     }
-
-
-
-
-//    /**
-//     * 탈퇴 가능 여부 확인 (1단계)
-//     */
-//    @GetMapping("/me/delete-check")
-//    public ResponseEntity<ApiResponse<UserDeleteAttemptRes>> checkDelete(
-//            @AuthenticationPrincipal UserPrincipal principal
-//    ) {
-//        UserDeleteAttemptRes result = userService.checkDelete(principal.getUserId());
-//        return ResponseEntity.ok(ApiResponse.success("탈퇴 가능 여부 확인 완료", result));
-//    }
-//
-//    /**
-//     * 회원 탈퇴
-//     * DELETE /api/users/me
-//     */
-//    @DeleteMapping("/me")
-//    public ResponseEntity<ApiResponse<Void>> deleteUser(
-//            @AuthenticationPrincipal UserPrincipal principal,
-//            @RequestParam(defaultValue = "false") boolean confirmDelete
-//    ) {
-//        userService.deleteUser(principal.getUserId(), confirmDelete);
-//        return ResponseEntity.ok(ApiResponse.success("회원 탈퇴 완료"));
-//    }
     /**
      * 탈퇴 시도 (첫 클릭)
      */
@@ -113,7 +72,5 @@ public class UserController {
         userService.userDelete(principal.getUserId());
         return ResponseEntity.ok(ApiResponse.success("회원 탈퇴 완료"));
     }
-
-
 }
 

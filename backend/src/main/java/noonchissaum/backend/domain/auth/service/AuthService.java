@@ -33,6 +33,7 @@ public class AuthService {
     private final WalletService walletService;
 
     /**로컬 회원가입*/
+    @Transactional
     public SignupRes signup(SignupReq signupReq) {
         if(userRepository.existsByEmailAndNotDeleted(signupReq.getEmail())) {
             throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
@@ -129,7 +130,8 @@ public class AuthService {
                 .orElseGet(() -> oauthSignup(req, oauthIdentifier));
     }
     /**OAuth 신규 회원가입*/
-    private LoginResult oauthSignup(LoginReq req, String identifier) {
+    @Transactional
+    protected LoginResult oauthSignup(LoginReq req, String identifier) {
 
         if (userAuthRepository.existsByIdentifierAndAuthType(req.getAuthType(),identifier)) {
             throw new CustomException(ErrorCode.DUPLICATE_EMAIL);

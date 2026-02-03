@@ -6,8 +6,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import noonchissaum.backend.domain.user.entity.User;
+import noonchissaum.backend.domain.user.entity.UserStatus;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 import noonchissaum.backend.domain.user.entity.UserRole;
+import noonchissaum.backend.global.exception.CustomException;
+import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -19,7 +23,9 @@ import java.io.IOException;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(
@@ -37,8 +43,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Long userId = jwtTokenProvider.getUserId(token);
                 String roleStr = jwtTokenProvider.getRole(token);
 
-                UserRole role = UserRole.valueOf(roleStr);
+                //유저가 차단된 상태인지 검증
+                User user = userRepository.findById(userId).orElseThrow(()->new CustomException(ErrorCode.USER_NOT_FOUND));
 
+                if(user.getStatus()== UserStatus.BLOCKED){
+                    throw new CustomException(ErrorCode.USER_BLOCKED);
+                }
+
+                UserRole role = UserRole.valueOf(roleStr);
                 UserPrincipal principal = UserPrincipal.of(userId, role);
 
                 UsernamePasswordAuthenticationToken authentication =
