@@ -191,6 +191,10 @@ public class AuthService {
     }
     /**로그아웃*/
     public void logout(String refreshToken) {
+        if(!jwtTokenProvider.validateToken(refreshToken)) {
+            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
         Long userId=jwtTokenProvider.getUserId(refreshToken);
         refreshTokenService.delete(userId);
     }

@@ -102,11 +102,11 @@ Content-Type: application/json
 
 ### 2. 첫 번째 탈퇴 시도
 POST http://localhost:8080/api/users/me/delete-attempt
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcwMDgyNTk3LCJleHAiOjE3NzAwODQzOTd9.zJoNMcNnBaSZz90xG6BGb3tcTl9RvGIhbHmPtMkb6Yw
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcwMDg1NDExLCJleHAiOjE3NzAwODcyMTF9.tGkThxwQvgRIN0BtW6ZxmDw2ZCsxo0QSH0vfn5eOgmQ
 
 ### 3. 두 번째 탈퇴 시도
 POST http://localhost:8080/api/users/me/delete-attempt
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcwMDgyNTk3LCJleHAiOjE3NzAwODQzOTd9.zJoNMcNnBaSZz90xG6BGb3tcTl9RvGIhbHmPtMkb6Yw
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcwMDg1NDExLCJleHAiOjE3NzAwODcyMTF9.tGkThxwQvgRIN0BtW6ZxmDw2ZCsxo0QSH0vfn5eOgmQ
 
 ### 4. 강제 탈퇴 (확인 후)
 DELETE http://localhost:8080/api/users/me/force
