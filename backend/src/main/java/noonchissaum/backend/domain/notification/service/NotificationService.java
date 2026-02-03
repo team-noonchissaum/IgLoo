@@ -1,7 +1,6 @@
 package noonchissaum.backend.domain.notification.service;
 
 import lombok.RequiredArgsConstructor;
-import noonchissaum.backend.domain.auction.service.AuctionMessageService;
 import noonchissaum.backend.domain.notification.dto.res.NotificationResponse;
 import noonchissaum.backend.domain.notification.entity.Notification;
 import noonchissaum.backend.domain.notification.entity.NotificationType;
@@ -10,7 +9,6 @@ import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

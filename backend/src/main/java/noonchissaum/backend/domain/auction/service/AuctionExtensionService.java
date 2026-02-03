@@ -5,7 +5,6 @@ import noonchissaum.backend.domain.auction.dto.ws.AuctionExtendedPayload;
 import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.global.RedisKeys;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
