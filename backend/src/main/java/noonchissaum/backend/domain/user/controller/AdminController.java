@@ -3,16 +3,19 @@ package noonchissaum.backend.domain.user.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import noonchissaum.backend.domain.user.dto.request.AdminBlockAuctionReq;
 import noonchissaum.backend.domain.user.dto.request.AdminBlockUserReq;
 import noonchissaum.backend.domain.user.dto.request.AdminReportProcessReq;
 import noonchissaum.backend.domain.user.dto.response.*;
 import noonchissaum.backend.domain.user.service.AdminService;
 import noonchissaum.backend.global.dto.ApiResponse;
+import noonchissaum.backend.global.security.UserPrincipal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -116,24 +119,40 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success("사용자 차단 해제 완료"));
     }
 
-    /* ================= 게시글 관리 ================= */
+    /* ================= 경매 게시글 관리 ================= */
 
     /**
-     * 차단된 게시글 목록 조회
+     * 경매 차단
+     * POST /api/admin/auctions/{auctionId}/block
      */
-
-    @GetMapping("/items/blocked")
-    public ResponseEntity<ApiResponse<Page<AdminItemListRes>>> getBlockedItems(Pageable pageable) {
-        Page<AdminItemListRes> result = adminService.getBlockedItems(pageable);
-        return ResponseEntity.ok(ApiResponse.success("차단된 게시글 목록 조회 성공", result));
+    @PostMapping("/auctions/{auctionId}/block")
+    public ResponseEntity<ApiResponse<AdminAuctionBlockRes>> blockAuction(
+            @PathVariable Long auctionId,
+            @RequestBody AdminBlockAuctionReq request,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        AdminAuctionBlockRes result = adminService.blockAuction(auctionId, request.getReason(), principal.getUserId());
+        return ResponseEntity.ok(ApiResponse.success("경매 차단 완료", result));
     }
 
     /**
-     * 차단된 게시글 복구
+     * 차단된 경매 게시글 목록 조회
      */
-    @PatchMapping("/items/{itemId}/restore")
-    public ResponseEntity<ApiResponse<Void>> restoreItem(@PathVariable Long itemId) {
-        adminService.restoreItem(itemId);
-        return ResponseEntity.ok(ApiResponse.success("차단된 게시글 복구 완료"));
+    @GetMapping("/auctions/blocked")
+    public ResponseEntity<ApiResponse<Page<AdminBlockedAuctionRes>>> getBlockedAuctions(Pageable pageable) {
+        Page<AdminBlockedAuctionRes> result = adminService.getBlockedAuctions(pageable);
+        return ResponseEntity.ok(ApiResponse.success("차단된 경매 목록 조회 성공", result));
+    }
+
+    /**
+     * 차단된 경매 복구
+     * PATCH /api/admin/auctions/{auctionId}/restore
+     */
+    @PatchMapping("/auctions/{auctionId}/restore")
+    public ResponseEntity<ApiResponse<AdminAuctionRestoreRes>> restoreAuction(
+            @PathVariable Long auctionId
+    ) {
+        AdminAuctionRestoreRes result = adminService.restoreAuction(auctionId);
+        return ResponseEntity.ok(ApiResponse.success("경매 복구 완료", result));
     }
 }

@@ -1,7 +1,7 @@
 package noonchissaum.backend.domain.report.handler;
 
 import lombok.RequiredArgsConstructor;
-import noonchissaum.backend.domain.item.repository.ItemRepository;
+import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.report.entity.ReportTargetType;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
@@ -10,9 +10,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-
 public class AuctionReportHandler implements ReportTargetHandler {
-    private final ItemRepository itemRepository; // 경매글 = 게시글
+    private final AuctionRepository auctionRepository;
 
     @Override
     public ReportTargetType getType(){
@@ -21,8 +20,8 @@ public class AuctionReportHandler implements ReportTargetHandler {
 
     @Override
     public void validate(Long targetId){
-        if(!itemRepository.existsById(targetId)){
-            throw new CustomException(ErrorCode.ITEM_NOT_FOUND);
+        if(!auctionRepository.existsById(targetId)){
+            throw new CustomException(ErrorCode.NOT_FOUND_AUCTIONS);
         }
     }
 }

@@ -18,6 +18,7 @@ public class AdminReportListRes {
     private String reporterNickname;
     private String targetType;
     private Long targetId;
+    private String targetName; // 유저일 경우 닉네임, 경매일 경우 제목
     private String reason;
     private String status;
     private LocalDateTime createdAt;

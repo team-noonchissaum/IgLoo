@@ -47,16 +47,17 @@ public class Report extends BaseTimeEntity {
     private ReportStatus status;
 
     //관리자 처리 결과
-    @Column(name="process_result",length=500)
+    @Column(name = "process_result", length = 500)
     private String processResult;
 
-    @Column(name="processed_at")
+    @Column(name = "processed_at")
     private LocalDateTime processedAt;
 
     //reporterId읽기전용
     @Formula("reporter_id")
     @Column(name = "reporter_id", insertable = false, updatable = false)
     private Long reporterId;
+
     /**
      * 관리자 계정용
      */
@@ -68,25 +69,30 @@ public class Report extends BaseTimeEntity {
         this.processedAt = LocalDateTime.now();
     }
 
-    /**처리 결과 기록*/
+    /**
+     * 처리 결과 기록
+     */
     public void addProcessResult(String processResult) {
         this.processResult = processResult;
     }
-    /**신고 생성*/
+
+    /**
+     * 신고 생성
+     */
     public static Report create(
             User reporter,
             ReportTargetType targetType,
             Long targetId,
             String reason,
             String description
-    ){
+    ) {
         Report report = new Report();
-        report.reporter=reporter;
-        report.targetType=targetType;
-        report.targetId=targetId;
-        report.reason=reason;
-        report.description=description;
-        report.status=ReportStatus.PENDING;
+        report.reporter = reporter;
+        report.targetType = targetType;
+        report.targetId = targetId;
+        report.reason = reason;
+        report.description = description;
+        report.status = ReportStatus.PENDING;
         return report;
     }
 }

@@ -1,10 +1,12 @@
 package noonchissaum.backend.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
+import noonchissaum.backend.domain.auction.entity.Auction;
+import noonchissaum.backend.domain.auction.entity.AuctionStatus;
+import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.service.AuctionService;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.item.entity.Item;
-import noonchissaum.backend.domain.item.repository.ItemRepository;
 import noonchissaum.backend.domain.order.service.OrderService;
 import noonchissaum.backend.domain.report.entity.Report;
 import noonchissaum.backend.domain.report.entity.ReportStatus;
@@ -19,11 +21,16 @@ import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -32,7 +39,7 @@ import java.time.LocalDate;
 public class AdminService {
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
-    private final ItemRepository itemRepository;
+    private final AuctionRepository auctionRepository;
     private final AuctionService auctionService;
     private final OrderService orderService;
     private final WalletService walletService;
@@ -48,22 +55,26 @@ public class AdminService {
                 ? reportRepository.findAllWithReporter(pageable)
                 : reportRepository.findByStatusWithReporter(ReportStatus.valueOf(status), pageable);
 
-        return reports.map(report -> new AdminReportListRes(
-                report.getId(),
-                report.getReporter().getId(),
-                report.getReporter().getNickname(),
-                report.getTargetType().name(),
-                report.getTargetId(),
-                report.getReason(),
-                report.getStatus().name(),
-                report.getCreatedAt()
-        ));
+        return reports.map(report -> {
+            String targetName = getTargetName(report.getTargetType(), report.getTargetId());
+
+            return new AdminReportListRes(
+                    report.getId(),
+                    report.getReporter().getId(),
+                    report.getReporter().getNickname(),
+                    report.getTargetType().name(),
+                    report.getTargetId(),
+                    targetName,
+                    report.getReason(),
+                    report.getStatus().name(),
+                    report.getCreatedAt()
+            );
+        });
     }
 
     /**
      * 신고 상세 조회
      */
-
     public AdminReportDetailRes getReportDetail(Long reportId) {
         Report report = reportRepository.findByIdWithReporter(reportId)
                 .orElseThrow(() -> new CustomException(ErrorCode.REPORT_NOT_FOUND));
@@ -74,16 +85,34 @@ public class AdminService {
                 report.getReporter().getEmail()
         );
 
+        // [추가] targetInfo 조회
+        String targetInfo = getTargetName(report.getTargetType(), report.getTargetId());
+
         return new AdminReportDetailRes(
                 report.getId(),
                 reporterInfo,
                 report.getTargetType().name(),
                 report.getTargetId(),
-                null,  // targetInfo는 targetType에 따라서 조회가 필요함
+                targetInfo,  // [변경] null → targetInfo
                 report.getReason(),
                 report.getStatus().name(),
                 report.getCreatedAt()
         );
+    }
+
+    /**
+     * 신고 대상 이름 조회
+     */
+    private String getTargetName(ReportTargetType targetType, Long targetId) {
+        if (targetType == ReportTargetType.USER) {
+            return userRepository.findById(targetId)
+                    .map(user -> user.getNickname() + " (userId: " + targetId + ")")
+                    .orElse("삭제된 사용자 (userId: " + targetId + ")");
+        } else {
+            return auctionRepository.findById(targetId)
+                    .map(auction -> auction.getItem().getTitle() + " (auctionId: " + targetId + ")")
+                    .orElse("삭제된 경매 (auctionId: " + targetId + ")");
+        }
     }
 
     /**
@@ -112,37 +141,182 @@ public class AdminService {
     }
 
     /**신고 대상 제재 처리*/
-    public void blockReportTarget(Report report, String reason) {
+    private void blockReportTarget(Report report, String reason) {
         ReportTargetType targetType = report.getTargetType();
         Long targetId = report.getTargetId();
-        //processResult를 이용
-        String blockReason = reason != null ? reason : "신고 처리로 인한 제재";
 
         switch (targetType) {
             case USER:
                 blockUser(targetId, reason);
                 break;
             case AUCTION:
-                blockAuctionItem(targetId,reason);
+                blockAuctionByReport(targetId, reason);
                 break;
             default:
                 throw new CustomException(ErrorCode.INVALID_REPORT_TARGET);
         }
     }
 
-    /**경매 아이템(게시글) 차단*/
-    private void blockAuctionItem(Long itemId, String reason) {
-        Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+    /* ================= 경매 게시글 관리 ================= */
 
-        // 이미 삭제된 아이템인지 체크
-        if (item.isDeleted()) {
-            throw new CustomException(ErrorCode.ITEM_ALREADY_DELETED);
+    /**
+     * 경매 차단 공통 로직
+     */
+    private void doBlockAuction(Long auctionId) {
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
+
+        Item item = auction.getItem();
+        if (item == null) {
+            throw new CustomException(ErrorCode.ITEM_NOT_FOUND);
         }
 
-        item.delete(); // Item 엔티티의 기존 delete 메서드 사용
+        if (item.isDeleted()) {
+            throw new CustomException(ErrorCode.ITEM_ALREADY_BLOCKED);
+        }
 
-        log.info("경매 아이템 차단(삭제) 완료 - itemId: {}, reason: {}", itemId, reason);
+        // 진행 중인 경매만 차단 가능
+        if (auction.getStatus() != AuctionStatus.READY &&
+                auction.getStatus() != AuctionStatus.RUNNING &&
+                auction.getStatus() != AuctionStatus.DEADLINE)
+        {
+            throw new CustomException(ErrorCode.AUCTION_CANNOT_BLOCK);
+        }
+
+        item.delete();
+        auction.block();
+    }
+
+    /**
+     * 신고로 인한 경매 차단
+     */
+    private void blockAuctionByReport(Long auctionId, String reason) {
+        doBlockAuction(auctionId);
+        log.info("신고 처리로 경매 차단 완료 - auctionId: {}, reason: {}", auctionId, reason);
+    }
+
+    /**
+     * 경매 게시글 차단 (관리자 직접)
+     */
+    @Transactional
+    public AdminAuctionBlockRes blockAuction(Long auctionId, String reason, Long adminId) {
+        doBlockAuction(auctionId);
+
+        // 해당 경매의 PENDING 신고가 있는지 확인
+        long pendingCount = reportRepository.countByTargetTypeAndTargetIdAndStatus(
+                ReportTargetType.AUCTION, auctionId, ReportStatus.PENDING);
+
+        if (pendingCount > 0) {
+            reportRepository.updateStatusByTargetTypeAndTargetIdAndStatus(
+                    ReportTargetType.AUCTION,
+                    auctionId,
+                    ReportStatus.PENDING,
+                    ReportStatus.PROCESSED
+            );
+        } else {
+            User admin = userRepository.findById(adminId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+            Report report = Report.builder()
+                    .reporter(admin)
+                    .targetType(ReportTargetType.AUCTION)
+                    .targetId(auctionId)
+                    .reason(reason)
+                    .description("관리자 직접 차단")
+                    .status(ReportStatus.PROCESSED)
+                    .processedAt(LocalDateTime.now())
+                    .build();
+
+            reportRepository.save(report);
+        }
+
+        log.info("경매 게시글 차단 완료 - auctionId: {}, reason: {}", auctionId, reason);
+
+        return new AdminAuctionBlockRes(
+                auctionId,
+                "BLOCKED",
+                LocalDateTime.now()
+        );
+    }
+
+    /**
+     * 차단된 경매 게시글 복구
+     */
+    @Transactional
+    public AdminAuctionRestoreRes restoreAuction(Long auctionId) {
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
+
+        Item item = auction.getItem();
+        if (item == null) {
+            throw new CustomException(ErrorCode.ITEM_NOT_FOUND);
+        }
+
+        if (!item.isDeleted()) {
+            throw new CustomException(ErrorCode.ITEM_NOT_BLOCKED);
+        }
+
+        if (auction.getStatus() != AuctionStatus.BLOCKED) {
+            throw new CustomException(ErrorCode.AUCTION_NOT_BLOCKED);
+        }
+
+        item.restore();
+        auction.reopen();
+
+        reportRepository.updateStatusByTargetTypeAndTargetIdAndStatus(
+                ReportTargetType.AUCTION,
+                auctionId,
+                ReportStatus.PROCESSED,
+                ReportStatus.REJECTED
+        );
+
+        log.info("경매 게시글 복구 완료 - auctionId: {}", auctionId);
+
+        return new AdminAuctionRestoreRes(
+                auctionId,
+                "ACTIVE",
+                LocalDateTime.now()
+        );
+    }
+
+    /**
+     * 차단된 경매 게시글 목록 조회
+     */
+    public Page<AdminBlockedAuctionRes> getBlockedAuctions(Pageable pageable) {
+        List<Auction> allAuctions = auctionRepository.findAll();
+
+        List<AdminBlockedAuctionRes> blockedList = allAuctions.stream()
+                .filter(auction -> auction.getStatus() == AuctionStatus.BLOCKED)
+                .map(auction -> {
+                    Item item = auction.getItem();
+
+                    Report report = reportRepository
+                            .findTopByTargetTypeAndTargetIdOrderByCreatedAtDesc(
+                                    ReportTargetType.AUCTION, auction.getId())
+                            .orElse(null);
+
+                    String reason = (report != null) ? report.getReason() : "관리자 직접 차단";
+                    LocalDateTime blockedAt = (report != null) ? report.getProcessedAt() : item.getUpdatedAt();
+
+                    return new AdminBlockedAuctionRes(
+                            auction.getId(),
+                            item.getTitle(),
+                            item.getSeller().getId(),
+                            item.getSeller().getNickname(),
+                            reason,
+                            blockedAt
+                    );
+                })
+                .collect(Collectors.toList());
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), blockedList.size());
+
+        List<AdminBlockedAuctionRes> pagedList = (start >= blockedList.size())
+                ? Collections.emptyList()
+                : blockedList.subList(start, end);
+
+        return new PageImpl<>(pagedList, pageable, blockedList.size());
     }
 
 
@@ -190,23 +364,6 @@ public class AdminService {
             return AdminUserListRes.from(user, reportCount);
         });
     }
-
-    /* ================= 게시글 관리(수정 필요) ================= */
-
-    /**차단된 게시글 목록 조회*/
-
-    public Page<AdminItemListRes> getBlockedItems(Pageable pageable) {
-        // 추가 필요! Item 상태가 BLOCKED 인 것만 조회
-        return Page.empty();
-    }
-
-    /**차단된 게시글 복구*/
-    @Transactional
-    public void restoreItem(Long itemId) {
-        Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
-        item.restore();
-}
 
     /* =================== 일일 통계 ==================== */
 

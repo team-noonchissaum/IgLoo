@@ -6,6 +6,7 @@ import noonchissaum.backend.domain.report.entity.ReportTargetType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -33,4 +34,28 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
 
     // 유저별 신고 당한 횟수 조회
     long countByTargetTypeAndTargetId(ReportTargetType targetType, Long targetId);
+
+    // 가장 최근 신고 조회
+    Optional<Report> findTopByTargetTypeAndTargetIdOrderByCreatedAtDesc(
+            ReportTargetType targetType,
+            Long targetId
+    );
+
+    // 신고 수 카운트 (상태별)
+    long countByTargetTypeAndTargetIdAndStatus(
+            ReportTargetType targetType,
+            Long targetId,
+            ReportStatus status
+    );
+
+    // 신고 상태 일괄 업데이트
+    @Modifying
+    @Query("UPDATE Report r SET r.status = :newStatus, r.processedAt = CURRENT_TIMESTAMP " +
+            "WHERE r.targetType = :targetType AND r.targetId = :targetId AND r.status = :oldStatus")
+    void updateStatusByTargetTypeAndTargetIdAndStatus(
+            @Param("targetType") ReportTargetType targetType,
+            @Param("targetId") Long targetId,
+            @Param("oldStatus") ReportStatus oldStatus,
+            @Param("newStatus") ReportStatus newStatus
+    );
 }
