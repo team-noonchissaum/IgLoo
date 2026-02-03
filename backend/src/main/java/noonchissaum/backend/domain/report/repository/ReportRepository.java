@@ -31,4 +31,6 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
     //reporterId로 직접조회
     boolean existsByReporterIdAndTargetTypeAndTargetId(Long reporterId, ReportTargetType targetType, Long targetId);
 
+    // 유저별 신고 당한 횟수 조회
+    long countByTargetTypeAndTargetId(ReportTargetType targetType, Long targetId);
 }

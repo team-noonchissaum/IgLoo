@@ -1,10 +1,11 @@
 package noonchissaum.backend.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
+import noonchissaum.backend.domain.auction.service.AuctionService;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.item.entity.Item;
 import noonchissaum.backend.domain.item.repository.ItemRepository;
-import noonchissaum.backend.domain.order.repositroy.OrderRepository;
+import noonchissaum.backend.domain.order.service.OrderService;
 import noonchissaum.backend.domain.report.entity.Report;
 import noonchissaum.backend.domain.report.entity.ReportStatus;
 import noonchissaum.backend.domain.report.entity.ReportTargetType;
@@ -14,7 +15,7 @@ import noonchissaum.backend.domain.user.dto.response.*;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.entity.UserStatus;
 import noonchissaum.backend.domain.user.repository.*;
-import noonchissaum.backend.domain.wallet.repository.WalletTransactionRepository;
+import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.data.domain.Page;
@@ -32,8 +33,9 @@ public class AdminService {
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
     private final ItemRepository itemRepository;
-    private final OrderRepository orderRepository;
-    private final WalletTransactionRepository walletTransactionRepository;
+    private final AuctionService auctionService;
+    private final OrderService orderService;
+    private final WalletService walletService;
 
     /* ================= 신고 관리 ================= */
 
@@ -176,10 +178,17 @@ public class AdminService {
         user.unblock();
     }
 
-    /**유저 목록 조회*/ //(수정 필요)
+    /**유저 목록 조회*/
     public Page<AdminUserListRes> getUsers(String status, String keyword, Pageable pageable) {
         Page<User> users = userRepository.findAll(pageable);
-        return users.map(user -> AdminUserListRes.from(user, 0)); //reportRepository.countByTargetTypeAndTargetId(USER, userId) 추가 후 구현
+
+        return users.map(user -> {
+            int reportCount = (int) reportRepository.countByTargetTypeAndTargetId(
+                    ReportTargetType.USER,
+                    user.getId()
+            );
+            return AdminUserListRes.from(user, reportCount);
+        });
     }
 
     /* ================= 게시글 관리(수정 필요) ================= */
@@ -199,20 +208,44 @@ public class AdminService {
         item.restore();
 }
 
-    /* =================== 통계(수정 필요) ==================== */
+    /* =================== 일일 통계 ==================== */
 
     public AdminStatisticsRes getDailyStatistics(String date) {
         LocalDate targetDate = (date == null) ? LocalDate.now() : LocalDate.parse(date);
 
-        // Order, Auction, Wallet 레포지토리 연결 후 구현
+        // 거래 통계
+        long orderTotal = orderService.countByDate(targetDate);
+        long orderCompleted = orderService.countCompletedByDate(targetDate);
+        long orderCanceled = orderService.countCanceledByDate(targetDate);
+
         AdminStatisticsRes.TransactionStats transaction =
-                new AdminStatisticsRes.TransactionStats(0, 0, 0);
+                new AdminStatisticsRes.TransactionStats(
+                        (int) orderTotal,
+                        (int) orderCompleted,
+                        (int) orderCanceled
+                );
+
+        // 경매 통계
+        long auctionTotal = auctionService.countByDate(targetDate);
+        long auctionSuccess = auctionService.countSuccessByDate(targetDate);
+        long auctionFailed = auctionService.countFailedByDate(targetDate);
+        double successRate = (auctionTotal > 0) ? (double) auctionSuccess / auctionTotal * 100 : 0.0;
 
         AdminStatisticsRes.AuctionStats auction =
-                new AdminStatisticsRes.AuctionStats(0, 0, 0, 0.0);
+                new AdminStatisticsRes.AuctionStats(
+                        (int) auctionTotal,
+                        (int) auctionSuccess,
+                        (int) auctionFailed,
+                        Math.round(successRate * 10) / 10.0  // 소수점 1자리
+                );
+
+        // 크레딧 통계
+        long totalCharged = walletService.sumChargeByDate(targetDate);
+        long totalUsed = walletService.sumUsedByDate(targetDate);
+        long totalWithdrawn = walletService.sumWithdrawnByDate(targetDate);
 
         AdminStatisticsRes.CreditStats credit =
-                new AdminStatisticsRes.CreditStats(0L, 0L, 0L);
+                new AdminStatisticsRes.CreditStats(totalCharged, totalUsed, totalWithdrawn);
 
         return new AdminStatisticsRes(
                 targetDate.toString(),
@@ -220,7 +253,6 @@ public class AdminService {
                 auction,
                 credit
         );
-
     }
 
 }
