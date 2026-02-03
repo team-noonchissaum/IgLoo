@@ -72,10 +72,6 @@ public class User extends BaseTimeEntity {
         this.status = status;
     }
 
-    public static User createLocalUser(String email, String nickname) {
-        return new User(email, nickname, UserRole.USER, UserStatus.ACTIVE);
-    }
-
     // ============ 비즈니스 로직 ============
 
     /**
@@ -95,14 +91,6 @@ public class User extends BaseTimeEntity {
      */
     public boolean isActive() {
         return this.status == UserStatus.ACTIVE;
-    }
-
-    /**
-     * 회원 탈퇴 (soft delete)
-     */
-    public void softDelete() {
-        this.status = UserStatus.DELETED;
-        this.deletedAt = LocalDateTime.now();
     }
 
     // =========== 관리자 기능 ==========
