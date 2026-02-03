@@ -66,7 +66,7 @@ public enum ErrorCode {
     NOT_FOUND_AUCTIONS(HttpStatus.NOT_FOUND, "A001", "경매를 찾을 수 없습니다."),
 
     // Notification Error
-    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "알림을 찾을 수 없습니다.");
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "알림을 찾을 수 없습니다."),
     //Charge Error
     CHARGE_LOCK_ACQUISITION(HttpStatus.TOO_MANY_REQUESTS, "C001", "처리에 실패했습니다. 다시 시도해주세요"),
     CHARGE_CHECK_NOT_FOUND(HttpStatus.NOT_FOUND,"C002","충전금을 찾을 수 없습니다."),
