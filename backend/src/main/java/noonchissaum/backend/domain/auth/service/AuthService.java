@@ -83,7 +83,11 @@ public class AuthService {
 
         // 차단된 사용자 체크
         if (user.getStatus() == UserStatus.BLOCKED) {
-            throw new CustomException(ErrorCode.USER_BLOCKED);
+            String reason = user.getBlockReason();
+            String message = (reason != null && !reason.isBlank())
+                    ? "차단된 사용자입니다. 사유: " + reason
+                    : "차단된 사용자입니다. 관리자에게 문의하세요.";
+            throw new CustomException(ErrorCode.USER_BLOCKED, message);
         }
 
         String accessToken = jwtTokenProvider.createAccessToken(user.getId(),user.getRole());
