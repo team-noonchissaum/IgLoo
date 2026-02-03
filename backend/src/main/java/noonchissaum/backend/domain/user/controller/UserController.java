@@ -4,10 +4,7 @@ package noonchissaum.backend.domain.user.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.user.dto.request.ProfileUpdateUserReq;
-import noonchissaum.backend.domain.user.dto.response.MyPageRes;
-import noonchissaum.backend.domain.user.dto.response.OtherUserProfileRes;
-import noonchissaum.backend.domain.user.dto.response.ProfileRes;
-import noonchissaum.backend.domain.user.dto.response.ProfileUpdateUserRes;
+import noonchissaum.backend.domain.user.dto.response.*;
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.global.dto.ApiResponse;
 import noonchissaum.backend.global.security.UserPrincipal;
@@ -69,14 +66,51 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("수정 성공", response));
     }
 
+
+
+
+//    /**
+//     * 탈퇴 가능 여부 확인 (1단계)
+//     */
+//    @GetMapping("/me/delete-check")
+//    public ResponseEntity<ApiResponse<UserDeleteAttemptRes>> checkDelete(
+//            @AuthenticationPrincipal UserPrincipal principal
+//    ) {
+//        UserDeleteAttemptRes result = userService.checkDelete(principal.getUserId());
+//        return ResponseEntity.ok(ApiResponse.success("탈퇴 가능 여부 확인 완료", result));
+//    }
+//
+//    /**
+//     * 회원 탈퇴
+//     * DELETE /api/users/me
+//     */
+//    @DeleteMapping("/me")
+//    public ResponseEntity<ApiResponse<Void>> deleteUser(
+//            @AuthenticationPrincipal UserPrincipal principal,
+//            @RequestParam(defaultValue = "false") boolean confirmDelete
+//    ) {
+//        userService.deleteUser(principal.getUserId(), confirmDelete);
+//        return ResponseEntity.ok(ApiResponse.success("회원 탈퇴 완료"));
+//    }
     /**
-     * 회원 탈퇴
-     * DELETE /api/users/me  - 현재 hardDelete
+     * 탈퇴 시도 (첫 클릭)
      */
-    @DeleteMapping("/me")
-    public ResponseEntity<ApiResponse<Void>> deleteUser(
-            @AuthenticationPrincipal UserPrincipal principal) {
-        userService.deleteUser(principal.getUserId());
+    @PostMapping("/me/delete-attempt")
+    public ResponseEntity<ApiResponse<UserDeleteAttemptRes>> attemptDelete(
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        UserDeleteAttemptRes result = userService.attemptDelete(principal.getUserId());
+        return ResponseEntity.ok(ApiResponse.success("탈퇴 시도 완료", result));
+    }
+
+    /**
+     * 강제 탈퇴 (두 번째 클릭 후 확인)
+     */
+    @DeleteMapping("/me/force")
+    public ResponseEntity<ApiResponse<Void>> forceDelete(
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        userService.userDelete(principal.getUserId());
         return ResponseEntity.ok(ApiResponse.success("회원 탈퇴 완료"));
     }
 

@@ -134,4 +134,12 @@ public class User extends BaseTimeEntity {
     public void registWallet(Wallet wallet) {
         this.wallet = wallet;
     }
+
+    public void delete(){
+        if(this.status==UserStatus.DELETED){
+            throw new IllegalStateException("이미 탈퇴한 사용자입니다");
+        }
+        this.status = UserStatus.DELETED;
+        this.deletedAt = LocalDateTime.now();
+    }
 }

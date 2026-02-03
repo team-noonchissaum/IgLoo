@@ -80,6 +80,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             nickname = nickname + "_" + UUID.randomUUID().toString().substring(0, 8);
         }
 
+        //유저 생성
         User newUser = new User(email, nickname, UserRole.USER, UserStatus.ACTIVE);
         // 프로필 URL 있으면 저장 (null이면 그대로)
         newUser.updateProfile(nickname, info.getProfileUrl());
@@ -89,7 +90,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         UserAuth oauthAuth = UserAuth.oauth(newUser, authType, identifier);
         userAuthRepository.save(oauthAuth);
 
-        Wallet wallet = walletService.createWallet(saved.getId());
+        Wallet wallet = walletService.createWallet(saved);
         saved.registWallet(wallet);
 
         return newUser;

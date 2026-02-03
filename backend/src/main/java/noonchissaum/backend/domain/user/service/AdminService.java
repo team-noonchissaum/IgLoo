@@ -1,11 +1,13 @@
 package noonchissaum.backend.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.item.entity.Item;
 import noonchissaum.backend.domain.item.repository.ItemRepository;
 import noonchissaum.backend.domain.order.repositroy.OrderRepository;
 import noonchissaum.backend.domain.report.entity.Report;
 import noonchissaum.backend.domain.report.entity.ReportStatus;
+import noonchissaum.backend.domain.report.entity.ReportTargetType;
 import noonchissaum.backend.domain.report.repository.ReportRepository;
 import noonchissaum.backend.domain.user.dto.request.AdminReportProcessReq;
 import noonchissaum.backend.domain.user.dto.response.*;
@@ -22,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -97,7 +99,50 @@ public class AdminService {
         }
 
         report.process(ReportStatus.valueOf(req.getStatus()));
+
+        if (req.getProcessResult() != null && !req.getProcessResult().isBlank()) {
+            report.addProcessResult(req.getProcessResult());
+        }
+
+        if (Boolean.TRUE.equals(req.getBlockTarget())) {
+            blockReportTarget(report, req.getProcessResult());
+        }
     }
+
+    /**신고 대상 제재 처리*/
+    public void blockReportTarget(Report report, String reason) {
+        ReportTargetType targetType = report.getTargetType();
+        Long targetId = report.getTargetId();
+        //processResult를 이용
+        String blockReason = reason != null ? reason : "신고 처리로 인한 제재";
+
+        switch (targetType) {
+            case USER:
+                blockUser(targetId, reason);
+                break;
+            case AUCTION:
+                blockAuctionItem(targetId,reason);
+                break;
+            default:
+                throw new CustomException(ErrorCode.INVALID_REPORT_TARGET);
+        }
+    }
+
+    /**경매 아이템(게시글) 차단*/
+    private void blockAuctionItem(Long itemId, String reason) {
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+
+        // 이미 삭제된 아이템인지 체크
+        if (item.isDeleted()) {
+            throw new CustomException(ErrorCode.ITEM_ALREADY_DELETED);
+        }
+
+        item.delete(); // Item 엔티티의 기존 delete 메서드 사용
+
+        log.info("경매 아이템 차단(삭제) 완료 - itemId: {}, reason: {}", itemId, reason);
+    }
+
 
     /* ================= 사용자 관리 ================= */
     /**유저 차단*/
@@ -139,24 +184,18 @@ public class AdminService {
 
     /* ================= 게시글 관리(수정 필요) ================= */
 
-    /**
-     * 차단된 게시글 목록 조회
-     */
+    /**차단된 게시글 목록 조회*/
 
     public Page<AdminItemListRes> getBlockedItems(Pageable pageable) {
         // 추가 필요! Item 상태가 BLOCKED 인 것만 조회
         return Page.empty();
     }
 
-    /**
-     * 차단된 게시글 복구
-     */
-
+    /**차단된 게시글 복구*/
     @Transactional
     public void restoreItem(Long itemId) {
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
-
         item.restore();
 }
 

@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -24,8 +25,8 @@ public class WalletService {
 
     private final StringRedisTemplate redisTemplate;
     private final WalletRepository walletRepository;
-    private final UserService userService;
 
+    /**입찰 처리*/
     public void processBidWallet(Long userId, Long previousBidderId, BigDecimal bidAmount, BigDecimal currentPrice ,Long auctionId, String requestId) {
 
         String userBalanceKey = RedisKeys.userBalance(userId);
@@ -63,9 +64,39 @@ public class WalletService {
     }
 
     @Transactional
-    public Wallet createWallet(Long userId) {
-        User user = userService.getUserByUserId(userId);
+    public Wallet createWallet(User user) {
         Wallet wallet = new Wallet(user);
         return walletRepository.save(wallet);
+    }
+
+    /**잔액 확인용 메서드*/
+    @Transactional(readOnly = true)
+    public BigDecimal getCurrentBalance(Long userId) {
+        Wallet wallet = walletRepository.findByUserId(userId)
+                .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+        return wallet.getBalance();
+    }
+    /**캐시삭제*/
+    public void clearWalletCache(Long userId) {
+        redisTemplate.delete(RedisKeys.userBalance(userId));
+        redisTemplate.delete(RedisKeys.userLockedBalance(userId));
+    }
+
+    /**탈퇴 첫 시도인지 확인*/
+    public boolean isFirstDeleteAttempt(Long userId) {
+        String attemptKey = "user:delete:attempt:" + userId;
+        return !Boolean.TRUE.equals(redisTemplate.hasKey(attemptKey));
+    }
+
+    /**탈퇴 시도 기록*/
+    public void markDeleteAttempt(Long userId) {
+        String attemptKey = "user:delete:attempt:" + userId;
+        redisTemplate.opsForValue().set(attemptKey, "1", 10, TimeUnit.MINUTES);
+    }
+
+    /**탈퇴 시도 기록 삭제*/
+    public void clearDeleteAttempt(Long userId) {
+        String attemptKey = "user:delete:attempt:" + userId;
+        redisTemplate.delete(attemptKey);
     }
 }

@@ -14,7 +14,7 @@ import noonchissaum.backend.domain.user.entity.*;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.service.WalletService;
-import noonchissaum.backend.global.config.JwtTokenProvider;
+import noonchissaum.backend.global.security.JwtTokenProvider;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -34,10 +34,10 @@ public class AuthService {
 
     /**로컬 회원가입*/
     public SignupRes signup(SignupReq signupReq) {
-        if(userRepository.existsByEmail(signupReq.getEmail())) {
+        if(userRepository.existsByEmailAndNotDeleted(signupReq.getEmail())) {
             throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
         }
-        if(userRepository.existsByNickname(signupReq.getNickname())) {
+        if(userRepository.existsByNicknameAndNotDeleted(signupReq.getNickname())) {
             throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
         }
         User user= new User(
@@ -55,7 +55,7 @@ public class AuthService {
         );
         userAuthRepository.save(userAuth);
 
-        Wallet wallet = walletService.createWallet(saved.getId());
+        Wallet wallet = walletService.createWallet(saved);
         saved.registWallet(wallet);
 
         return new SignupRes(
@@ -64,7 +64,6 @@ public class AuthService {
                 user.getNickname()
         );
     }
-
     /**로그인 처리*/
     public LoginRes login(LoginReq req) {
 
@@ -106,10 +105,7 @@ public class AuthService {
                 isNewer
         );
     }
-
-    /**
-     * Local로그인
-     */
+    /**Local로그인*/
     private UserAuth localLogin(LoginReq req) {
         UserAuth userAuth = userAuthRepository
                 .findByAuthTypeAndIdentifier(AuthType.LOCAL,req.getEmail())
@@ -121,10 +117,7 @@ public class AuthService {
 
         return userAuth;
     }
-
-    /**
-     * OAuth로그인
-     */
+    /**OAuth로그인*/
     private LoginResult oauthLogin(LoginReq req) {
 
         // 🔥 실제로는 provider별로 토큰 검증 필요
@@ -135,10 +128,7 @@ public class AuthService {
                 .map(auth -> new LoginResult(auth, false))
                 .orElseGet(() -> oauthSignup(req, oauthIdentifier));
     }
-
-    /**
-     * OAuth 신규 회원가입
-     */
+    /**OAuth 신규 회원가입*/
     private LoginResult oauthSignup(LoginReq req, String identifier) {
 
         if (userAuthRepository.existsByIdentifierAndAuthType(req.getAuthType(),identifier)) {
@@ -161,12 +151,11 @@ public class AuthService {
         UserAuth userAuth = UserAuth.oauth(user, req.getAuthType(), identifier);
         userAuthRepository.save(userAuth);
 
-        Wallet wallet = walletService.createWallet(saved.getId());
+        Wallet wallet = walletService.createWallet(saved);
         saved.registWallet(wallet);
 
         return new LoginResult(userAuth, true);
     }
-
     /**토큰 재발급(refresh)*/
     public RefreshRes refresh(RefreshReq req) {
         String refreshToken= req.getRefreshToken();
@@ -200,18 +189,12 @@ public class AuthService {
         );
         return new RefreshRes(newAccessToken,newRefreshToken);
     }
-
     /**로그아웃*/
     public void logout(String refreshToken) {
         Long userId=jwtTokenProvider.getUserId(refreshToken);
         refreshTokenService.delete(userId);
     }
-
-
-
-    /**
-     * OAuth 로그인 결과용 내부 record
-     */
+    /**OAuth 로그인 결과용 내부 record*/
     private record LoginResult(UserAuth userAuth, boolean isNewer) {
     }
 }

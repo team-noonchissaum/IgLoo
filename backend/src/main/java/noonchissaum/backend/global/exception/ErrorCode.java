@@ -43,6 +43,7 @@ public enum ErrorCode {
     USER_ALREADY_BLOCKED(HttpStatus.BAD_REQUEST, "이미 차단된 사용자입니다.", "USER-004"),
     /** 차단되지 않은 사용자 해제 시도 */
     USER_NOT_BLOCKED(HttpStatus.BAD_REQUEST, "차단되지 않은 사용자입니다.", "USER-005"),
+    BALANCE_EXISTS(HttpStatus.CONFLICT,"잔액이 남아있습니다.","USER-006"),
 
     // ========== REPORT (신고 에러) ==========
     /** 신고 조회 실패 */
@@ -53,6 +54,7 @@ public enum ErrorCode {
 
     // ========== ITEM (상품/게시글 에러) ==========
     ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다.", "ITEM-001"),
+    ITEM_ALREADY_DELETED(HttpStatus.NOT_FOUND, "이미 삭제된 게시글입니다", "ITEM-002"),
 
     // Bid Error
     LOW_BID_AMOUNT(HttpStatus.BAD_REQUEST, "B001", "현재가보다 같거나 낮은 가격에 입찰할 수 없습니다."),
