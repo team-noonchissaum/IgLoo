@@ -93,6 +93,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         Wallet wallet = walletService.createWallet(saved);
         saved.registWallet(wallet);
 
-        return newUser;
+        return saved;
     }
 }
