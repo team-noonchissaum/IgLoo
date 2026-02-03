@@ -5,6 +5,7 @@
 ### pem
 *.pem
 
-### db
+###
 /db/**
 /redis-data/**
+.idea
