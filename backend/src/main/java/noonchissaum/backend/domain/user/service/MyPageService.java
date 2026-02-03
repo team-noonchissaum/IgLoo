@@ -1,4 +1,4 @@
-package noonchissaum.backend.domain.mypage.service;
+package noonchissaum.backend.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.user.dto.response.MyPageRes;

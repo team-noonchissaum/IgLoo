@@ -1,7 +1,7 @@
-package noonchissaum.backend.domain.mypage.controller;
+package noonchissaum.backend.domain.user.controller;
 
 import lombok.RequiredArgsConstructor;
-import noonchissaum.backend.domain.mypage.service.MyPageService;
+import noonchissaum.backend.domain.user.service.MyPageService;
 import noonchissaum.backend.domain.user.dto.response.MyPageRes;
 import noonchissaum.backend.domain.user.dto.response.UserWalletRes;
 import noonchissaum.backend.global.dto.ApiResponse;
