@@ -1,11 +1,16 @@
 package noonchissaum.backend.domain.user.controller;
 
 import lombok.RequiredArgsConstructor;
+import noonchissaum.backend.domain.auction.dto.res.AuctionRes;
+import noonchissaum.backend.domain.auction.dto.res.MyBidAuctionRes;
+import noonchissaum.backend.domain.auction.service.BidService;
 import noonchissaum.backend.domain.user.service.MyPageService;
 import noonchissaum.backend.domain.user.dto.response.MyPageRes;
 import noonchissaum.backend.domain.user.dto.response.UserWalletRes;
 import noonchissaum.backend.global.dto.ApiResponse;
 import noonchissaum.backend.global.security.UserPrincipal;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class MyPageController {
 
     private final MyPageService myPageService;
+    private final BidService bidService;
 
     /**마이페이지 조회
      * GET /api/mypage */
@@ -38,4 +44,31 @@ public class MyPageController {
         UserWalletRes response = myPageService.getWallet(principal.getUserId());
         return ResponseEntity.ok(ApiResponse.success("지갑 조회 성공", response));
     }
+
+    /**
+     * 내 입찰 경매 목록 조회
+     * GET /api/mypage/bids
+     */
+    @GetMapping("/bids")
+    public ResponseEntity<ApiResponse<Page<MyBidAuctionRes>>> getMyBidAuctions(
+            @AuthenticationPrincipal UserPrincipal principal,
+            Pageable pageable
+    ) {
+        Page<MyBidAuctionRes> response = bidService.getMyBidAuctions(principal.getUserId(), pageable);
+        return ResponseEntity.ok(ApiResponse.success("내 입찰 내역 조회 성공", response));
+    }
+
+    /**
+     * 내가 등록한 경매 목록 조회
+     * GET /api/mypage/auctions
+     */
+    @GetMapping("/auctions")
+    public ResponseEntity<ApiResponse<Page<AuctionRes>>> getMyAuctions(
+            @AuthenticationPrincipal UserPrincipal principal,
+            Pageable pageable
+    ) {
+        Page<AuctionRes> response = myPageService.getMyAuctions(principal.getUserId(), pageable);
+        return ResponseEntity.ok(ApiResponse.success("내 등록 경매 조회 성공", response));
+    }
+
 }

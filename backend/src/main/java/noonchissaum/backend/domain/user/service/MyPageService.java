@@ -1,6 +1,8 @@
 package noonchissaum.backend.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
+import noonchissaum.backend.domain.auction.dto.res.AuctionRes;
+import noonchissaum.backend.domain.auction.service.AuctionService;
 import noonchissaum.backend.domain.user.dto.response.MyPageRes;
 import noonchissaum.backend.domain.user.dto.response.UserWalletRes;
 import noonchissaum.backend.domain.user.entity.User;
@@ -9,6 +11,8 @@ import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +25,7 @@ public class MyPageService {
 
     private final UserRepository userRepository;
     private final WalletRepository walletRepository;
+    private final AuctionService auctionService;
 
     /**마이페이지 조회*/
     public MyPageRes getMyPage(Long userId) {
@@ -49,6 +54,13 @@ public class MyPageService {
         BigDecimal totalBalance = balance.add(lockedBalance);
 
         return new UserWalletRes(balance, lockedBalance, totalBalance);
+    }
+
+    /**
+     * 내가 등록한 경매 목록 조회
+     */
+    public Page<AuctionRes> getMyAuctions(Long userId, Pageable pageable) {
+        return auctionService.getMyAuctions(userId, pageable);
     }
 
 }

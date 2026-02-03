@@ -17,6 +17,7 @@ import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.global.RedisKeys;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -183,6 +184,21 @@ public class AuctionService {
 
         redisTemplate.opsForValue().set(RedisKeys.auctionEndTime(auctionId), endTime.toString());
         redisTemplate.opsForValue().set(RedisKeys.auctionIsExtended(auctionId), "true");
+    }
+
+    /**
+     * 내가 등록한 경매 목록 조회
+     */
+    public Page<AuctionRes> getMyAuctions(Long userId, Pageable pageable) {
+        Page<Auction> auctions = auctionRepository.findAll(pageable);
+
+        // 내가 등록한 경매만 필터링
+        List<AuctionRes> myAuctions = auctions.getContent().stream()
+                .filter(a -> a.getItem().getSeller().getId().equals(userId))
+                .map(AuctionRes::from)
+                .toList();
+
+        return new PageImpl<>(myAuctions, pageable, myAuctions.size());
     }
 
     /**
