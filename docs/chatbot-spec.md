@@ -58,12 +58,12 @@
 flowchart TB
   %% Scenario 1: auction_flow
   subgraph S1[입찰/경매 진행]
-    S1_root([어떤 도움이 필요하신가요?])
-    S1_bid([입찰은 경매 상세 페이지에서 진행됩니다.\n현재가보다 높은 금액을 입력해 주세요.])
-    S1_reg([경매 등록은 상품 정보와\n시작/종료 시간을 입력하면 완료됩니다.])
+    S1_root(["어떤 도움이 필요하신가요?"])
+    S1_bid(["입찰은 경매 상세 페이지에서 진행됩니다.<br/>현재가보다 높은 금액을 입력해 주세요."])
+    S1_reg(["경매 등록은 상품 정보와<br/>시작/종료 시간을 입력하면 완료됩니다."])
 
-    S1_root -->|경매 목록 보기| S1_link_auctions([LINK /auctions])
-    S1_root -->|경매 등록하기| S1_link_register([LINK /auctions/register])
+    S1_root -->|경매 목록 보기| S1_link_auctions(["LINK /auctions"])
+    S1_root -->|경매 등록하기| S1_link_register(["LINK /auctions/register"])
     S1_root -->|입찰 방법 안내| S1_bid
     S1_root -->|등록 방법 안내| S1_reg
 
@@ -76,11 +76,11 @@ flowchart TB
 
   %% Scenario 2: payment_flow
   subgraph S2[낙찰/결제]
-    S2_root([낙찰/결제는 아래 메뉴에서 선택할 수 있어요.])
-    S2_guide([결제는 마이페이지 또는\n결제 진행 페이지에서 확인할 수 있습니다.])
+    S2_root(["낙찰/결제는 아래 메뉴에서 선택할 수 있어요."])
+    S2_guide(["결제는 마이페이지 또는<br/>결제 진행 페이지에서 확인할 수 있습니다."])
 
-    S2_root -->|결제 진행 페이지로 이동| S2_link_login([LINK /login])
-    S2_root -->|결제 상태 확인 (API)| S2_api_payments([API /payments])
+    S2_root -->|결제 진행 페이지로 이동| S2_link_login(["LINK /login"])
+    S2_root -->|결제 상태 확인 API| S2_api_payments(["API /payments"])
     S2_root -->|결제 안내 보기| S2_guide
 
     S2_guide -->|로그인 페이지로 이동| S2_link_login
