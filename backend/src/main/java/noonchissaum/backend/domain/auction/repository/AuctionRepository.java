@@ -60,9 +60,9 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
       and a.endAt <= :now
 """)
     int endRunningAuctions(
-            AuctionStatus deadline,
-            AuctionStatus ended,
-            LocalDateTime now
+            @Param("deadline") AuctionStatus deadline,
+            @Param("ended") AuctionStatus ended,
+            @Param("now") LocalDateTime now
     );
 
     /**
@@ -86,7 +86,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
             value = """
         SELECT a.auction_id
         FROM auctions a
-        WHERE a.status IN ('RUNNING', 'DEADLINE')
+        WHERE a.status = 'RUNNING'
           AND TIMESTAMPDIFF(MINUTE, :now, a.end_at) <= a.imminent_minutes
     """,
             nativeQuery = true

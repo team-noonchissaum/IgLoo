@@ -115,19 +115,25 @@ public class Auction extends BaseTimeEntity {
      * 입찰 시점에서 호출
      */
     public boolean extendIfNeeded(LocalDateTime now) {
-        if (Boolean.TRUE.equals(this.isExtended)) return false;
-        if (now.isAfter(this.endAt)) return false;
+
+        if (Boolean.TRUE.equals(this.isExtended)) {
+            return false;
+        }
+        if (now.isAfter(this.endAt)) {
+            return false;
+        }
 
         long remainSeconds = Duration.between(now, this.endAt).getSeconds();
-
         int windowMinutes = (this.imminentMinutes == null ? 5 : this.imminentMinutes);
         long windowSeconds = windowMinutes * 60L;
 
-        if (remainSeconds <= windowSeconds && remainSeconds >= 0) {
+
+        if (remainSeconds <= windowSeconds && remainSeconds >= 0 || this.status == AuctionStatus.DEADLINE) {
             this.endAt = this.endAt.plusMinutes(3);
             this.isExtended = true;
             return true;
         }
+
         return false;
     }
 

@@ -79,6 +79,10 @@ public class AuctionController {
         return ResponseEntity.ok(new ApiResponse<>("Auction canceled successfully", null));
     }
 
+    /**
+     * 토글 형식
+     *
+     */
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<Page<AuctionListRes>>> searchAuctions(
             @RequestParam(required = false) AuctionStatus status,

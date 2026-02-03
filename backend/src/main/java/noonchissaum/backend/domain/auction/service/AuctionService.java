@@ -62,11 +62,15 @@ public class AuctionService {
         Item item = itemService.createItem(seller,category,request);
 
         // 3. 경매(Auction) 설정 및 저장
+        LocalDateTime startAt = request.getStartAt() != null ? request.getStartAt() : LocalDateTime.now();
+        LocalDateTime endAt = request.getEndAt() != null ? request.getEndAt() : 
+                (request.getAuctionDuration() != null ? startAt.plusHours(request.getAuctionDuration()) : startAt.plusHours(1));
+
         Auction auction = Auction.builder()
                 .item(item)
                 .startPrice(request.getStartPrice())
-                .startAt(LocalDateTime.now())
-                .endAt(LocalDateTime.now().plusHours(request.getAuctionDuration()))
+                .startAt(startAt)
+                .endAt(endAt)
                 .build();
         auctionRepository.save(auction);
 
