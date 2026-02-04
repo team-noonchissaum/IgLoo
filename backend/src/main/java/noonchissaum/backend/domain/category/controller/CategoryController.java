@@ -1,11 +1,13 @@
 package noonchissaum.backend.domain.category.controller;
 
 import lombok.RequiredArgsConstructor;
-import noonchissaum.backend.domain.category.dto.CategoryListRes;
+import noonchissaum.backend.domain.category.dto.req.AddCategoryReq;
+import noonchissaum.backend.domain.category.dto.res.CategoryListRes;
+import noonchissaum.backend.domain.category.dto.res.CategoryRes;
 import noonchissaum.backend.domain.category.service.CategoryService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import noonchissaum.backend.global.dto.ApiResponse;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -21,5 +23,14 @@ public class CategoryController {
     @GetMapping
     public List<CategoryListRes> getCategories(){
         return categoryService.categoryList();
+    }
+
+    /**
+     * admin 카테고리 추가
+     * */
+    @PostMapping
+    public ResponseEntity<ApiResponse<CategoryRes>> addCategory(@RequestBody AddCategoryReq req) {
+        CategoryRes categoryRes = categoryService.addCategory(req);
+        return ResponseEntity.ok(ApiResponse.success("카테고리 추가 완료", categoryRes));
     }
 }
