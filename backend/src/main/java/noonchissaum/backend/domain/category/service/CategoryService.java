@@ -20,11 +20,13 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final ItemRepository itemRepository;
 
+    @Transactional(readOnly = true)
     public Category getcategory(Long categoryId) {
         return categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new IllegalArgumentException("Category not found"));
     }
 
+    @Transactional(readOnly = true)
     public List<CategoryListRes> categoryList(){
         return categoryRepository.findAll()
                 .stream()
@@ -32,6 +34,7 @@ public class CategoryService {
                 .toList();
     }
 
+    @Transactional
     public CategoryRes addCategory(AddCategoryReq req) {
         Category parent = null;
         if (req.parentId() != null) {

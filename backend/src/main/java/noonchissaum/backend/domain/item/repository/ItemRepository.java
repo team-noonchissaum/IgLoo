@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import org.springframework.data.jpa.repository.EntityGraph;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -24,12 +26,13 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update Item i " +
             "set i.wishCount = case\n" +
-            "                when coalesce(i.wishCount, 0) > 0 then coalesce(i.wishCount, 0) - 1\n" +
-            "                else 0\n" +
-            "            end\n" +
+            "                  when coalesce(i.wishCount, 0) > 0 then coalesce(i.wishCount, 0) - 1\n" +
+            "                  else 0\n" +
+            "                  end\n" +
             "where i.id = :itemId ")
     int decrementWishCount(Long itemId);
 
+    @EntityGraph(attributePaths = {"seller", "category"})
     List<Item>findByCategoryIn(List<Category> categories);
 
 
