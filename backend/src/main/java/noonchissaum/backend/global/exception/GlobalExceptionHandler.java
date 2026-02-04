@@ -1,6 +1,7 @@
 package noonchissaum.backend.global.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import noonchissaum.backend.global.dto.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -8,6 +9,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.Map;
 
@@ -83,6 +85,19 @@ public class GlobalExceptionHandler {
                         "code", ErrorCode.INVALID_INPUT_VALUE.getCode(),
                         "message", e.getMessage()
                 ));
+    }
+
+    /**
+     * 이미지 파일 크기 초과 예외 처리
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMaxUploadSizeExceededException(
+            MaxUploadSizeExceededException e
+    ) {
+        log.warn("파일 크기 초과: {}", e.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(ApiResponse.error("파일 크기가 너무 큽니다. 최대 10MB까지 업로드 가능합니다."));
     }
 
     /**
