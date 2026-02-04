@@ -1,11 +1,13 @@
 package noonchissaum.backend.domain.item.repository;
 
+import noonchissaum.backend.domain.category.entity.Category;
 import noonchissaum.backend.domain.item.entity.Item;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -27,6 +29,8 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
             "            end\n" +
             "where i.id = :itemId ")
     int decrementWishCount(Long itemId);
+
+    List<Item>findByCategoryIn(List<Category> categories);
 
 
 }
