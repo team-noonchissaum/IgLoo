@@ -15,12 +15,12 @@ import noonchissaum.backend.domain.user.repository.UserRepository;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -30,7 +30,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final ReportRepository reportRepository;
     private final WalletService walletService;
-//    private final StringRedisTemplate redisTemplate;
+    private final StringRedisTemplate redisTemplate;
 
     /**본인 프로필 조회*/
     public ProfileRes getMyProfile(Long userId) {
@@ -44,22 +44,6 @@ public class UserService {
                 user.getStatus().name()
         );
     }
-
-//    /**마이페이지 조회*/
-//    public MyPageRes getMyPage(Long userId) {
-//        User user = userRepository.findByIdWithWallet(userId).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-//
-//        BigDecimal balance =
-//                user.getWallet() != null ? user.getWallet().getBalance() : BigDecimal.ZERO;
-//
-//        return new MyPageRes(
-//                user.getId(),
-//                user.getEmail(),
-//                user.getNickname(),
-//                user.getProfileUrl(),
-//                balance
-//        );
-//    }
 
     /**다른 유저 프로필 조회*/
     public OtherUserProfileRes getOtherUserProfile(Long userId) {
@@ -115,11 +99,11 @@ public class UserService {
         }
 
         // 크레딧 있을 때: 첫 시도인지 확인
-        boolean isFirstAttempt = walletService.isFirstDeleteAttempt(userId);
+        boolean isFirstAttempt = isFirstDeleteAttempt(userId);
 
         if (isFirstAttempt) {
             // 첫 번째 시도 - 환전 권장
-            walletService.markDeleteAttempt(userId);
+            markDeleteAttempt(userId);
             return UserDeleteAttemptRes.firstAttempt(balance);
         } else {
             // 두 번째 이상 - 포기 확인 필요 (공통)
@@ -137,7 +121,7 @@ public class UserService {
         //탈퇴 처리
         user.delete();
         walletService.clearWalletCache(userId);
-        walletService.clearDeleteAttempt(userId);
+        clearDeleteAttempt(userId);
 
         if (balance.compareTo(BigDecimal.ZERO) > 0) {
             log.warn("크레딧 {}원 포기하고 탈퇴 - userId: {}", balance, userId);
@@ -180,5 +164,23 @@ public class UserService {
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         walletService.createWallet(user);
+    }
+
+    /**탈퇴 첫 시도인지 확인*/
+    public boolean isFirstDeleteAttempt(Long userId) {
+        String attemptKey = "user:delete:attempt:" + userId;
+        return !Boolean.TRUE.equals(redisTemplate.hasKey(attemptKey));
+    }
+
+    /**탈퇴 시도 기록*/
+    public void markDeleteAttempt(Long userId) {
+        String attemptKey = "user:delete:attempt:" + userId;
+        redisTemplate.opsForValue().set(attemptKey, "1", 10, TimeUnit.MINUTES);
+    }
+
+    /**탈퇴 시도 기록 삭제*/
+    public void clearDeleteAttempt(Long userId) {
+        String attemptKey = "user:delete:attempt:" + userId;
+        redisTemplate.delete(attemptKey);
     }
 }

@@ -31,7 +31,6 @@ public class WalletService {
     private final StringRedisTemplate redisTemplate;
     private final WalletRepository walletRepository;
     private final WalletTransactionRepository walletTransactionRepository;
-    private final UserService userService;
     private final UserLockExecutor userLockExecutor;
     private final WalletTransactionRecordService walletTransactionRecordService;
 
@@ -90,102 +89,7 @@ public class WalletService {
         redisTemplate.delete(RedisKeys.userLockedBalance(userId));
     }
 
-    /**탈퇴 첫 시도인지 확인*/
-    public boolean isFirstDeleteAttempt(Long userId) {
-        String attemptKey = "user:delete:attempt:" + userId;
-        return !Boolean.TRUE.equals(redisTemplate.hasKey(attemptKey));
-    }
 
-    /**탈퇴 시도 기록*/
-    public void markDeleteAttempt(Long userId) {
-        String attemptKey = "user:delete:attempt:" + userId;
-        redisTemplate.opsForValue().set(attemptKey, "1", 10, TimeUnit.MINUTES);
-    }
-
-    /**탈퇴 시도 기록 삭제*/
-    public void clearDeleteAttempt(Long userId) {
-        String attemptKey = "user:delete:attempt:" + userId;
-        redisTemplate.delete(attemptKey);
-    }
-
-//     /**사용 가능 잔액 조회*/
-//     @Transactional(readOnly = true)
-//     public BigDecimal getAvailableBalance(Long userId) {
-//         Wallet wallet = walletRepository.findByUserId(userId)
-//                 .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
-//         return wallet.getBalance();
-//     }
-//     /**입찰중인 금액*/
-//     @Transactional(readOnly = true)
-//     public BigDecimal getLockedBalance(Long userId) {
-//         Wallet wallet = walletRepository.findByUserId(userId)
-//                 .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
-//         return wallet.getLockedBalance();
-//     }
-//     /**전체 잔액 조회(balance+lockedBalance)*/
-//     @Transactional(readOnly = true)
-//     public BigDecimal getTotalBalance(Long userId) {
-//         Wallet wallet = walletRepository.findByUserId(userId)
-//                 .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
-//         return wallet.getBalance().add(wallet.getLockedBalance());
-//     }
-//     /**입찰시 balance차감+lockedBalnce증가*/
-//     @Transactional
-//     public void lockBalance(Long userId, BigDecimal amount) {
-//         Wallet wallet = walletRepository.findByUserId(userId)
-//                 .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
-
-//         if (wallet.getBalance().compareTo(amount) < 0) {
-//             throw new ApiException(ErrorCode.INSUFFICIENT_BALANCE);
-//         }
-
-//         wallet.bid(amount); // Wallet Entity의 bid() 메서드 사용
-//         walletRepository.save(wallet);
-
-//         // Redis도 동시 업데이트
-//         String userBalanceKey = RedisKeys.userBalance(userId);
-//         String userLockedBalanceKey = RedisKeys.userLockedBalance(userId);
-//         redisTemplate.opsForValue().set(userBalanceKey, wallet.getBalance().toPlainString(), Duration.ofMinutes(30));
-//         redisTemplate.opsForValue().set(userLockedBalanceKey, wallet.getLockedBalance().toPlainString(), Duration.ofMinutes(30));
-//     }
-
-//     /**redis와 db동기화*/
-//     @Transactional
-//     public void unlockBalance(Long userId, BigDecimal amount) {
-//         Wallet wallet = walletRepository.findByUserId(userId)
-//                 .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
-
-//         if (wallet.getLockedBalance().compareTo(amount) < 0) {
-//             throw new ApiException(ErrorCode.INSUFFICIENT_LOCKED_BALANCE);
-//         }
-
-//         wallet.bidCanceled(amount); // Wallet Entity의 bidCanceled() 메서드 사용
-//         walletRepository.save(wallet);
-
-//         // Redis도 동시 업데이트
-//         String userBalanceKey = RedisKeys.userBalance(userId);
-//         String userLockedBalanceKey = RedisKeys.userLockedBalance(userId);
-//         redisTemplate.opsForValue().set(userBalanceKey, wallet.getBalance().toPlainString(), Duration.ofMinutes(30));
-//         redisTemplate.opsForValue().set(userLockedBalanceKey, wallet.getLockedBalance().toPlainString(), Duration.ofMinutes(30));
-//     }
-
-//     /**낙찰시 lockedBalance에서 최종 차감*/
-//     @Transactional
-//     public void deductLockedBalance(Long userId, BigDecimal amount) {
-//         Wallet wallet = walletRepository.findByUserId(userId)
-//                 .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
-
-//         if (wallet.getLockedBalance().compareTo(amount) < 0) {
-//             throw new ApiException(ErrorCode.INSUFFICIENT_LOCKED_BALANCE);
-//         }
-
-//         wallet.setLockedBalance(wallet.getLockedBalance().subtract(amount));
-//         walletRepository.save(wallet);
-
-//         // Redis도 동시 업데이트
-//         String userLockedBalanceKey = RedisKeys.userLockedBalance(userId);
-//         redisTemplate.opsForValue().set(userLockedBalanceKey, wallet.getLockedBalance().toPlainString(), Duration.ofMinutes(30));
-//     }
 
     /**
      * 관리자 통계용 - 날짜별 충전 금액 합계
@@ -214,7 +118,7 @@ public class WalletService {
      */
     public long sumWithdrawnByDate(LocalDate date) {
         return walletTransactionRepository.findAll().stream()
-                .filter(t -> t.getType() == TransactionType.WITHDRAW)
+                .filter(t -> t.getType() == TransactionType.WITHDRAW_CONFIRM)
                 .filter(t -> t.getCreatedAt().toLocalDate().equals(date))
                 .map(t -> t.getAmount().longValue())
                 .reduce(0L, Long::sum);

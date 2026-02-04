@@ -245,6 +245,8 @@ public class AuctionService {
                 .filter(a -> a.getStatus() == AuctionStatus.FAILED)
                 .filter(a -> a.getEndAt() != null && a.getEndAt().toLocalDate().equals(date))
                 .count();
+    }
+
     @Transactional(readOnly = true)
     public Page<AuctionListRes> searchAuctionList(
             Long userId,

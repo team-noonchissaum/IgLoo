@@ -4,7 +4,7 @@ package noonchissaum.backend.global.websocket;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
-import noonchissaum.backend.global.config.JwtTokenProvider;
+import noonchissaum.backend.global.security.JwtTokenProvider;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
