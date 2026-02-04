@@ -28,7 +28,6 @@ public class PaymentWebhookController {
             paymentService.processDepositDone(req.data().paymentKey(), req.data().orderId(), req.data().amount());
         }
 
-
         return ResponseEntity.ok(ApiResponse.success("success"));
     }
 }

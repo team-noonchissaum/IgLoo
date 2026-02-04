@@ -1,13 +1,15 @@
 package noonchissaum.backend.global.config;
 
 import lombok.RequiredArgsConstructor;
-import noonchissaum.backend.domain.auth.oauth2.OAuth2SuccessHandler;
+import noonchissaum.backend.domain.auth.oauth2.handler.OAuth2FailureHandler;
+import noonchissaum.backend.domain.auth.oauth2.handler.OAuth2SuccessHandler;
 import noonchissaum.backend.domain.auth.oauth2.service.CustomOAuth2UserService;
 import noonchissaum.backend.global.handler.JwtAccessDeniedHandler;
 import noonchissaum.backend.global.handler.JwtAuthenticationEntryPoint;
 import noonchissaum.backend.global.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -36,25 +38,24 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final noonchissaum.backend.domain.auth.oauth2.OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final OAuth2FailureHandler oAuth2FailureHandler;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, OAuth2SuccessHandler oAuth2SuccessHandler) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
-                .formLogin(form->form.disable())
-                .httpBasic(basic->basic.disable())
+                .csrf(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
 
                 // 인증/인가 예외 처리 (JSON 응답)
                 .exceptionHandling(exception -> exception
@@ -63,38 +64,50 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
-                        //  preflight OPTIONS 허용
-                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                        // auction,wish test
-                        .requestMatchers(
-                                "/api/auctions/**",
-                                "/api/item/**",
-                                "/ws/**",
-                                "/api/chat/**"
-                        ).permitAll()
-
-
-
-                        //  actuator 전부 허용
-                        .requestMatchers("/actuator/**").permitAll()
                         //인증 없이 접근
                         .requestMatchers(
                                 "/api/auth/**",
-                                "/api/oauth2/login/**", //OAuth2 API진입점
-                                "/health"
+                                "/api/oauth2/login/**"
                         ).permitAll()
-                        //관리자 전용
-                        .requestMatchers("/api/admin/**")
-                        .hasRole("ADMIN")
-                        //OAuth2 내부 엔드포인트
-                        .requestMatchers("/oauth2/authorization/**",
-                                "/login/oauth2/code/**").permitAll()
+
+                        .requestMatchers(HttpMethod.POST, "/api/reports").hasAnyRole("USER", "ADMIN")
+
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                         //로그인 유저(USER,ADMIN)
-                        .requestMatchers(
-                                "/api/users/**",
-                                "/api/reports"
-                        ).hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/api/users/**").hasAnyRole("USER", "ADMIN")
+
+                        // auction controller
+                        .requestMatchers(HttpMethod.GET, "/api/auctions").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auctions/{auctionId}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auctions/search").permitAll()
+
+                        .requestMatchers("/api/auctions").hasAnyRole("USER", "ADMIN")
+
+                        // bid controller
+                        .requestMatchers("/api/bid/{auctionId}").permitAll()
+
+                        .requestMatchers("/api/bid/**").hasAnyRole("USER", "ADMIN")
+
+                        // category controller
+                        .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
+
+                        .requestMatchers("/api/categories").hasRole("ADMIN")
+
+                        // wish controller
+                        .requestMatchers("/api/item/**").hasAnyRole("USER", "ADMIN")
+
+                        // notification controller
+                        .requestMatchers("/api/notifications/**").hasAnyRole("USER", "ADMIN")
+
+                        // charge controller
+                        .requestMatchers("/api/charges/**").hasAnyRole("USER", "ADMIN")
+
+                        // payment controller
+                        .requestMatchers("/api/payments/**").hasAnyRole("USER", "ADMIN")
+
+                        // mypage controller
+                        .requestMatchers("/api/mypage/**").hasAnyRole("USER", "ADMIN")
 
                         //그 외 모두 차단
                         .anyRequest().authenticated()
@@ -102,7 +115,8 @@ public class SecurityConfig {
                 .oauth2Login(oauth->oauth.authorizationEndpoint(auth->
                         auth.baseUri("/api/oauth2/login"))
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-                        .successHandler(oAuth2SuccessHandler))
+                        .successHandler(oAuth2SuccessHandler)
+                        .failureHandler(oAuth2FailureHandler))
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class);
@@ -117,7 +131,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(java.util.List.of("http://localhost:3000"));
+        config.setAllowedOriginPatterns(java.util.List.of("*"));
         config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(java.util.List.of("*"));
         config.setAllowCredentials(true);

@@ -1,7 +1,6 @@
 package noonchissaum.backend.domain.notification.dto.ws;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
