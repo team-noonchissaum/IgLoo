@@ -65,7 +65,7 @@ public class ChargeRecordService {
         walletTransactionRecordService.record(wallet, TransactionType.CHARGE,amount,chargeCheckId);
     }
 
-
+    @Transactional
     public void cancelChargeTx(Long chargeCheckId, Long userId,String cancelReason) {
         ChargeCheck chargeCheck = chargeCheckRepository.findWithLockById(chargeCheckId)
                 .orElseThrow(() -> new ApiException(ErrorCode.CHARGE_LOCK_ACQUISITION));

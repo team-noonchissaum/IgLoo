@@ -128,34 +128,37 @@ public class BidService {
                 // 경매 정보 및 시간 연장은 동기적으로 즉시 업데이트 (데이터 정합성 유지)
                 auctionRecordService.updateAuctionWithExtension(auctionId, userId, bidAmount);
 
-            // Stomp 메세지 발행 로직
-            // messageService.sendPriceUpdate(auctionId, bidAmount);
-            BidSuccessedPayload bidSuccessedPayload = BidSuccessedPayload
-                    .builder()
-                    .auctionId(auctionId)
-                    .currentPrice(bidAmount.longValueExact())
-                    .currentBidderId(userId)
-                    .build();
-            auctionMessageService.sendBidSuccessed(auctionId, bidSuccessedPayload);
-
-            if (previousBidderId != -1L){
-                String msg = NotificationConstants.MSG_AUCTION_OUTBID;
-                OutbidPayload outbidPayload = OutbidPayload
+                // Stomp 메세지 발행 로직 - 갱신된 경매 정보로 payload 구성 (모든 시청자 화면 실시간 반영)
+                Auction updatedAuction = auctionRepository.findById(auctionId)
+                        .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
+                BidSuccessedPayload bidSuccessedPayload = BidSuccessedPayload
                         .builder()
                         .auctionId(auctionId)
-                        .myBidPrice(currentPrice)
-                        .newCurrentPrice(bidAmount)
-                        .message(msg)
+                        .currentPrice(bidAmount.longValueExact())
+                        .currentBidderId(userId)
+                        .bidCount(updatedAuction.getBidCount())
+                        .endAt(updatedAuction.getEndAt())
                         .build();
-                auctionMessageService.sendOutbid(previousBidderId, outbidPayload);
-                notificationService.create(
-                        previousBidderId,
-                        NotificationType.OUTBID,
-                        msg,
-                        NotificationConstants.REF_TYPE_AUCTION,
-                        auctionId
-                );
-            }
+                auctionMessageService.sendBidSuccessed(auctionId, bidSuccessedPayload);
+
+                if (previousBidderId != -1L){
+                    String msg = NotificationConstants.MSG_AUCTION_OUTBID;
+                    OutbidPayload outbidPayload = OutbidPayload
+                            .builder()
+                            .auctionId(auctionId)
+                            .myBidPrice(currentPrice)
+                            .newCurrentPrice(bidAmount)
+                            .message(msg)
+                            .build();
+                    auctionMessageService.sendOutbid(previousBidderId, outbidPayload);
+                    notificationService.create(
+                            previousBidderId,
+                            NotificationType.OUTBID,
+                            msg,
+                            NotificationConstants.REF_TYPE_AUCTION,
+                            auctionId
+                    );
+                }
 
 
 

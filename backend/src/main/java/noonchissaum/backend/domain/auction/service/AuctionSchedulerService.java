@@ -142,7 +142,7 @@ public class AuctionSchedulerService {
     /**
      * ended -> success or failed
      */
-    @Transactional
+
     public void result() {
         // ENDED 상태인 경매를 페이지 단위로 가져옴
         Page<Auction> endedPage = auctionRepository.findAllByStatus(

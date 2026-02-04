@@ -1,6 +1,9 @@
 package noonchissaum.backend.domain.user.repository;
 
 import noonchissaum.backend.domain.user.entity.User;
+import noonchissaum.backend.domain.user.entity.UserStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -8,6 +11,8 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User,Long> {
+
+    Page<User> findByStatus(UserStatus status, Pageable pageable);
 
     boolean existsByNickname(String Nickname);
 
