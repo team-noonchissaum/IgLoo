@@ -114,19 +114,27 @@ public class Auction extends BaseTimeEntity {
      * 마감 임박 시 단 한 번만 3분 연장
      * 입찰 시점에서 호출
      */
-    public void extendIfNeeded(LocalDateTime now) {
-        if (Boolean.TRUE.equals(this.isExtended)) return;
-        if (now.isAfter(this.endAt)) return;
+    public boolean extendIfNeeded(LocalDateTime now) {
+
+        if (Boolean.TRUE.equals(this.isExtended)) {
+            return false;
+        }
+        if (now.isAfter(this.endAt)) {
+            return false;
+        }
 
         long remainSeconds = Duration.between(now, this.endAt).getSeconds();
-
         int windowMinutes = (this.imminentMinutes == null ? 5 : this.imminentMinutes);
         long windowSeconds = windowMinutes * 60L;
 
-        if (remainSeconds <= windowSeconds) {
+
+        if (remainSeconds <= windowSeconds && remainSeconds >= 0 || this.status == AuctionStatus.DEADLINE) {
             this.endAt = this.endAt.plusMinutes(3);
             this.isExtended = true;
+            return true;
         }
+
+        return false;
     }
 
     /**
@@ -136,6 +144,23 @@ public class Auction extends BaseTimeEntity {
         this.currentBidder = user;
         this.currentPrice = newBid;
         this.bidCount++;
+    }
+
+    /**
+     * 경매 차단 (관리자용)
+     */
+    public void block() {
+        this.status = AuctionStatus.BLOCKED;
+    }
+
+    /**
+     * 경매 복구 (관리자용)
+     */
+    public void reopen() {
+        if (this.status != AuctionStatus.BLOCKED) {
+            throw new IllegalStateException("차단된 경매만 복구할 수 있습니다.");
+        }
+        this.status = AuctionStatus.READY;
     }
 
     public User getSeller() {

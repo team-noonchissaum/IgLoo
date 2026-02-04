@@ -27,3 +27,14 @@ services:
       TZ: Asia/Seoul
     env_file:
       - .env.dev
+
+  nginx:
+    image: nginx:latest
+    container_name: igloo-nginx
+    ports:
+      - "80:80" # 로컬 브라우저에서 http://localhost 로 접속 가능하게 함
+    volumes:
+      - ./local.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+    restart: always

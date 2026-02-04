@@ -1,0 +1,38 @@
+@host = http://localhost:8080
+@accessToken = REPLACE_ME
+@notificationId = 1
+
+### =========================
+### Notification - List
+### GET /api/notifications
+### =========================
+GET {{host}}/api/notifications
+Authorization: Bearer {{accessToken}}
+
+### =========================
+### Notification - Unread Count
+### GET /api/notifications/unread-count
+### =========================
+GET {{host}}/api/notifications/unread-count
+Authorization: Bearer {{accessToken}}
+
+### =========================
+### Notification - Detail
+### GET /api/notifications/{notificationId}
+### =========================
+GET {{host}}/api/notifications/{{notificationId}}
+Authorization: Bearer {{accessToken}}
+
+### =========================
+### Notification - Mark as Read (single)
+### PATCH /api/notifications/{notificationId}/read
+### =========================
+PATCH {{host}}/api/notifications/{{notificationId}}/read
+Authorization: Bearer {{accessToken}}
+
+### =========================
+### Notification - Mark All as Read
+### PATCH /api/notifications/read-all
+### =========================
+PATCH {{host}}/api/notifications/read-all
+Authorization: Bearer {{accessToken}}
