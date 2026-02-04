@@ -28,17 +28,21 @@ public class ChatRoomService {
      */
     @Transactional
     public ChatRoomRes createRoom(Order order){
+
+        // 1. 직거래 가능 상태인지 필수 값 체크
         validateOrderForDirectTrade(order);
 
         Long auctionId = order.getAuction().getId();
-        Long myUserId = order.getBuyer().getId(); // DIRECT 선택 주체 = buyer 전제
+        Long userId = order.getBuyer().getId();
 
+        // 2. 이미 해당 경매에 대한 채팅방이 존재하는지 1차 확인 (성능 최적화)
+        // 존재하면 즉시 반환, 없으면 생성 로직(createRoomDedup) 실행
         return chatRoomRepository.findByAuctionId(auctionId)
-                .map(room -> ChatRoomRes.from(room, myUserId))
-                .orElseGet(() -> createRoomWithDedup(order, myUserId));
+                .map(room -> ChatRoomRes.from(room, userId))
+                .orElseGet(() -> createRoomDedup(order, userId));
     }
 
-    private ChatRoomRes createRoomWithDedup(Order order, Long myUserId) {
+    private ChatRoomRes createRoomDedup(Order order, Long userId) {
         Long auctionId = order.getAuction().getId();
 
         try {
@@ -49,13 +53,18 @@ public class ChatRoomService {
                     .build();
 
             ChatRoom saved = chatRoomRepository.save(room);
-            return ChatRoomRes.from(saved, myUserId);
+            return ChatRoomRes.from(saved, userId);
 
         } catch (DataIntegrityViolationException e) {
+
+            /**
+             * [동시성 처리] 동시에 save() 호출 시 하나는 성공하고 하나는 중복 에러 발생
+            에러 발생 시 로그를 남기고, 먼저 생성된 방을 다시 조회해서 반환
+             */
             log.info("ChatRoom unique conflict (auctionId={}), re-fetching...", auctionId);
 
             return chatRoomRepository.findByAuctionId(auctionId)
-                    .map(r -> ChatRoomRes.from(r, myUserId))
+                    .map(room -> ChatRoomRes.from(room, userId))
                     .orElseThrow(() -> e);
         }
     }
@@ -86,9 +95,8 @@ public class ChatRoomService {
 
 
     /**
-    * DIRECT 채팅방 생성이 가능한 Order인지 검증
-    * Order, auction, buyer, seller가 존재해야 함
-    */
+     * 직거래 채팅방 생성이 가능한 주문인지 유효성 검증
+     */
     private void validateOrderForDirectTrade(Order order) {
         if (order == null) {
             throw new ApiException(ErrorCode.INVALID_REQUEST);
