@@ -1,6 +1,6 @@
 services:
   backend:
-    image: igloo-backend:latest
+    image: corqu/igloo-backend:latest
     container_name: igloo-backend
     env_file:
       - .env
@@ -19,7 +19,7 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - backend
