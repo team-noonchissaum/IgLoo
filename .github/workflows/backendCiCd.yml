@@ -26,7 +26,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKER_USERNAME }}/backend
+          images: ${{ secrets.DOCKER_USERNAME }}/igloo-backend
           tags: |
             type=ref,event=tag
             type=raw,value=latest

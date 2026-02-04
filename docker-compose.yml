@@ -1,6 +1,6 @@
 services:
   backend:
-    build: .
+    image: igloo-backend:latest
     container_name: igloo-backend
     env_file:
       - .env
