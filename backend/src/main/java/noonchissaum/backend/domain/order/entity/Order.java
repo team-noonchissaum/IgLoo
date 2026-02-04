@@ -1,9 +1,7 @@
 package noonchissaum.backend.domain.order.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.item.entity.Item;
 import noonchissaum.backend.domain.user.entity.User;
@@ -12,6 +10,8 @@ import noonchissaum.backend.global.entity.BaseTimeEntity;
 @Entity
 @Table(name = "orders")
 @Getter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Order extends BaseTimeEntity {
 

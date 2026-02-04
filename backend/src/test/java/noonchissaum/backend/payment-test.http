@@ -1,0 +1,42 @@
+@baseUrl = http://localhost:8080
+
+# 1. 로그인
+# username과 password를 실제 테스트 계정 정보로 변경해주세요.
+### 로컬 로그인 (토큰 저장)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "1234",
+  "authType": "LOCAL"
+}
+
+> {%
+    client.global.set("accessToken", response.body.accessToken);
+    client.global.set("refreshToken", response.body.refreshToken);
+%}
+
+### 충전 준비
+# 충전 승인을 테스트하기 위해 미리 충전 요청을 생성합니다.
+POST {{baseUrl}}/api/payments/prepare
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "amount": 10000,
+  "provider": "TOSS"
+}
+
+### 충전 승인하기
+POST http://localhost:8080/api/payments/confirm
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "paymentKey": "tgen_20260202145250qPrY8",
+  "pgOrderId": "e016eee7-67a0-476a-8143-2a0f29afed14",
+  "amount": 10000
+}
+
+### 가상계좌 충전 테스트

@@ -1,0 +1,156 @@
+### 로컬 회원가입
+POST http://localhost:8080/api/auth/signup
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "1234",
+  "nickname": "테스트유저"
+}
+
+### 로컬 회원가입 경매 등록용
+POST http://localhost:8080/api/auth/signup
+Content-Type: application/json
+
+{
+  "email": "test1@test.com",
+  "password": "12345",
+  "nickname": "테스트경매유저"
+}
+
+### 로컬 로그인 (토큰 저장)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "1234",
+  "authType": "LOCAL"
+}
+
+> {%
+    client.global.set("accessToken", response.body.accessToken);
+    client.global.set("refreshToken", response.body.refreshToken);
+%}
+
+### 로컬 로그인
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "1234",
+  "authType": "LOCAL"
+}
+### 2. 새로운 유저 신고 - 성공 (user_id=4 신고)
+POST http://localhost:8080/api/reports
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3Njk5OTc2MjksImV4cCI6MTc2OTk5OTQyOX0.EXRJhLt7C3888D2oxkZECeMSKKjdRsoVxYukXMje2Rg
+Content-Type: application/json
+
+{
+  "targetType": "USER",
+  "targetId": 4,
+  "reason": "부적절한 언어 사용",
+  "description": "채팅에서 욕설을 사용했습니다"
+}
+
+### 1. Admin 로그인 (비밀번호는 test@test.com과 동일하게 1234)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@test.com",
+  "password": "1234",
+  "authType": "LOCAL"
+}
+
+> {%
+    client.global.set("adminToken", response.body.accessToken);
+    client.log("Admin Token: " + response.body.accessToken);
+%}
+
+### 2. Admin 권한 테스트 - 신고 목록 조회
+GET http://localhost:8080/api/admin/reports?status=PENDING
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI1Iiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzcwMDAwMjkxLCJleHAiOjE3NzAwMDIwOTF9.donWUx9xn7OnLlmQP0utj-xMwmX6lgBTx-_Xy6E7NRI
+
+### 3. Admin 권한 테스트 - 신고 처리
+PATCH http://localhost:8080/api/admin/reports/102
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI1Iiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzcwMDAwMjkxLCJleHAiOjE3NzAwMDIwOTF9.donWUx9xn7OnLlmQP0utj-xMwmX6lgBTx-_Xy6E7NRI
+Content-Type: application/json
+
+{
+  "status": "PROCESSED",
+  "blockTarget": true,
+  "processResult": "욕설 사용 확인, 유저 차단 처리"
+}
+
+
+### 회원가입
+POST http://localhost:8080/api/auth/signup
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "test",
+  "nickname": "tester12"
+}
+### 1. 로그인
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example1.com",
+  "password": "test",
+  "authType": "LOCAL"
+}
+
+> {%
+    client.global.set("token", response.body.accessToken);
+%}
+
+### 2. 첫 번째 탈퇴 시도
+POST http://localhost:8080/api/users/me/delete-attempt
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcwMTA3MjE5LCJleHAiOjE3NzAxMDkwMTl9._6WBROmvg7pQlYr_lrwTtAKAhbodtwUJPTkb8M83K3U
+
+### 3. 두 번째 탈퇴 시도
+POST http://localhost:8080/api/users/me/delete-attempt
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcwMTA3MjE5LCJleHAiOjE3NzAxMDkwMTl9._6WBROmvg7pQlYr_lrwTtAKAhbodtwUJPTkb8M83K3U
+
+### 4. 강제 탈퇴 (확인 후)
+DELETE http://localhost:8080/api/users/me/force
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcwMTA3MjE5LCJleHAiOjE3NzAxMDkwMTl9._6WBROmvg7pQlYr_lrwTtAKAhbodtwUJPTkb8M83K3U
+
+# 응답:
+# {
+#   "success": true,
+#   "message": "회원 탈퇴 완료"
+# }
+
+
+### 회원가입
+POST http://localhost:8080/api/auth/signup
+Content-Type: application/json
+
+{
+  "email": "bidder@example.com",
+  "password": "1234",
+  "nickname": "입찰중인유저"
+}
+
+### 로그인
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "bidder@example.com",
+  "password": "1234",
+  "authType": "LOCAL"
+}
+
+### 마이페이지 조회
+GET http://localhost:8080/api/mypage
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxNCIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcwMTA3MzM5LCJleHAiOjE3NzAxMDkxMzl9.81qX3-ObXOZohUq5xOhoRZZHWfYJCT9oMeF9pin8K08
+
+### 지갑정보조회
+GET http://localhost:8080/api/mypage/wallet
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxNCIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcwMTA3MzM5LCJleHAiOjE3NzAxMDkxMzl9.81qX3-ObXOZohUq5xOhoRZZHWfYJCT9oMeF9pin8K08

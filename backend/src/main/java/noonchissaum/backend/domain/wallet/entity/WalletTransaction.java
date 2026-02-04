@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import noonchissaum.backend.global.exception.ApiException;
+import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -26,7 +28,7 @@ public class WalletTransaction {
     @JoinColumn(name = "wallet_id", nullable = false)
     private Wallet wallet;
 
-    @Column(precision = 15, scale = 0)
+    @Column(precision = 15, scale = 0,nullable = false)
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
@@ -46,4 +48,30 @@ public class WalletTransaction {
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+
+    public static WalletTransaction create(
+            Wallet wallet,
+            BigDecimal amount,
+            TransactionType type,
+            Long refId
+    ) {
+
+        WalletTransaction tx = new WalletTransaction();
+        tx.wallet = wallet;
+        tx.amount = amount;
+        tx.type = type;
+        tx.refType = type.getDefaultRefType();
+        tx.refId = refId;
+        tx.memo = type.getMemo();
+
+        return tx;
+    }
+
+    public void confirmWithdrawal(){
+        TransactionType type = TransactionType.WITHDRAW_CONFIRM;
+        this.type = type;
+        this.refType = type.getDefaultRefType();
+        this.memo = type.getMemo();
+    }
 }

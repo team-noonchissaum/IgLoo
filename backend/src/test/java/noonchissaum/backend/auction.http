@@ -1,0 +1,32 @@
+### 로컬 로그인 (토큰 저장)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test1@test.com",
+  "password": "12345",
+  "authType": "LOCAL"
+}
+
+> {%
+    client.global.set("accessToken", response.body.accessToken);
+    client.global.set("refreshToken", response.body.refreshToken);
+%}
+
+### 경매 등록
+POST http://localhost:8080/api/auctions
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+X-User-Id: 2
+
+{
+  "title": "테스트 경매",
+  "description": "이것은 테스트 경매입니다.",
+  "startPrice": 5000,
+  "categoryId": 3,
+  "auctionDuration": 24,
+  "imageUrls": [null]
+}
+
+### 경매 목록 조회
+GET http://localhost:8080/api/auctions

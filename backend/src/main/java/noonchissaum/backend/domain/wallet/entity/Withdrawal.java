@@ -48,4 +48,30 @@ public class Withdrawal {
 
     @Column(name = "processed_at")
     private LocalDateTime processedAt;
+
+    public static Withdrawal create(
+            Wallet wallet,
+            BigDecimal amount,
+            BigDecimal feeAmount,
+            String bankName,
+            String accountNumber
+    ) {
+        Withdrawal withdrawal = new Withdrawal();
+        withdrawal.wallet = wallet;
+        withdrawal.amount = amount;
+        withdrawal.feeAmount = feeAmount;
+        withdrawal.bankName = bankName;
+        withdrawal.accountNumber = accountNumber;
+        withdrawal.status = WithdrawalStatus.REQUESTED;
+        return withdrawal;
+    }
+
+    public void confirm() {
+        this.status = WithdrawalStatus.APPROVED;
+        this.processedAt = LocalDateTime.now();
+    }
+    public void reject() {
+        this.status = WithdrawalStatus.REJECTED;
+        this.processedAt = LocalDateTime.now();
+    }
 }
