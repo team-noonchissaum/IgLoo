@@ -40,7 +40,19 @@ public class Order extends BaseTimeEntity {
     @Column(nullable = false)
     private OrderStatus status;
 
+    //거래방식(직거래/배송)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "delivery_type")
+    private DeliveryType deliveryType;
+
     // 양방향 매핑: 배송 정보 (1:1)
     @OneToOne(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Shipment shipment;
+
+    public void chooseDeliveryType(DeliveryType type){
+        if(this.deliveryType != null){
+            throw new IllegalStateException("이미 거래방식이 선택되었습니다.");
+        }
+        this.deliveryType = type;
+    }
 }

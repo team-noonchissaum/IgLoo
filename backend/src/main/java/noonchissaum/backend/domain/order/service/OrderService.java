@@ -25,6 +25,7 @@ public class OrderService {
                 .buyer(buyer)
                 .seller(auction.getSeller())
                 .status(OrderStatus.CREATED)
+                .deliveryType(null)// 아직 선택전
                 .build();
         orderRepository.save(order);
     }
@@ -57,5 +58,6 @@ public class OrderService {
                 .filter(o -> o.getCreatedAt().toLocalDate().equals(date))
                 .count();
     }
+
 
 }
