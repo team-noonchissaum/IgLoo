@@ -67,5 +67,33 @@ public class Wallet extends BaseTimeEntity {
     }
     public void setLockedBalance(BigDecimal lockedBalance) {
         this.lockedBalance = lockedBalance;
+
+    public void auctionDeposit(BigDecimal amount) {
+        this.balance = this.balance.subtract(amount);
+    }
+
+    public void auctionRefund(BigDecimal amount) {
+        this.balance = this.balance.add(amount);
+    }
+
+    public void charge(BigDecimal amount){
+        this.balance = this.balance.add(amount);
+    }
+
+    public void withdrawRequest(BigDecimal total) {
+        if (this.balance.compareTo(total) < 0) {
+            throw new ApiException(ErrorCode.INSUFFICIENT_BALANCE);
+        }
+        this.balance = this.balance.subtract(total);
+        this.lockedBalance = this.lockedBalance.add(total);
+    }
+
+    public void withdrawRollback(BigDecimal total) {
+        this.balance = this.balance.add(total);
+        this.lockedBalance = this.lockedBalance.subtract(total);
+    }
+
+    public void withdrawConfirm(BigDecimal total) {
+        this.lockedBalance = this.lockedBalance.subtract(total);
     }
 }

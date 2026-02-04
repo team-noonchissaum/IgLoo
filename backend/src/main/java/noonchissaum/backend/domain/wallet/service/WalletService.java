@@ -4,12 +4,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.service.UserService;
+import noonchissaum.backend.domain.wallet.dto.wallet.res.WalletRes;
 import noonchissaum.backend.domain.wallet.entity.TransactionType;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
 import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
+import noonchissaum.backend.global.util.UserLockExecutor;
 import org.springframework.context.ApplicationEventPublisher;
 import noonchissaum.backend.domain.wallet.repository.WalletTransactionRepository;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -29,6 +31,9 @@ public class WalletService {
     private final StringRedisTemplate redisTemplate;
     private final WalletRepository walletRepository;
     private final WalletTransactionRepository walletTransactionRepository;
+    private final UserService userService;
+    private final UserLockExecutor userLockExecutor;
+    private final WalletTransactionRecordService walletTransactionRecordService;
 
     public void processBidWallet(Long userId, Long previousBidderId, BigDecimal bidAmount, BigDecimal currentPrice ,Long auctionId, String requestId) {
 
@@ -103,84 +108,84 @@ public class WalletService {
         redisTemplate.delete(attemptKey);
     }
 
-    /**사용 가능 잔액 조회*/
-    @Transactional(readOnly = true)
-    public BigDecimal getAvailableBalance(Long userId) {
-        Wallet wallet = walletRepository.findByUserId(userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
-        return wallet.getBalance();
-    }
-    /**입찰중인 금액*/
-    @Transactional(readOnly = true)
-    public BigDecimal getLockedBalance(Long userId) {
-        Wallet wallet = walletRepository.findByUserId(userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
-        return wallet.getLockedBalance();
-    }
-    /**전체 잔액 조회(balance+lockedBalance)*/
-    @Transactional(readOnly = true)
-    public BigDecimal getTotalBalance(Long userId) {
-        Wallet wallet = walletRepository.findByUserId(userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
-        return wallet.getBalance().add(wallet.getLockedBalance());
-    }
-    /**입찰시 balance차감+lockedBalnce증가*/
-    @Transactional
-    public void lockBalance(Long userId, BigDecimal amount) {
-        Wallet wallet = walletRepository.findByUserId(userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+//     /**사용 가능 잔액 조회*/
+//     @Transactional(readOnly = true)
+//     public BigDecimal getAvailableBalance(Long userId) {
+//         Wallet wallet = walletRepository.findByUserId(userId)
+//                 .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+//         return wallet.getBalance();
+//     }
+//     /**입찰중인 금액*/
+//     @Transactional(readOnly = true)
+//     public BigDecimal getLockedBalance(Long userId) {
+//         Wallet wallet = walletRepository.findByUserId(userId)
+//                 .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+//         return wallet.getLockedBalance();
+//     }
+//     /**전체 잔액 조회(balance+lockedBalance)*/
+//     @Transactional(readOnly = true)
+//     public BigDecimal getTotalBalance(Long userId) {
+//         Wallet wallet = walletRepository.findByUserId(userId)
+//                 .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+//         return wallet.getBalance().add(wallet.getLockedBalance());
+//     }
+//     /**입찰시 balance차감+lockedBalnce증가*/
+//     @Transactional
+//     public void lockBalance(Long userId, BigDecimal amount) {
+//         Wallet wallet = walletRepository.findByUserId(userId)
+//                 .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
 
-        if (wallet.getBalance().compareTo(amount) < 0) {
-            throw new ApiException(ErrorCode.INSUFFICIENT_BALANCE);
-        }
+//         if (wallet.getBalance().compareTo(amount) < 0) {
+//             throw new ApiException(ErrorCode.INSUFFICIENT_BALANCE);
+//         }
 
-        wallet.bid(amount); // Wallet Entity의 bid() 메서드 사용
-        walletRepository.save(wallet);
+//         wallet.bid(amount); // Wallet Entity의 bid() 메서드 사용
+//         walletRepository.save(wallet);
 
-        // Redis도 동시 업데이트
-        String userBalanceKey = RedisKeys.userBalance(userId);
-        String userLockedBalanceKey = RedisKeys.userLockedBalance(userId);
-        redisTemplate.opsForValue().set(userBalanceKey, wallet.getBalance().toPlainString(), Duration.ofMinutes(30));
-        redisTemplate.opsForValue().set(userLockedBalanceKey, wallet.getLockedBalance().toPlainString(), Duration.ofMinutes(30));
-    }
+//         // Redis도 동시 업데이트
+//         String userBalanceKey = RedisKeys.userBalance(userId);
+//         String userLockedBalanceKey = RedisKeys.userLockedBalance(userId);
+//         redisTemplate.opsForValue().set(userBalanceKey, wallet.getBalance().toPlainString(), Duration.ofMinutes(30));
+//         redisTemplate.opsForValue().set(userLockedBalanceKey, wallet.getLockedBalance().toPlainString(), Duration.ofMinutes(30));
+//     }
 
-    /**redis와 db동기화*/
-    @Transactional
-    public void unlockBalance(Long userId, BigDecimal amount) {
-        Wallet wallet = walletRepository.findByUserId(userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+//     /**redis와 db동기화*/
+//     @Transactional
+//     public void unlockBalance(Long userId, BigDecimal amount) {
+//         Wallet wallet = walletRepository.findByUserId(userId)
+//                 .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
 
-        if (wallet.getLockedBalance().compareTo(amount) < 0) {
-            throw new ApiException(ErrorCode.INSUFFICIENT_LOCKED_BALANCE);
-        }
+//         if (wallet.getLockedBalance().compareTo(amount) < 0) {
+//             throw new ApiException(ErrorCode.INSUFFICIENT_LOCKED_BALANCE);
+//         }
 
-        wallet.bidCanceled(amount); // Wallet Entity의 bidCanceled() 메서드 사용
-        walletRepository.save(wallet);
+//         wallet.bidCanceled(amount); // Wallet Entity의 bidCanceled() 메서드 사용
+//         walletRepository.save(wallet);
 
-        // Redis도 동시 업데이트
-        String userBalanceKey = RedisKeys.userBalance(userId);
-        String userLockedBalanceKey = RedisKeys.userLockedBalance(userId);
-        redisTemplate.opsForValue().set(userBalanceKey, wallet.getBalance().toPlainString(), Duration.ofMinutes(30));
-        redisTemplate.opsForValue().set(userLockedBalanceKey, wallet.getLockedBalance().toPlainString(), Duration.ofMinutes(30));
-    }
+//         // Redis도 동시 업데이트
+//         String userBalanceKey = RedisKeys.userBalance(userId);
+//         String userLockedBalanceKey = RedisKeys.userLockedBalance(userId);
+//         redisTemplate.opsForValue().set(userBalanceKey, wallet.getBalance().toPlainString(), Duration.ofMinutes(30));
+//         redisTemplate.opsForValue().set(userLockedBalanceKey, wallet.getLockedBalance().toPlainString(), Duration.ofMinutes(30));
+//     }
 
-    /**낙찰시 lockedBalance에서 최종 차감*/
-    @Transactional
-    public void deductLockedBalance(Long userId, BigDecimal amount) {
-        Wallet wallet = walletRepository.findByUserId(userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+//     /**낙찰시 lockedBalance에서 최종 차감*/
+//     @Transactional
+//     public void deductLockedBalance(Long userId, BigDecimal amount) {
+//         Wallet wallet = walletRepository.findByUserId(userId)
+//                 .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
 
-        if (wallet.getLockedBalance().compareTo(amount) < 0) {
-            throw new ApiException(ErrorCode.INSUFFICIENT_LOCKED_BALANCE);
-        }
+//         if (wallet.getLockedBalance().compareTo(amount) < 0) {
+//             throw new ApiException(ErrorCode.INSUFFICIENT_LOCKED_BALANCE);
+//         }
 
-        wallet.setLockedBalance(wallet.getLockedBalance().subtract(amount));
-        walletRepository.save(wallet);
+//         wallet.setLockedBalance(wallet.getLockedBalance().subtract(amount));
+//         walletRepository.save(wallet);
 
-        // Redis도 동시 업데이트
-        String userLockedBalanceKey = RedisKeys.userLockedBalance(userId);
-        redisTemplate.opsForValue().set(userLockedBalanceKey, wallet.getLockedBalance().toPlainString(), Duration.ofMinutes(30));
-    }
+//         // Redis도 동시 업데이트
+//         String userLockedBalanceKey = RedisKeys.userLockedBalance(userId);
+//         redisTemplate.opsForValue().set(userLockedBalanceKey, wallet.getLockedBalance().toPlainString(), Duration.ofMinutes(30));
+//     }
 
     /**
      * 관리자 통계용 - 날짜별 충전 금액 합계
@@ -216,4 +221,35 @@ public class WalletService {
     }
 
 
+    @Transactional
+    public void setAuctionDeposit(Long userId, Long auctionId, int amount, String caseName) {
+        BigDecimal depositAmount = new BigDecimal(amount);
+        userLockExecutor.withUserLock(userId, () -> {
+            Wallet wallet = walletRepository.findByUserId(userId)
+                    .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+
+            // 경매 등록 보증금 잔액 확인
+            if (wallet.getBalance().compareTo(depositAmount) < 0) {
+                throw new ApiException(ErrorCode.INSUFFICIENT_BALANCE);
+            }
+
+            switch (caseName) {
+                case "set" -> {
+                    wallet.auctionDeposit(depositAmount);
+                    walletTransactionRecordService.record(wallet, TransactionType.DEPOSIT_LOCK, depositAmount, auctionId);
+                }
+                case "refund" -> {
+                    wallet.auctionRefund(depositAmount);
+                    walletTransactionRecordService.record(wallet, TransactionType.DEPOSIT_RETURN, depositAmount, auctionId);
+                }
+                default -> {}
+            }
+        });
+    }
+
+    public WalletRes getMyWallet(Long userId) {
+        Wallet wallet = walletRepository.findByUserId(userId)
+                .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+        return WalletRes.from(wallet);
+    }
 }

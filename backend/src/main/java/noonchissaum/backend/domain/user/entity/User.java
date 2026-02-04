@@ -81,9 +81,7 @@ public class User extends BaseTimeEntity {
         if (nickname != null) {
             this.nickname = nickname;
         }
-        if (profileUrl != null) {
-            this.profileUrl = profileUrl;
-        }
+        this.profileUrl = profileUrl; // 이미지 삭제시 null
     }
 
     /**
