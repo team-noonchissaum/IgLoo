@@ -31,7 +31,7 @@ public class GlobalExceptionHandler {
                 .body(Map.of(
                         "success", false,
                         "code", errorCode.getCode(),
-                        "message", errorCode.getMessage()
+                        "message", e.getMessage()
                 ));
     }
 

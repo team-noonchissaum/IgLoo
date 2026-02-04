@@ -146,6 +146,23 @@ public class Auction extends BaseTimeEntity {
         this.bidCount++;
     }
 
+    /**
+     * 경매 차단 (관리자용)
+     */
+    public void block() {
+        this.status = AuctionStatus.BLOCKED;
+    }
+
+    /**
+     * 경매 복구 (관리자용)
+     */
+    public void reopen() {
+        if (this.status != AuctionStatus.BLOCKED) {
+            throw new IllegalStateException("차단된 경매만 복구할 수 있습니다.");
+        }
+        this.status = AuctionStatus.READY;
+    }
+
     public User getSeller() {
         return this.item != null ? this.item.getSeller() : null;
     }

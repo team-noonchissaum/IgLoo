@@ -1,38 +1,38 @@
 package noonchissaum.backend.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.report.dto.ReportReq;
 import noonchissaum.backend.domain.report.entity.Report;
 import noonchissaum.backend.domain.report.entity.ReportStatus;
 import noonchissaum.backend.domain.user.dto.request.ProfileUpdateUserReq;
-import noonchissaum.backend.domain.user.dto.response.MyPageRes;
-import noonchissaum.backend.domain.user.dto.response.OtherUserProfileRes;
-import noonchissaum.backend.domain.user.dto.response.ProfileRes;
-import noonchissaum.backend.domain.user.dto.response.ProfileUpdateUserRes;
+import noonchissaum.backend.domain.user.dto.response.*;
 import noonchissaum.backend.domain.user.entity.User;
 
 import noonchissaum.backend.domain.report.repository.ReportRepository;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 
+import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class UserService {
     private final UserRepository userRepository;
     private final ReportRepository reportRepository;
+    private final WalletService walletService;
+//    private final StringRedisTemplate redisTemplate;
 
-    /**
-     * 본인 프로필 조회
-     */
-
+    /**본인 프로필 조회*/
     public ProfileRes getMyProfile(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         return new ProfileRes(
@@ -45,29 +45,23 @@ public class UserService {
         );
     }
 
-    /**
-     * 마이페이지 조회
-     */
+//    /**마이페이지 조회*/
+//    public MyPageRes getMyPage(Long userId) {
+//        User user = userRepository.findByIdWithWallet(userId).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+//
+//        BigDecimal balance =
+//                user.getWallet() != null ? user.getWallet().getBalance() : BigDecimal.ZERO;
+//
+//        return new MyPageRes(
+//                user.getId(),
+//                user.getEmail(),
+//                user.getNickname(),
+//                user.getProfileUrl(),
+//                balance
+//        );
+//    }
 
-    public MyPageRes getMyPage(Long userId) {
-        User user = userRepository.findByIdWithWallet(userId).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        BigDecimal balance =
-                user.getWallet() != null ? user.getWallet().getBalance() : BigDecimal.ZERO;
-
-        return new MyPageRes(
-                user.getId(),
-                user.getEmail(),
-                user.getNickname(),
-                user.getProfileUrl(),
-                balance
-        );
-    }
-
-    /**
-     * 다른 유저 프로필 조회
-     */
-
+    /**다른 유저 프로필 조회*/
     public OtherUserProfileRes getOtherUserProfile(Long userId) {
 
         User user = userRepository.findById(userId)
@@ -80,11 +74,7 @@ public class UserService {
 //                user.getLocation()
         );
     }
-
-    /**
-     * 프로필 수정
-     */
-
+    /**프로필 수정*/
     @Transactional
     public ProfileUpdateUserRes updateProfile(Long userId, ProfileUpdateUserReq request) {
 
@@ -111,28 +101,60 @@ public class UserService {
         );
     }
 
-    /**
-     * 회원 탈퇴
-     * hard delete
-     */
-    @Transactional
-    public void deleteUser(Long userId) {
+    /**탈퇴 시도 (첫 클릭)*/
+    @Transactional(readOnly = true)
+    public UserDeleteAttemptRes attemptDelete(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        userRepository.delete(user);
+        BigDecimal balance = walletService.getCurrentBalance(userId);
 
+        // 크레딧 없으면 확인 창 표시
+        if (balance.compareTo(BigDecimal.ZERO) == 0) {
+            return UserDeleteAttemptRes.noBalance();
+        }
+
+        // 크레딧 있을 때: 첫 시도인지 확인
+        boolean isFirstAttempt = walletService.isFirstDeleteAttempt(userId);
+
+        if (isFirstAttempt) {
+            // 첫 번째 시도 - 환전 권장
+            walletService.markDeleteAttempt(userId);
+            return UserDeleteAttemptRes.firstAttempt(balance);
+        } else {
+            // 두 번째 이상 - 포기 확인 필요 (공통)
+            return UserDeleteAttemptRes.confirmRequired(balance);
+        }
     }
+    /**잔액 포기하고 강제 탈퇴*/
+    @Transactional
+    public void userDelete(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
+        BigDecimal balance = walletService.getCurrentBalance(userId);
+
+        //탈퇴 처리
+        user.delete();
+        walletService.clearWalletCache(userId);
+        walletService.clearDeleteAttempt(userId);
+
+        if (balance.compareTo(BigDecimal.ZERO) > 0) {
+            log.warn("크레딧 {}원 포기하고 탈퇴 - userId: {}", balance, userId);
+        } else {
+            log.info("회원 탈퇴 완료 - userId: {}", userId);
+        }
+    }
+    /**회원 신고*/
     @Transactional
     public void createReport(Long reporterId, ReportReq request) {
         User reporter=userRepository.findById(reporterId)
-                .orElseThrow(()->new IllegalArgumentException("유저 없음"));
+                .orElseThrow(()->new CustomException(ErrorCode.USER_NOT_FOUND));
 
         //중복 신고 방지
         if (reportRepository.existsByReporterIdAndTargetTypeAndTargetId(
                 reporterId, request.getTargetType(), request.getTargetId())) {
-            throw new IllegalStateException("이미 신고한 대상입니다.");
+            throw new CustomException(ErrorCode.ALREADY_REPORTED);
         }
 
         Report report = Report.builder()
@@ -149,6 +171,14 @@ public class UserService {
 
     public User getUserByUserId(Long userId) {
         return userRepository.findById(userId).
-                orElseThrow(() -> new RuntimeException("user not found"));
+                orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    @Transactional
+    public void createUserWallet(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        walletService.createWallet(user);
     }
 }

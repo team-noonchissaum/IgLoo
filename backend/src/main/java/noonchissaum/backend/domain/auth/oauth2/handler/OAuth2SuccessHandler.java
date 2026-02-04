@@ -1,11 +1,10 @@
-package noonchissaum.backend.domain.auth.oauth2;
+package noonchissaum.backend.domain.auth.oauth2.handler;
 
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.auth.service.RefreshTokenService;
-import noonchissaum.backend.global.config.JwtTokenProvider;
+import noonchissaum.backend.global.security.JwtTokenProvider;
 import noonchissaum.backend.global.security.UserPrincipal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -29,7 +28,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             HttpServletRequest request,
             HttpServletResponse response,
             Authentication authentication
-    ) throws IOException, ServletException {
+    ) throws IOException {
 
         // UserPrincipal로 캐스팅
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();

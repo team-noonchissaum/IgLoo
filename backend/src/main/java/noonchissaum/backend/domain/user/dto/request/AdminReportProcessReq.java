@@ -15,5 +15,8 @@ public class AdminReportProcessReq {
     @NotBlank(message = "처리 상태는 필수입니다.")
     private String status;
 
-    private String adminNote;
+    private Boolean blockTarget;
+
+    private String processResult;
+
 }

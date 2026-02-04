@@ -25,6 +25,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -201,6 +202,49 @@ public class AuctionService {
         redisTemplate.opsForValue().set(RedisKeys.auctionEndTime(auctionId), endTime.toString());
         redisTemplate.opsForValue().set(RedisKeys.auctionIsExtended(auctionId), "true");
     }
+
+    /**
+     * 내가 등록한 경매 목록 조회
+     */
+    public Page<AuctionRes> getMyAuctions(Long userId, Pageable pageable) {
+        Page<Auction> auctions = auctionRepository.findAll(pageable);
+
+        // 내가 등록한 경매만 필터링
+        List<AuctionRes> myAuctions = auctions.getContent().stream()
+                .filter(a -> a.getItem().getSeller().getId().equals(userId))
+                .map(AuctionRes::from)
+                .toList();
+
+        return new PageImpl<>(myAuctions, pageable, myAuctions.size());
+    }
+
+    /**
+     * 관리자 통계용 - 날짜별 전체 경매 수
+     */
+    public long countByDate(LocalDate date) {
+        return auctionRepository.findAll().stream()
+                .filter(a -> a.getCreatedAt().toLocalDate().equals(date))
+                .count();
+    }
+
+    /**
+     * 관리자 통계용 - 날짜별 낙찰 성공 경매 수
+     */
+    public long countSuccessByDate(LocalDate date) {
+        return auctionRepository.findAll().stream()
+                .filter(a -> a.getStatus() == AuctionStatus.SUCCESS)
+                .filter(a -> a.getEndAt() != null && a.getEndAt().toLocalDate().equals(date))
+                .count();
+    }
+
+    /**
+     * 관리자 통계용 - 날짜별 유찰 경매 수
+     */
+    public long countFailedByDate(LocalDate date) {
+        return auctionRepository.findAll().stream()
+                .filter(a -> a.getStatus() == AuctionStatus.FAILED)
+                .filter(a -> a.getEndAt() != null && a.getEndAt().toLocalDate().equals(date))
+                .count();
     @Transactional(readOnly = true)
     public Page<AuctionListRes> searchAuctionList(
             Long userId,

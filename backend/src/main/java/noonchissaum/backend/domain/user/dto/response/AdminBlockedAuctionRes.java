@@ -6,21 +6,17 @@ import lombok.Getter;
 import java.time.LocalDateTime;
 
 /**
- * 차단된 게시글 목록 조회 응답
+ * 차단된 경매 게시글 목록 조회 응답
  */
 
 @Getter
 @AllArgsConstructor
-public class AdminItemListRes {
+public class AdminBlockedAuctionRes {
 
-    private Long itemId;
+    private Long auctionId;
     private String title;
     private Long sellerId;
     private String sellerNickname;
-    private Long startPrice;
-    private String status;
-    private LocalDateTime createdAt;
+    private String reason;
     private LocalDateTime blockedAt;
-    private String blockReason;
-
 }

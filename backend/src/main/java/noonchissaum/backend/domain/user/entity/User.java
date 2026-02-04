@@ -72,10 +72,6 @@ public class User extends BaseTimeEntity {
         this.status = status;
     }
 
-    public static User createLocalUser(String email, String nickname) {
-        return new User(email, nickname, UserRole.USER, UserStatus.ACTIVE);
-    }
-
     // ============ 비즈니스 로직 ============
 
     /**
@@ -93,14 +89,6 @@ public class User extends BaseTimeEntity {
      */
     public boolean isActive() {
         return this.status == UserStatus.ACTIVE;
-    }
-
-    /**
-     * 회원 탈퇴 (soft delete)
-     */
-    public void softDelete() {
-        this.status = UserStatus.DELETED;
-        this.deletedAt = LocalDateTime.now();
     }
 
     // =========== 관리자 기능 ==========
@@ -131,5 +119,13 @@ public class User extends BaseTimeEntity {
 
     public void registWallet(Wallet wallet) {
         this.wallet = wallet;
+    }
+
+    public void delete(){
+        if(this.status==UserStatus.DELETED){
+            throw new IllegalStateException("이미 탈퇴한 사용자입니다");
+        }
+        this.status = UserStatus.DELETED;
+        this.deletedAt = LocalDateTime.now();
     }
 }

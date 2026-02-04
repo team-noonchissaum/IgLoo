@@ -1,5 +1,7 @@
-package noonchissaum.backend.global.config;
+package noonchissaum.backend.global.security;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
@@ -66,4 +68,21 @@ public class JwtTokenProvider {
         }
     }
 
+    /**토큰 만료전까지 처리*/
+    public long getExpiration(String token) {
+        Claims claims = parseClaims(token);
+        return claims.getExpiration().getTime() - System.currentTimeMillis();
+    }
+
+    private Claims parseClaims(String token) {
+        try{
+            return Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        }catch(ExpiredJwtException e){
+            return e.getClaims();
+        }
+    }
 }
