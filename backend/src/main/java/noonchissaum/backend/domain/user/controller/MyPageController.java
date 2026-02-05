@@ -35,29 +35,6 @@ public class MyPageController {
         return ResponseEntity.ok(ApiResponse.success("마이페이지 조회 성공", response));
     }
 
-    /**지갑 정보 조회
-     * GET /api/mypage/wallet*/
-    @GetMapping("/wallet")
-    public ResponseEntity<ApiResponse<UserWalletRes>> getWallet(
-            @AuthenticationPrincipal UserPrincipal principal
-    ) {
-        UserWalletRes response = myPageService.getWallet(principal.getUserId());
-        return ResponseEntity.ok(ApiResponse.success("지갑 조회 성공", response));
-    }
-
-    /**
-     * 내 입찰 경매 목록 조회
-     * GET /api/mypage/bids
-     */
-    @GetMapping("/bids")
-    public ResponseEntity<ApiResponse<Page<MyBidAuctionRes>>> getMyBidAuctions(
-            @AuthenticationPrincipal UserPrincipal principal,
-            Pageable pageable
-    ) {
-        Page<MyBidAuctionRes> response = bidService.getMyBidAuctions(principal.getUserId(), pageable);
-        return ResponseEntity.ok(ApiResponse.success("내 입찰 내역 조회 성공", response));
-    }
-
     /**
      * 내가 등록한 경매 목록 조회
      * GET /api/mypage/auctions
