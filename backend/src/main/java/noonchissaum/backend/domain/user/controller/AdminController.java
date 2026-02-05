@@ -13,7 +13,6 @@ import noonchissaum.backend.global.security.UserPrincipal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 @EnableMethodSecurity(prePostEnabled = true)
 public class AdminController {
     private final AdminService adminService;
@@ -117,6 +115,15 @@ public class AdminController {
     public ResponseEntity<ApiResponse<Void>> unblockUser(@PathVariable Long userId) {
         adminService.unblockUser(userId);
         return ResponseEntity.ok(ApiResponse.success("사용자 차단 해제 완료"));
+    }
+
+    /**
+     * 차단된 사용자 목록 조회
+     */
+    @GetMapping("/users/blocked")
+    public ResponseEntity<ApiResponse<Page<AdminBlockedUserRes>>> getBlockedUsers(Pageable pageable) {
+        Page<AdminBlockedUserRes> result = adminService.getBlockedUsers(pageable);
+        return ResponseEntity.ok(ApiResponse.success("차단된 사용자 목록 조회 성공", result));
     }
 
     /* ================= 경매 게시글 관리 ================= */

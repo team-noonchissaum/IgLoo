@@ -113,4 +113,9 @@ public class Item extends BaseTimeEntity {
     public boolean isActive() {
         return Boolean.TRUE.equals(this.status);
     }
+
+    //카테고리 변경('기타'로 옮김)
+    public void changeCategory(Category category) {
+        this.category = category;
+    }
 }

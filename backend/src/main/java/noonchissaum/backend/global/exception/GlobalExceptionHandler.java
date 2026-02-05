@@ -35,6 +35,20 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity<Map<String, Object>> handleApiException(ApiException e) {
+        ErrorCode errorCode = e.getErrorCode();
+        log.warn("ApiException 발생: {}", errorCode.getCode(), e);
+
+        return ResponseEntity
+                .status(errorCode.getStatus())
+                .body(Map.of(
+                        "success", false,
+                        "code", errorCode.getCode(),
+                        "message", errorCode.getMessage()
+                ));
+    }
+
     /**
      * @Valid 검증 실패 처리
      * - DTO의 @NotBlank, @Email 등 검증 실패 시

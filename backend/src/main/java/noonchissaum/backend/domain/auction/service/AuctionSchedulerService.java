@@ -14,6 +14,9 @@ import noonchissaum.backend.domain.notification.entity.NotificationType;
 import noonchissaum.backend.domain.notification.service.AuctionNotificationService;
 import noonchissaum.backend.domain.order.service.OrderService;
 import noonchissaum.backend.domain.user.entity.User;
+import noonchissaum.backend.domain.wallet.service.WalletService;
+import noonchissaum.backend.global.exception.ApiException;
+import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -34,6 +37,7 @@ public class AuctionSchedulerService {
     private final AuctionRealtimeSnapshotService snapshotService;
     private final AuctionMessageService auctionMessageService;
     private final AuctionNotificationService auctionNotificationService;
+    private final WalletService walletService;
 
 
     /**
@@ -62,12 +66,16 @@ public class AuctionSchedulerService {
         LocalDateTime threshold = now.minusMinutes(5);
 
         long startMs = System.currentTimeMillis();
-        int updated = auctionRepository.exposeReadyAuctions(
-                AuctionStatus.READY,
-                AuctionStatus.RUNNING,
-                threshold,
-                now
-        );
+
+        List<Auction> auctions = auctionRepository.findReadyAuctions(AuctionStatus.READY, threshold)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
+        int updated=0;
+        for(Auction auction :auctions){
+            auction.run();
+            int amount = (int) Math.min( auction.getCurrentPrice().longValue() * 0.05 , 1000);
+            walletService.setAuctionDeposit(auction.getItem().getSeller().getId(), auction.getId(), amount, "refund");
+            updated++;
+        }
         long elapsed = System.currentTimeMillis() - startMs;
 
         if (updated > 0) {
@@ -75,6 +83,7 @@ public class AuctionSchedulerService {
         } else {
             log.debug("[AuctionExpose] running=0 elapsedMs={}", elapsed);
         }
+
         return updated;
     }
 
@@ -142,6 +151,7 @@ public class AuctionSchedulerService {
     /**
      * ended -> success or failed
      */
+
     @Transactional
     public void result() {
         // ENDED 상태인 경매를 페이지 단위로 가져옴

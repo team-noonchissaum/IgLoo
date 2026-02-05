@@ -10,6 +10,8 @@ import noonchissaum.backend.domain.order.entity.ChargeCheck;
 import noonchissaum.backend.domain.order.entity.Payment;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
+import noonchissaum.backend.global.exception.CustomException;
+import noonchissaum.backend.global.exception.ErrorCode;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -98,7 +100,7 @@ public class User extends BaseTimeEntity {
      */
     public void block(String reason) {
         if (this.status == UserStatus.BLOCKED) {
-            throw new IllegalArgumentException("이미 차단된 사용자입니다.");
+            throw new CustomException(ErrorCode.USER_ALREADY_BLOCKED);
         }
         this.status = UserStatus.BLOCKED;
         this.blockedAt = LocalDateTime.now();
@@ -110,7 +112,7 @@ public class User extends BaseTimeEntity {
      */
     public void unblock() {
         if (this.status != UserStatus.BLOCKED) {
-            throw new IllegalArgumentException("차단된 사용자가 아닙니다");
+            throw new CustomException(ErrorCode.USER_NOT_BLOCKED);
         }
         this.status = UserStatus.ACTIVE;
         this.blockedAt = null;

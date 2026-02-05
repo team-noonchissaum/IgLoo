@@ -168,7 +168,7 @@ public class PaymentService {
     public void cancelPayment(Long userId, String cancelReason, Long chargeCheckId) {
 
         ChargeCheck check = chargeCheckRepository.findById(chargeCheckId)
-                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_PAYMENT_REQUEST));
+                .orElseThrow(() -> new ApiException(ErrorCode.CHARGE_CHECK_NOT_FOUND));
         User user = userService.getUserByUserId(userId);
 
         Payment payment = check.getPayment();
@@ -211,7 +211,7 @@ public class PaymentService {
     @Transactional
     public void abortPayment(Long paymentId, String reason) {
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new ApiException(ErrorCode.PAYMENTS_FAILED));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_PAYMENT));
         payment.abort("TOSS_ABORT_FAILED" + reason);
     }
 

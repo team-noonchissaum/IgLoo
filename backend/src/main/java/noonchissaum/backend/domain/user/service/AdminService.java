@@ -49,11 +49,19 @@ public class AdminService {
     /**
      * 신고 목록 조회
      */
-
     public Page<AdminReportListRes> getReports(String status, String targetType, Pageable pageable) {
-        Page<Report> reports = (status == null)
-                ? reportRepository.findAllWithReporter(pageable)
-                : reportRepository.findByStatusWithReporter(ReportStatus.valueOf(status), pageable);
+        Page<Report> reports;
+        if (targetType != null && !targetType.isBlank()) {
+            ReportTargetType type = ReportTargetType.valueOf(targetType);
+            ReportStatus statusFilter = (status != null && !status.isBlank())
+                    ? ReportStatus.valueOf(status)
+                    : ReportStatus.PENDING;
+            reports = reportRepository.findByStatusAndTargetTypeWithReporter(statusFilter, type, pageable);
+        } else if (status != null && !status.isBlank()) {
+            reports = reportRepository.findByStatusWithReporter(ReportStatus.valueOf(status), pageable);
+        } else {
+            reports = reportRepository.findAllWithReporter(pageable);
+        }
 
         return reports.map(report -> {
             String targetName = getTargetName(report.getTargetType(), report.getTargetId());
@@ -326,7 +334,7 @@ public class AdminService {
     @Transactional
     public AdminBlockUserRes blockUser(Long userId, String reason) {
         User user = userRepository.findById(userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 이미 차단된 사용자인지 체크
         if (user.getStatus() == UserStatus.BLOCKED) {
@@ -342,7 +350,7 @@ public class AdminService {
     @Transactional
     public void unblockUser(Long userId) {
         User user = userRepository.findById(userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 차단되지 않은 사용자인지 체크
         if (user.getStatus() != UserStatus.BLOCKED) {
@@ -363,6 +371,12 @@ public class AdminService {
             );
             return AdminUserListRes.from(user, reportCount);
         });
+    }
+
+    /** 차단된 사용자 목록 조회 */
+    public Page<AdminBlockedUserRes> getBlockedUsers(Pageable pageable) {
+        return userRepository.findByStatus(UserStatus.BLOCKED, pageable)
+                .map(AdminBlockedUserRes::from);
     }
 
     /* =================== 일일 통계 ==================== */

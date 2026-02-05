@@ -3,6 +3,7 @@ package noonchissaum.backend.domain.auction.scheduler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.auction.service.AuctionSchedulerService;
+import noonchissaum.backend.domain.wallet.service.WalletService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -25,7 +26,7 @@ public class AuctionExposureScheduler {
     /**
      * 5분뒤 READY상태에서 RUNNING으로 전환
      */
-    @Scheduled(fixedRate = 300_000)
+    @Scheduled(fixedRate = 60_000)
     public void exposeReadyAuctions() {
         LocalDateTime now = LocalDateTime.now();
         auctionSchedulerService.expose(now);
