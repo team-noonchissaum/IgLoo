@@ -136,9 +136,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(java.util.List.of(
-                "https://ig-loo-fe-89f2.vercel.app", // Vercel 운영 주소
-                "http://localhost:3000",             // 로컬 리액트/넥스트 환경
-                "http://localhost:5173"              // Vite 사용 시 기본 포트
+                "*"
         ));
         config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(java.util.List.of("*"));
