@@ -146,7 +146,7 @@ public class WalletService {
                     walletTransactionRecordService.record(wallet, TransactionType.DEPOSIT_RETURN, depositAmount, auctionId);
                 }
                 case "forfeit" -> {
-                    wallet.auctionRefund(depositAmount);
+                    wallet.auctionDeposit(depositAmount);
                     walletTransactionRecordService.record(wallet, TransactionType.DEPOSIT_FORFEIT, depositAmount, auctionId);
                 }
                 default -> {}
