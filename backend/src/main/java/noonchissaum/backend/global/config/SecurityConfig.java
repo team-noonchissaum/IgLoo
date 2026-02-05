@@ -109,6 +109,9 @@ public class SecurityConfig {
                         // mypage controller
                         .requestMatchers("/api/mypage/**").hasAnyRole("USER", "ADMIN")
 
+                        // websocket
+                        .requestMatchers("/ws/**").permitAll()
+
                         //그 외 모두 차단
                         .anyRequest().authenticated()
                 )
