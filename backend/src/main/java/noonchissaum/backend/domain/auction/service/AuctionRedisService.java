@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.global.RedisKeys;
+import noonchissaum.backend.global.exception.ApiException;
+import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +25,7 @@ public class AuctionRedisService {
 
     public void setRedis(Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new IllegalArgumentException("Auction not found"));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
 
         // TTL: endAt + 10분까지 유지, 음수면 최소 1분
         Duration ttl = Duration.between(LocalDateTime.now(), auction.getEndAt().plusMinutes(10));

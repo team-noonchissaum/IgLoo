@@ -213,7 +213,7 @@ public class BidService {
     @Transactional(readOnly = true)
     public Page<BidHistoryItemRes> getBidHistory(Long auctionId, Pageable pageable){
         Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(()-> new RuntimeException(ErrorCode.NOT_FOUND_AUCTIONS.getMessage()));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
         Page<Bid> bidPage = bidRepository.findByAuctionIdOrderByCreatedAtDesc(auction.getId(), pageable);
 
         return bidPage.map(BidHistoryItemRes::from);
@@ -298,7 +298,7 @@ public class BidService {
 
         //경매 상태 체크
         Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new RuntimeException("해당 경매는 존재하지 않습니다."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
         if (!auction.getStatus().equals(AuctionStatus.RUNNING) && !auction.getStatus().equals(AuctionStatus.DEADLINE)) {
             throw new ApiException(ErrorCode.NOT_FOUND_AUCTIONS);
         }

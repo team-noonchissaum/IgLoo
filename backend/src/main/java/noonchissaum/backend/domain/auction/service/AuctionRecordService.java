@@ -6,6 +6,8 @@ import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.service.UserService;
+import noonchissaum.backend.global.exception.ApiException;
+import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,7 +29,7 @@ public class AuctionRecordService {
     @Transactional
     public void saveAuction(Long auctionId, Long userId, BigDecimal bidAmount) {
         Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new RuntimeException("auction not found"));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
         User user = userService.getUserByUserId(userId);
 
         auction.updateBid(user, bidAmount);
@@ -45,7 +47,7 @@ public class AuctionRecordService {
     @Transactional
     public void updateAuctionWithExtension(Long auctionId, Long userId, BigDecimal bidAmount) {
         Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new RuntimeException("auction not found"));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
         User user = userService.getUserByUserId(userId);
 
         // 1. 입찰 정보 업데이트

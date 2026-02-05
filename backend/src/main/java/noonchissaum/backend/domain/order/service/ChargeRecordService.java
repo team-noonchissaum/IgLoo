@@ -68,7 +68,7 @@ public class ChargeRecordService {
     @Transactional
     public void cancelChargeTx(Long chargeCheckId, Long userId,String cancelReason) {
         ChargeCheck chargeCheck = chargeCheckRepository.findWithLockById(chargeCheckId)
-                .orElseThrow(() -> new ApiException(ErrorCode.CHARGE_LOCK_ACQUISITION));
+                .orElseThrow(() -> new ApiException(ErrorCode.CHARGE_CHECK_NOT_FOUND));
 
         if(!chargeCheck.getUser().getId().equals(userId)){
             throw new ApiException(ErrorCode.NOT_FOUND_CHARGE);
