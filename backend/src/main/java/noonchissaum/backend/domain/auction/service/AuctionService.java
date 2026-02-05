@@ -163,6 +163,7 @@ public class AuctionService {
             // 5분 이후 취소 → 보증금 몰수 확정(패널티)
             // 5분 이후 취소 -> 보증금 환불 없음
             auction.forfeitDeposit();
+            walletService.setAuctionDeposit(userId, auctionId, amount, "forfeit");
         }
 
 
