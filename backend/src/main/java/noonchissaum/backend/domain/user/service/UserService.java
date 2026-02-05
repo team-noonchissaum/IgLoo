@@ -14,6 +14,7 @@ import noonchissaum.backend.domain.report.repository.ReportRepository;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 
 import noonchissaum.backend.domain.wallet.service.WalletService;
+import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -164,19 +165,19 @@ public class UserService {
 
     /**탈퇴 첫 시도인지 확인*/
     public boolean isFirstDeleteAttempt(Long userId) {
-        String attemptKey = "user:delete:attempt:" + userId;
+        String attemptKey = RedisKeys.deleteAttemptUser(userId);
         return !Boolean.TRUE.equals(redisTemplate.hasKey(attemptKey));
     }
 
     /**탈퇴 시도 기록*/
     public void markDeleteAttempt(Long userId) {
-        String attemptKey = "user:delete:attempt:" + userId;
+        String attemptKey = RedisKeys.deleteAttemptUser(userId);
         redisTemplate.opsForValue().set(attemptKey, "1", 10, TimeUnit.MINUTES);
     }
 
     /**탈퇴 시도 기록 삭제*/
     public void clearDeleteAttempt(Long userId) {
-        String attemptKey = "user:delete:attempt:" + userId;
+        String attemptKey = RedisKeys.deleteAttemptUser(userId);
         redisTemplate.delete(attemptKey);
     }
 }
