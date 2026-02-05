@@ -26,7 +26,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry){
         // 클라이언트가 연결하는 endpoint
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*")
+                .setAllowedOrigins("https://ig-loo-fe-89f2.vercel.app", "http://localhost:3000")
                 .withSockJS();
 
     }
