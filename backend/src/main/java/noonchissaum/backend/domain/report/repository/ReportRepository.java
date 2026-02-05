@@ -15,8 +15,6 @@ import java.util.Optional;
 
 public interface ReportRepository extends JpaRepository<Report, Long> {
 
-    List<Report> findByStatus(ReportStatus status);
-
     //신고 목록 조회
     @Query("SELECT r FROM Report r JOIN FETCH r.reporter")
     Page<Report> findAllWithReporter(Pageable pageable);

@@ -64,37 +64,51 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
-                        //  preflight OPTIONS 허용
-                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                        // auction,wish test
-                        .requestMatchers(
-                                "/api/auctions/**",
-                                "/api/item/**",
-                                "/ws/**"
-                        ).permitAll()
-
-
-
-                        //  actuator 전부 허용
-                        .requestMatchers("/actuator/**").permitAll()
                         //인증 없이 접근
                         .requestMatchers(
                                 "/api/auth/**",
-                                "/api/oauth2/login/**", //OAuth2 API진입점
-                                "/health"
+                                "/api/oauth2/login/**"
                         ).permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/reports").hasAnyRole("USER", "ADMIN")//신고는 유저까지 가능
-                        .requestMatchers(HttpMethod.GET, "/api/reports/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/reports/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/reports/**").hasRole("ADMIN")
-                        //관리자 전용
+
+                        .requestMatchers(HttpMethod.POST, "/api/reports").hasAnyRole("USER", "ADMIN")
+
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        //OAuth2 내부 엔드포인트
-                        .requestMatchers("/oauth2/authorization/**",
-                                "/login/oauth2/code/**").permitAll()
 
                         //로그인 유저(USER,ADMIN)
                         .requestMatchers("/api/users/**").hasAnyRole("USER", "ADMIN")
+
+                        // auction controller
+                        .requestMatchers(HttpMethod.GET, "/api/auctions").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auctions/{auctionId}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auctions/search").permitAll()
+
+                        .requestMatchers("/api/auctions").hasAnyRole("USER", "ADMIN")
+
+                        // bid controller
+                        .requestMatchers("/api/bid/{auctionId}").permitAll()
+
+                        .requestMatchers("/api/bid/**").hasAnyRole("USER", "ADMIN")
+
+                        // category controller
+                        .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
+
+                        .requestMatchers("/api/categories").hasRole("ADMIN")
+
+                        // wish controller
+                        .requestMatchers("/api/item/**").hasAnyRole("USER", "ADMIN")
+
+                        // notification controller
+                        .requestMatchers("/api/notifications/**").hasAnyRole("USER", "ADMIN")
+
+                        // charge controller
+                        .requestMatchers("/api/charges/**").hasAnyRole("USER", "ADMIN")
+
+                        // payment controller
+                        .requestMatchers("/api/payments/**").hasAnyRole("USER", "ADMIN")
+
+                        // mypage controller
+                        .requestMatchers("/api/mypage/**").hasAnyRole("USER", "ADMIN")
+
                         //그 외 모두 차단
                         .anyRequest().authenticated()
                 )

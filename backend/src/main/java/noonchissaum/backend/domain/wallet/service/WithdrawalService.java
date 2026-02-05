@@ -45,7 +45,7 @@ public class WithdrawalService {
     /**
      * 내 출금 신청 목록 조회
      */
-
+    @Transactional(readOnly = true)
     public Page<WithdrawalRes> getMyWithdrawals(Long userId, Pageable pageable) {
         return withdrawalRepository.findByWallet_User_Id(userId, pageable)
                 .map(WithdrawalRes::from);
@@ -61,13 +61,12 @@ public class WithdrawalService {
         Withdrawal withdrawal = withdrawalRepository.findById(withdrawalId)
                 .orElseThrow(() -> new ApiException(ErrorCode.WITHDRAW_NOT_FOUND));
 
-        Long ownerId = withdrawal.getWallet().getUser().getId(); //
-        userLockExecutor.withUserLock(ownerId, () -> { //
-            if (!taskService.checkTasks(ownerId)) { //
+        Long ownerId = withdrawal.getWallet().getUser().getId();
+        userLockExecutor.withUserLock(ownerId, () -> {
+            if (!taskService.checkTasks(ownerId)) {
                 throw new ApiException(ErrorCode.PENDING_TASK_EXISTS);
             }
 
-            //
             withdrawalRecordService.confirmWithdrawalTx(withdrawalId);
         });
     }
@@ -94,6 +93,7 @@ public class WithdrawalService {
     /**
      * 승인 대기 목록 조회
      */
+    @Transactional(readOnly = true)
     public Page<WithdrawalRes> getRequestedWithdrawals(Pageable pageable) {
         return withdrawalRepository.findByStatus(WithdrawalStatus.REQUESTED, pageable)
                 .map(WithdrawalRes::from);
