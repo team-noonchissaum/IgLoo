@@ -15,6 +15,12 @@ import noonchissaum.backend.domain.chat.entity.ChatRoom;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.chat.entity.ChatMessage;
 import noonchissaum.backend.domain.user.service.UserService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import noonchissaum.backend.domain.chat.dto.res.ChatMessagePageRes;
+import noonchissaum.backend.domain.chat.dto.res.ChatMessageRes;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -58,6 +64,35 @@ public class ChatMessageService {
         messagingTemplate.convertAndSend("/topic/chat." + room.getId(), payload);
 
         return payload;
+    }
+    @Transactional(readOnly = true)
+    public ChatMessagePageRes getMessages(Long roomId, Long userId, Long cursor, int size) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("채팅방이 존재하지 않습니다. roomId=" + roomId));
+
+        if (!room.getBuyer().getId().equals(userId)
+                && !room.getSeller().getId().equals(userId)) {
+            throw new IllegalArgumentException("채팅 권한이 없습니다.");
+        }
+
+        int pageSize = Math.min(Math.max(size, 1), 100);
+        PageRequest pageRequest = PageRequest.of(0, pageSize + 1, Sort.by(Sort.Direction.DESC, "id"));
+
+        List<ChatMessage> fetched = cursor == null
+                ? chatMessageRepository.findByRoomIdOrderByIdDesc(roomId, pageRequest)
+                : chatMessageRepository.findByRoomIdAndIdLessThanOrderByIdDesc(roomId, cursor, pageRequest);
+
+        boolean hasNext = fetched.size() > pageSize;
+        List<ChatMessage> pageItems = hasNext ? fetched.subList(0, pageSize) : fetched;
+
+        List<ChatMessageRes> messages = new ArrayList<>();
+        for (ChatMessage message : pageItems) {
+            messages.add(ChatMessageRes.from(message));
+        }
+
+        Long nextCursor = messages.isEmpty() ? null : messages.get(messages.size() - 1).getMessageId();
+
+        return new ChatMessagePageRes(messages, nextCursor, hasNext);
     }
 
     /**
