@@ -17,6 +17,7 @@ public class UserHandler implements ReportTargetHandler {
     public ReportTargetType getType(){
         return ReportTargetType.USER;
     }
+
     @Override
     public void validate(Long targetId) {
         if(!userRepository.existsById(targetId)) {
