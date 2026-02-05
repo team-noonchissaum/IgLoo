@@ -26,7 +26,6 @@ public class ChargeConfirmScheduler {
     private final ChargeCheckRepository chargeCheckRepository;
     private final ChargeRecordService chargeRecordService;
     private final TaskService taskService;
-    private final RedissonClient redissonClient;
     private final UserLockExecutor userLockExecutor;
 
     private static final int BATCH_SIZE = 100;
@@ -50,7 +49,10 @@ public class ChargeConfirmScheduler {
         for (Long chargeCheckId : expiredIds) {
             try {
                 Long userId = chargeCheckRepository.findUser_IdById(chargeCheckId);
-                if (userId == null) continue;
+                if (userId == null) {
+                    log.error("[AutoConfirm] charge check id not found");
+                    continue;
+                }
 
                 try {
                     userLockExecutor.withUserLock(userId, () -> {
