@@ -19,5 +19,6 @@ public interface WithdrawalRepository extends JpaRepository<Withdrawal, Long> {
     Page<Withdrawal> findByStatus(WithdrawalStatus status, Pageable pageable);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @EntityGraph(attributePaths = {"wallet", "wallet.user"})
     Optional<Withdrawal> findWithLockById(Long id);
 }

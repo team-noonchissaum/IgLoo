@@ -14,14 +14,6 @@ import java.util.Optional;
 
 public interface WalletTransactionRepository extends JpaRepository<WalletTransaction, Long> {
 
-    @Query("""
-        SELECT COALESCE(SUM(w.amount), 0)
-        FROM WalletTransaction w
-        WHERE w.type = 'USE'
-        AND DATE(w.createdAt) = :date
-    """)
-    BigDecimal sumUsageByDate(@Param("date") LocalDate date);
-
     Optional<WalletTransaction> findByTypeAndRefId(TransactionType type, Long refId);
 
     Page<WalletTransaction> findByWallet_User_Id(Long id, Pageable pageable);
