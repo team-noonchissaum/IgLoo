@@ -5,8 +5,6 @@ import noonchissaum.backend.domain.chat.dto.res.ChatMessagePageRes;
 import noonchissaum.backend.domain.chat.dto.res.ChatRoomRes;
 import noonchissaum.backend.domain.chat.dto.res.MyChatRoomRes;
 import noonchissaum.backend.domain.chat.service.ChatMessageService;
-import noonchissaum.backend.domain.chat.repository.ChatRoomRepository;
-import noonchissaum.backend.domain.chat.service.ChatMessageService;
 import noonchissaum.backend.domain.chat.service.ChatRoomService;
 import noonchissaum.backend.global.dto.ApiResponse;
 import noonchissaum.backend.global.security.UserPrincipal;

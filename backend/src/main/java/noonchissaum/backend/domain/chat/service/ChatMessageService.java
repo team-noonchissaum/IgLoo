@@ -1,13 +1,11 @@
 package noonchissaum.backend.domain.chat.service;
 
 import lombok.RequiredArgsConstructor;
-import noonchissaum.backend.domain.chat.dto.ws.ChatSendReq;
 import noonchissaum.backend.domain.chat.repository.ChatMessageRepository;
 import noonchissaum.backend.domain.chat.repository.ChatRoomRepository;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
-import noonchissaum.backend.domain.user.repository.UserRepository;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import noonchissaum.backend.domain.chat.dto.ws.ChatMessagePayload;
