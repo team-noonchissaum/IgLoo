@@ -2,6 +2,7 @@ package noonchissaum.backend.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import noonchissaum.backend.domain.item.dto.SellerItemRes;
 import noonchissaum.backend.domain.report.dto.ReportReq;
 import noonchissaum.backend.domain.report.entity.Report;
 import noonchissaum.backend.domain.report.entity.ReportStatus;
@@ -34,7 +35,9 @@ public class UserService {
 
     /**본인 프로필 조회*/
     public ProfileRes getMyProfile(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
         return new ProfileRes(
                 user.getId(),
                 user.getNickname(),
@@ -54,9 +57,11 @@ public class UserService {
         return new OtherUserProfileRes(
                 user.getId(),
                 user.getNickname(),
-                user.getProfileUrl()
+                user.getProfileUrl(),
+                user.getItems().stream().map(SellerItemRes::from).toList()
         );
     }
+
     /**프로필 수정*/
     @Transactional
     public ProfileUpdateUserRes updateProfile(Long userId, ProfileUpdateUserReq request) {

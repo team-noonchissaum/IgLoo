@@ -4,6 +4,7 @@ import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.entity.UserStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -28,5 +29,8 @@ public interface UserRepository extends JpaRepository<User,Long> {
     @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END " +
             "FROM User u WHERE u.nickname = :nickname AND u.status != 'DELETED'")
     boolean existsByNicknameAndNotDeleted(@Param("nickname") String nickname);
+
+    @EntityGraph(attributePaths = {"items"})
+    Optional<User> findById(Long id);
 
 }
