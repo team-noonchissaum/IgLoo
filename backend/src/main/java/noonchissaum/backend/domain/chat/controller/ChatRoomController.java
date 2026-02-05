@@ -3,11 +3,9 @@ package noonchissaum.backend.domain.chat.controller;
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.chat.dto.res.ChatRoomRes;
 import noonchissaum.backend.domain.chat.dto.res.MyChatRoomRes;
-import noonchissaum.backend.domain.chat.repository.ChatRoomRepository;
+import noonchissaum.backend.domain.chat.service.ChatMessageService;
 import noonchissaum.backend.domain.chat.service.ChatRoomService;
 import noonchissaum.backend.global.dto.ApiResponse;
-import noonchissaum.backend.global.exception.ApiException;
-import noonchissaum.backend.global.exception.ErrorCode;
 import noonchissaum.backend.global.security.UserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +18,7 @@ import java.util.List;
 public class ChatRoomController {
 
     private final ChatRoomService chatRoomService;
+    private final ChatMessageService chatMessageService;
 
     @GetMapping("/rooms")
     public ApiResponse<List<MyChatRoomRes>> myRooms(
@@ -39,6 +38,16 @@ public class ChatRoomController {
         Long userId = userPrincipal.getUserId();
         ChatRoomRes res = chatRoomService.getRoom(roomId, userId);
         return ApiResponse.success("채팅방 조회 성공", res);
+    }
+
+    @PostMapping("/room/{roomId}/enter")
+    public ApiResponse<Integer> enterRoom(
+            @PathVariable Long roomId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ){
+        Long userId = userPrincipal.getUserId();
+        int updated = chatMessageService.ReadMessage(roomId, userId);
+        return ApiResponse.success("읽음 처리 완료", updated);
     }
 
 

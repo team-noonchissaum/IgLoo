@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.chat.dto.ws.ChatSendReq;
 import noonchissaum.backend.domain.chat.repository.ChatMessageRepository;
 import noonchissaum.backend.domain.chat.repository.ChatRoomRepository;
+import noonchissaum.backend.global.exception.ApiException;
+import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -57,6 +59,23 @@ public class ChatMessageService {
 
         return payload;
     }
+
+    /**
+     * 채팅방 입장 시 상대방이 보낸 메시지 읽음 처리
+     * */
+    @Transactional
+    public int ReadMessage(Long roomId, Long userId){
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new ApiException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        boolean isMember = room.getBuyer().getId().equals(userId) || room.getSeller().getId().equals(userId);
+
+        if (!isMember){
+            throw new ApiException(ErrorCode.ACCESS_DENIED);
+        }
+        return chatMessageRepository.markAllAsReadInRoom(roomId, userId);
+    }
+
 
 
 }

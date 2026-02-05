@@ -3,11 +3,9 @@ package noonchissaum.backend.domain.chat.controller;
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.chat.dto.ws.ChatSendReq;
 import noonchissaum.backend.domain.chat.service.ChatMessageService;
-import noonchissaum.backend.global.security.UserPrincipal;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
