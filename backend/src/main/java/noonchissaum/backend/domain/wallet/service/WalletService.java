@@ -83,13 +83,12 @@ public class WalletService {
                 .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
         return wallet.getBalance();
     }
+
     /**캐시삭제*/
     public void clearWalletCache(Long userId) {
         redisTemplate.delete(RedisKeys.userBalance(userId));
         redisTemplate.delete(RedisKeys.userLockedBalance(userId));
     }
-
-
 
     /**
      * 관리자 통계용 - 날짜별 충전 금액 합계

@@ -55,7 +55,6 @@ public class UserService {
                 user.getId(),
                 user.getNickname(),
                 user.getProfileUrl()
-//                user.getLocation()
         );
     }
     /**프로필 수정*/
@@ -156,14 +155,6 @@ public class UserService {
     public User getUserByUserId(Long userId) {
         return userRepository.findById(userId).
                 orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-    }
-
-    @Transactional
-    public void createUserWallet(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        walletService.createWallet(user);
     }
 
     /**탈퇴 첫 시도인지 확인*/

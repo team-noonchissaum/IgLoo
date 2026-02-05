@@ -54,9 +54,6 @@ public class DbEventListener {
 
         // 작업이 완료되었는지 db저장
         registerAfterCommit(event);
-
-
-
     }
 
     private void registerAfterCommit(DbUpdateEvent event) {
