@@ -1,9 +1,11 @@
 package noonchissaum.backend.domain.chat.controller;
 
 import lombok.RequiredArgsConstructor;
+import noonchissaum.backend.domain.chat.dto.res.ChatMessagePageRes;
 import noonchissaum.backend.domain.chat.dto.res.ChatRoomRes;
 import noonchissaum.backend.domain.chat.dto.res.MyChatRoomRes;
 import noonchissaum.backend.domain.chat.repository.ChatRoomRepository;
+import noonchissaum.backend.domain.chat.service.ChatMessageService;
 import noonchissaum.backend.domain.chat.service.ChatRoomService;
 import noonchissaum.backend.global.dto.ApiResponse;
 import noonchissaum.backend.global.exception.ApiException;
@@ -20,6 +22,7 @@ import java.util.List;
 public class ChatRoomController {
 
     private final ChatRoomService chatRoomService;
+    private final ChatMessageService chatMessageService;
 
     @GetMapping("/rooms")
     public ApiResponse<List<MyChatRoomRes>> myRooms(
@@ -41,6 +44,18 @@ public class ChatRoomController {
         return ApiResponse.success("채팅방 조회 성공", res);
     }
 
+
+    @GetMapping("/rooms/{roomId}/messages")
+    public ApiResponse<ChatMessagePageRes> messages(
+            @PathVariable Long roomId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Long userId = userPrincipal.getUserId();
+        ChatMessagePageRes res = chatMessageService.getMessages(roomId, userId, cursor, size);
+        return ApiResponse.success("채팅 메시지 조회 성공", res);
+    }
 
 
 }
