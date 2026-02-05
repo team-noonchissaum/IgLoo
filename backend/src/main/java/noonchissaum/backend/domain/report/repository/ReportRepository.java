@@ -23,9 +23,16 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
     @Query("SELECT r FROM Report r JOIN FETCH r.reporter WHERE r.id = :reportId")
     Optional<Report> findByIdWithReporter(@Param("reportId") Long reportId);
 
-    //신고 상태별 신고 목록 조회(PENDING,RESOLVED, REJECTED)
+    //신고 상태별 신고 목록 조회(PENDING, PROCESSED, REJECTED)
     @Query("SELECT r FROM Report r JOIN FETCH r.reporter WHERE r.status = :status")
     Page<Report> findByStatusWithReporter(@Param("status") ReportStatus status, Pageable pageable);
+
+    // 신고 상태 + 대상 타입별 조회 (신고 관리: 경매 신고만, 대기 중만)
+    @Query("SELECT r FROM Report r JOIN FETCH r.reporter WHERE r.status = :status AND r.targetType = :targetType")
+    Page<Report> findByStatusAndTargetTypeWithReporter(
+            @Param("status") ReportStatus status,
+            @Param("targetType") ReportTargetType targetType,
+            Pageable pageable);
 
     //reporterId로 직접조회
     boolean existsByReporterIdAndTargetTypeAndTargetId(Long reporterId, ReportTargetType targetType, Long targetId);

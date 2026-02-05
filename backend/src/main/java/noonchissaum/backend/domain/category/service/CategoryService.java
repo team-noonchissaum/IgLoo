@@ -6,6 +6,8 @@ import noonchissaum.backend.domain.category.dto.req.AddCategoryReq;
 import noonchissaum.backend.domain.category.dto.res.CategoryRes;
 import noonchissaum.backend.domain.category.entity.Category;
 import noonchissaum.backend.domain.category.repository.CategoryRepository;
+import noonchissaum.backend.global.exception.CustomException;
+import noonchissaum.backend.global.exception.ErrorCode;
 import noonchissaum.backend.domain.item.entity.Item;
 import noonchissaum.backend.domain.item.repository.ItemRepository;
 import org.springframework.stereotype.Service;
@@ -23,7 +25,7 @@ public class CategoryService {
     @Transactional(readOnly = true)
     public Category getcategory(Long categoryId) {
         return categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new IllegalArgumentException("Category not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.CATEGORY_NOT_FOUND));
     }
 
     @Transactional(readOnly = true)

@@ -117,6 +117,15 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success("사용자 차단 해제 완료"));
     }
 
+    /**
+     * 차단된 사용자 목록 조회
+     */
+    @GetMapping("/users/blocked")
+    public ResponseEntity<ApiResponse<Page<AdminBlockedUserRes>>> getBlockedUsers(Pageable pageable) {
+        Page<AdminBlockedUserRes> result = adminService.getBlockedUsers(pageable);
+        return ResponseEntity.ok(ApiResponse.success("차단된 사용자 목록 조회 성공", result));
+    }
+
     /* ================= 경매 게시글 관리 ================= */
 
     /**

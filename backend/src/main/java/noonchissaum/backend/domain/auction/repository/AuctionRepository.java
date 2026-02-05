@@ -46,6 +46,18 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
             @Param("now") LocalDateTime now
     );
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+    select  a
+    from Auction a
+    WHERE a.status = :fromStatus
+      AND a.createdAt <= :threshold
+""")
+    Optional<List<Auction>> findReadyAuctions(
+            @Param("fromStatus") AuctionStatus fromStatus,
+            @Param("threshold") LocalDateTime threshold
+    );
+
     List<Auction> findByStartAt(LocalDateTime startAt);
 
     /**

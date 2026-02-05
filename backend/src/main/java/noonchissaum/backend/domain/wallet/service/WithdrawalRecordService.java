@@ -121,7 +121,7 @@ public class WithdrawalRecordService {
         withdrawal.reject();
 
         //지갑 내역에 추가
-        walletTransactionRecordService.record(wallet, TransactionType.WITHDRAW_REQUEST,total, withdrawal.getId());
+        walletTransactionRecordService.record(wallet, TransactionType.WITHDRAW_REJECT,total, withdrawal.getId());
 
         //Redis 반영
         registerAfterCommitRedisBalanceAndLockedDelta(userId, total, total.negate());

@@ -14,6 +14,7 @@ import java.util.Optional;
 public class WishItemRes {
 
     private Long itemId;
+    private Long auctionId;
     private String title;
     private BigDecimal startPrice;
     private String sellerName;
@@ -22,8 +23,10 @@ public class WishItemRes {
     private Boolean status;
 
     public static WishItemRes from(Item item) {
+        Long auctionId = (item.getAuction() != null) ? item.getAuction().getId() : null;
         return new WishItemRes(
                 item.getId(),
+                auctionId,
                 item.getTitle(),
                 item.getStartPrice(),
                 item.getSeller().getNickname(),
