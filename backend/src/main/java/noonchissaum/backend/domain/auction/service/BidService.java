@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -271,20 +272,24 @@ public class BidService {
     ) {
         String priceKey = RedisKeys.auctionCurrentPrice(auctionId);
         String bidderKey = RedisKeys.auctionCurrentBidder(auctionId);
+        String bidCountKey = RedisKeys.auctionCurrentBidCount(auctionId);
+        String statusKey = RedisKeys.auctionStatus(auctionId);
+        String endTimeKey = RedisKeys.auctionEndTime(auctionId);
         String userBalance = RedisKeys.userBalance(userId);
 
         String rawPrice = redisTemplate.opsForValue().get(priceKey);
+        String rawBidCount = redisTemplate.opsForValue().get(bidCountKey);
         BigDecimal currentPrice = (rawPrice == null || rawPrice.isBlank()) ? BigDecimal.ZERO : new BigDecimal(rawPrice);
         log.info("currentPrice:" + currentPrice);
 
-        //10% 이상 체크 (10원 단위 올림),
-        if (currentPrice.compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal minBid = currentPrice.multiply(new BigDecimal("1.1"))
-                    .setScale(-1, RoundingMode.CEILING);
+        // 첫 입찰은 현재가(등록가) 이상 허용, 이후는 10% 이상 체크 (10원 단위 올림)
+        int bidCount = parseIntOrDefault(rawBidCount, 0);
+        BigDecimal minBid = (bidCount == 0)
+                ? currentPrice
+                : currentPrice.multiply(new BigDecimal("1.1")).setScale(-1, RoundingMode.CEILING);
 
-            if (bidAmount.compareTo(minBid) < 0) {
-                throw new ApiException(ErrorCode.LOW_BID_AMOUNT);
-            }
+        if (bidAmount.compareTo(minBid) < 0) {
+            throw new ApiException(ErrorCode.LOW_BID_AMOUNT);
         }
 
         //연속 입찰 체크
@@ -296,10 +301,20 @@ public class BidService {
             }
         }
 
-        //경매 상태 체크
-        Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
-        if (!auction.getStatus().equals(AuctionStatus.RUNNING) && !auction.getStatus().equals(AuctionStatus.DEADLINE)) {
+        // 경매 상태/시간 체크 Redis 기반
+        String rawStatus = redisTemplate.opsForValue().get(statusKey);
+        String rawEndTime = redisTemplate.opsForValue().get(endTimeKey);
+        if (isBlank(rawStatus) || isBlank(rawEndTime)) {
+            throw new ApiException(ErrorCode.AUCTION_STATUS_UNAVAILABLE);
+        }
+
+        AuctionStatus status = AuctionStatus.valueOf(rawStatus);
+        LocalDateTime endAt = LocalDateTime.parse(rawEndTime);
+
+        if (status != AuctionStatus.RUNNING && status != AuctionStatus.DEADLINE) {
+            throw new ApiException(ErrorCode.NOT_FOUND_AUCTIONS);
+        }
+        if (LocalDateTime.now().isAfter(endAt)) {
             throw new ApiException(ErrorCode.NOT_FOUND_AUCTIONS);
         }
 
@@ -308,6 +323,21 @@ public class BidService {
         BigDecimal currentUserBalance = BigDecimal.valueOf(Long.parseLong(rawUserBalance));
         if (currentUserBalance.compareTo(bidAmount) < 0) {
             throw new ApiException(ErrorCode.INSUFFICIENT_BALANCE);
+        }
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    private int parseIntOrDefault(String value, int fallback) {
+        if (isBlank(value)) {
+            return fallback;
+        }
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return fallback;
         }
     }
 

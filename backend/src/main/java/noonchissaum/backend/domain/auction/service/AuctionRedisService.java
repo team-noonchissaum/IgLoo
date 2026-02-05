@@ -49,6 +49,10 @@ public class AuctionRedisService {
                 ? ""
                 : auction.getEndAt().toString();
 
+        String status = auction.getStatus() == null
+                ? ""
+                : auction.getStatus().name();
+
         String imminentMinutes = auction.getImminentMinutes() == null
                 ? "0"
                 : String.valueOf(auction.getImminentMinutes());
@@ -60,6 +64,7 @@ public class AuctionRedisService {
         redisTemplate.opsForValue().set(RedisKeys.auctionCurrentPrice(auctionId), currentPrice, ttl);
         redisTemplate.opsForValue().set(RedisKeys.auctionCurrentBidder(auctionId), bidderId, ttl);
         redisTemplate.opsForValue().set(RedisKeys.auctionCurrentBidCount(auctionId), bidCount, ttl);
+        redisTemplate.opsForValue().set(RedisKeys.auctionStatus(auctionId), status, ttl);
         redisTemplate.opsForValue().set(RedisKeys.auctionEndTime(auctionId), endAt, ttl);
         redisTemplate.opsForValue().set(RedisKeys.auctionImminentMinutes(auctionId), imminentMinutes, ttl);
         redisTemplate.opsForValue().set(RedisKeys.auctionIsExtended(auctionId), isExtended, ttl);
@@ -70,6 +75,7 @@ public class AuctionRedisService {
                 RedisKeys.auctionCurrentPrice(auctionId),
                 RedisKeys.auctionCurrentBidder(auctionId),
                 RedisKeys.auctionCurrentBidCount(auctionId),
+                RedisKeys.auctionStatus(auctionId),
                 RedisKeys.auctionEndTime(auctionId),
                 RedisKeys.auctionImminentMinutes(auctionId),
                 RedisKeys.auctionIsExtended(auctionId)
