@@ -37,7 +37,6 @@ public class ChargeCheckService {
     private final ChargeCheckRepository chargeCheckRepository;
     private final UserLockExecutor userLockExecutor;
 
-
     public void confirmCharge(Long chargeCheckId, Long userId) {
         //userLock
         userLockExecutor.withUserLock(userId, () -> {
@@ -49,7 +48,6 @@ public class ChargeCheckService {
             chargeRecordService.confirmChargeTx(chargeCheckId, userId);
         });
     }
-
 
     public void cancelCharge(Long chargeCheckId, Long userId,String cancelReason) {
        userLockExecutor.withUserLock(userId,()->{
