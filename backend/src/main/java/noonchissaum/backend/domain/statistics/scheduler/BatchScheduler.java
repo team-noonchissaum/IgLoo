@@ -28,7 +28,7 @@ public class BatchScheduler {
      * 매일 자정(00:00:00)에 실행
      * 초 분 시 일 월 요일
      */
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 0 0 * * *")
     public void runDailyStatisticsJob() {
         try {
             // 매번 다른 파라미터로 새로운 실행으로 인식시킴
