@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.inquiry.dto.res.InquiryListRes;
 import noonchissaum.backend.domain.inquiry.service.InquiryService;
+import noonchissaum.backend.domain.report.entity.ReportTargetType;
 import noonchissaum.backend.domain.user.dto.request.AdminBlockAuctionReq;
 import noonchissaum.backend.domain.user.dto.request.AdminBlockUserReq;
 import noonchissaum.backend.domain.user.dto.request.AdminReportProcessReq;
@@ -64,6 +65,19 @@ public class AdminController {
     ) {
         adminService.processReport(reportId, req);
         return ResponseEntity.ok(ApiResponse.success("신고 처리 완료"));
+    }
+
+    /**
+     * 특정 대상에 대한 신고 목록 조회
+     */
+    @GetMapping("/reports/by-target")
+    public ResponseEntity<ApiResponse<java.util.List<AdminReportListRes>>> getReportsByTarget(
+            @RequestParam String targetType,
+            @RequestParam Long targetId
+    ) {
+        ReportTargetType type = ReportTargetType.valueOf(targetType);
+        java.util.List<AdminReportListRes> result = adminService.getReportsByTarget(type, targetId);
+        return ResponseEntity.ok(ApiResponse.success("신고 목록 조회 성공", result));
     }
 
     /* ================== 통계 ====================== */

@@ -6,6 +6,7 @@ import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.service.AuctionService;
 import lombok.extern.slf4j.Slf4j;
+import noonchissaum.backend.domain.inquiry.service.InquiryService;
 import noonchissaum.backend.domain.item.entity.Item;
 import noonchissaum.backend.domain.order.service.OrderService;
 import noonchissaum.backend.domain.report.entity.Report;
@@ -43,6 +44,7 @@ public class AdminService {
     private final AuctionService auctionService;
     private final OrderService orderService;
     private final WalletService walletService;
+    private final InquiryService inquiryService;
 
     /* ================= 신고 관리 ================= */
 
@@ -78,6 +80,29 @@ public class AdminService {
                     report.getCreatedAt()
             );
         });
+    }
+
+    /**
+     * 특정 대상에 대한 신고 목록 조회
+     */
+    public List<AdminReportListRes> getReportsByTarget(ReportTargetType targetType, Long targetId) {
+        List<Report> reports = reportRepository.findByTargetTypeAndTargetId(targetType, targetId);
+
+        return reports.stream().map(report -> {
+            String targetName = getTargetName(report.getTargetType(), report.getTargetId());
+
+            return new AdminReportListRes(
+                    report.getId(),
+                    report.getReporter().getId(),
+                    report.getReporter().getNickname(),
+                    report.getTargetType().name(),
+                    report.getTargetId(),
+                    targetName,
+                    report.getReason(),
+                    report.getStatus().name(),
+                    report.getCreatedAt()
+            );
+        }).collect(Collectors.toList());
     }
 
     /**
@@ -366,8 +391,16 @@ public class AdminService {
         User user = userRepository.findByNickname(nickname)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        // 기존 unblockUser 로직 재사용
+        // 차단되지 않은 사용자인 경우 요청만 삭제하고 종료
+        if (user.getStatus() != UserStatus.BLOCKED) {
+            inquiryService.deleteByNickname(nickname);
+            return;
+        }
+
+        // 차단된 사용자인 경우 차단 해제 수행
         unblockUser(user.getId());
+        // 차단 해제 성공 시 해당 닉네임의 차단 해제 요청 삭제
+        inquiryService.deleteByNickname(nickname);
     }
 
     /**유저 목록 조회*/

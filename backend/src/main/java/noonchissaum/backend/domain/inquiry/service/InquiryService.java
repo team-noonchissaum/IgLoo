@@ -45,4 +45,12 @@ public class InquiryService {
         Page<Inquiry> inquiries = inquiryRepository.findAll(pageable);
         return inquiries.map(InquiryListRes::from);
     }
+
+    /**
+     * 닉네임으로 차단 해제 요청 삭제
+     */
+    public void deleteByNickname(String nickname) {
+        inquiryRepository.deleteByNickname(nickname);
+        log.info("차단 해제 요청 삭제 완료 - nickname: {}", nickname);
+    }
 }
