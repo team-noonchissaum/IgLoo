@@ -21,6 +21,9 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
     @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
     Page<Auction> findAll(Pageable pageable);
 
+    @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
+    Page<Auction> findAllByItem_Seller_Id(Long sellerId, Pageable pageable);
+
     List<Auction> findAllByStatusIn(List<AuctionStatus> statuses);
 
     // Redis id 리스트 상세 로딩용

@@ -99,6 +99,7 @@ public enum ErrorCode {
     AUCTION_INVALID_STATUS(HttpStatus.BAD_REQUEST, "A004", "현재 상태에서는 경매를 취소할 수 없습니다."),
     AUCTION_BLOCKED(HttpStatus.BAD_REQUEST, "A005", "차단된 경매입니다."),
     AUCTION_RESTORE_EXPIRED(HttpStatus.BAD_REQUEST, "A006", "종료된 경매는 복구할 수 없습니다."),
+    AUCTION_STATUS_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "A005", "경매 상태 정보를 불러올 수 없습니다."),
 
     // Notification Error
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "알림을 찾을 수 없습니다."),
