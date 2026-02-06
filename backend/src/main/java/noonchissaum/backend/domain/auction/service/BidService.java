@@ -299,6 +299,9 @@ public class BidService {
         //경매 상태 체크
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
+        if (auction.getStatus() == AuctionStatus.BLOCKED || auction.getStatus() == AuctionStatus.BLOCKED_ENDED) {
+            throw new ApiException(ErrorCode.AUCTION_BLOCKED);
+        }
         if (!auction.getStatus().equals(AuctionStatus.RUNNING) && !auction.getStatus().equals(AuctionStatus.DEADLINE)) {
             throw new ApiException(ErrorCode.NOT_FOUND_AUCTIONS);
         }

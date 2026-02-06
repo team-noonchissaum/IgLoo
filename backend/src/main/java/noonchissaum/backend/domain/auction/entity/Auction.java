@@ -154,6 +154,16 @@ public class Auction extends BaseTimeEntity {
     }
 
     /**
+     * 차단된 경매 종료 처리
+     */
+    public void markBlockedEnded() {
+        if (this.status != AuctionStatus.BLOCKED) {
+            throw new IllegalStateException("차단된 경매만 종료 처리할 수 있습니다.");
+        }
+        this.status = AuctionStatus.BLOCKED_ENDED;
+    }
+
+    /**
      * 경매 복구 (관리자용)
      */
     public void reopen() {

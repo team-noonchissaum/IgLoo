@@ -3,10 +3,14 @@ package noonchissaum.backend.domain.user.service;
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
+import noonchissaum.backend.domain.auction.repository.BidRepository;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.service.AuctionService;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.item.entity.Item;
+import noonchissaum.backend.domain.notification.constants.NotificationConstants;
+import noonchissaum.backend.domain.notification.entity.NotificationType;
+import noonchissaum.backend.domain.notification.service.AuctionNotificationService;
 import noonchissaum.backend.domain.order.service.OrderService;
 import noonchissaum.backend.domain.report.entity.Report;
 import noonchissaum.backend.domain.report.entity.ReportStatus;
@@ -40,9 +44,11 @@ public class AdminService {
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
     private final AuctionRepository auctionRepository;
+    private final BidRepository bidRepository;
     private final AuctionService auctionService;
     private final OrderService orderService;
     private final WalletService walletService;
+    private final AuctionNotificationService auctionNotificationService;
 
     /* ================= 신고 관리 ================= */
 
@@ -170,7 +176,7 @@ public class AdminService {
     /**
      * 경매 차단 공통 로직
      */
-    private void doBlockAuction(Long auctionId) {
+    private Auction doBlockAuction(Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
 
@@ -193,6 +199,8 @@ public class AdminService {
 
         item.delete();
         auction.block();
+        notifyAuctionStatusChange(auction, NotificationType.AUCTION_BLOCKED, NotificationConstants.MSG_AUCTION_BLOCKED);
+        return auction;
     }
 
     /**
@@ -267,9 +275,13 @@ public class AdminService {
         if (auction.getStatus() != AuctionStatus.BLOCKED) {
             throw new CustomException(ErrorCode.AUCTION_NOT_BLOCKED);
         }
+        if (auction.getEndAt() != null && auction.getEndAt().isBefore(LocalDateTime.now())) {
+            throw new CustomException(ErrorCode.AUCTION_RESTORE_EXPIRED);
+        }
 
         item.restore();
         auction.reopen();
+        notifyAuctionStatusChange(auction, NotificationType.AUCTION_RESTORED, NotificationConstants.MSG_AUCTION_RESTORED);
 
         reportRepository.updateStatusByTargetTypeAndTargetIdAndStatus(
                 ReportTargetType.AUCTION,
@@ -285,6 +297,19 @@ public class AdminService {
                 "ACTIVE",
                 LocalDateTime.now()
         );
+    }
+
+    private void notifyAuctionStatusChange(Auction auction, NotificationType type, String message) {
+        List<Long> participantIds = bidRepository.findDistinctBidderIdsByAuctionId(auction.getId());
+        for (Long userId : participantIds) {
+            auctionNotificationService.sendNotification(
+                    userId,
+                    type,
+                    message,
+                    NotificationConstants.REF_TYPE_AUCTION,
+                    auction.getId()
+            );
+        }
     }
 
     /**

@@ -11,6 +11,8 @@ public class NotificationConstants {
     public static final String MSG_AUCTION_SOLD = "등록하신 '%s' 물품이 판매되었습니다.";
     public static final String MSG_AUCTION_FAILED = "아쉽게도 '%s' 경매가 유찰되었습니다.";
     public static final String MSG_AUCTION_OUTBID = "누군가 더 높은 금액으로 입찰했습니다.";
+    public static final String MSG_AUCTION_BLOCKED = "해당 경매가 차단되었습니다.";
+    public static final String MSG_AUCTION_RESTORED = "해당 경매가 복구되었습니다.";
 
     // WebSocket Messages (Payloads)
     public static final String MSG_WS_AUCTION_ENDED_FAILED = "유찰되었습니다.";
