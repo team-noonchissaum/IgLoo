@@ -38,7 +38,7 @@ public class AuctionExposureScheduler {
      */
     @Scheduled(fixedRate = 60_000)
     public void exposeAuctions() {
-        auctionSchedulerService.markDeadLine();
+        auctionSchedulerService.markDeadline();
     }
 
     /**

@@ -54,13 +54,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .map(UserAuth::getUser)
                 .orElseGet(() -> createNewOAuthUser(authType, identifier, info));
 
-        // 차단된 사용자 체크
-        if (user.getStatus() == UserStatus.BLOCKED) {
-            throw new OAuth2AuthenticationException(
-                    new OAuth2Error("user_blocked", "차단된 사용자입니다. 관리자에게 문의하세요.", null)
-            );
-        }
-
         return UserPrincipal.from(user, oAuth2User.getAttributes());
     }
 
@@ -91,7 +84,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         userAuthRepository.save(oauthAuth);
 
         Wallet wallet = walletService.createWallet(saved);
-        saved.registWallet(wallet);
+        saved.registerWallet(wallet);
 
         return saved;
     }

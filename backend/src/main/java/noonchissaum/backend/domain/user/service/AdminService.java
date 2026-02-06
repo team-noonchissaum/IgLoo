@@ -360,6 +360,16 @@ public class AdminService {
         user.unblock();
     }
 
+    /**닉네임으로 유저 차단 해제*/
+    @Transactional
+    public void unblockUserByNickname(String nickname) {
+        User user = userRepository.findByNickname(nickname)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 기존 unblockUser 로직 재사용
+        unblockUser(user.getId());
+    }
+
     /**유저 목록 조회*/
     public Page<AdminUserListRes> getUsers(String status, String keyword, Pageable pageable) {
         Page<User> users = userRepository.findAll(pageable);

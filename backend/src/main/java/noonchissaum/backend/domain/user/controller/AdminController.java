@@ -3,6 +3,8 @@ package noonchissaum.backend.domain.user.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import noonchissaum.backend.domain.inquiry.dto.res.InquiryListRes;
+import noonchissaum.backend.domain.inquiry.service.InquiryService;
 import noonchissaum.backend.domain.user.dto.request.AdminBlockAuctionReq;
 import noonchissaum.backend.domain.user.dto.request.AdminBlockUserReq;
 import noonchissaum.backend.domain.user.dto.request.AdminReportProcessReq;
@@ -24,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 @EnableMethodSecurity(prePostEnabled = true)
 public class AdminController {
     private final AdminService adminService;
-
+    private final InquiryService inquiryService;
     /* ================= 신고 관리 ================= */
 
     /**
@@ -161,5 +163,27 @@ public class AdminController {
     ) {
         AdminAuctionRestoreRes result = adminService.restoreAuction(auctionId);
         return ResponseEntity.ok(ApiResponse.success("경매 복구 완료", result));
+    }
+
+    /* ================= 문의 및 유저 차단 관련 ===================== */
+
+    /**
+     * 차단 해제 요청 목록 조회
+     */
+    @GetMapping("/inquiries")
+    public ResponseEntity<ApiResponse<Page<InquiryListRes>>> getInquiries(Pageable pageable) {
+        Page<InquiryListRes> result = inquiryService.getInquiries(pageable);
+        return ResponseEntity.ok(ApiResponse.success("차단 해제 요청 목록 조회 성공",result));
+    }
+
+    /**
+     * 닉네임으로 유저 차단 해제
+     */
+    @PatchMapping("/users/unblock-by-nickname")
+    public ResponseEntity<ApiResponse<Void>> unblockUserByNickname(
+            @RequestParam String nickname
+    ) {
+        adminService.unblockUserByNickname(nickname);
+        return ResponseEntity.ok(ApiResponse.success("차단 해제 완료"));
     }
 }
