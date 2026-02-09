@@ -8,6 +8,7 @@ import noonchissaum.backend.domain.coupon.dto.res.CouponRes;
 import noonchissaum.backend.domain.coupon.dto.res.IssuedCouponRes;
 import noonchissaum.backend.domain.coupon.entity.Coupon;
 import noonchissaum.backend.domain.coupon.entity.CouponIssued;
+import noonchissaum.backend.domain.coupon.entity.CouponStatus;
 import noonchissaum.backend.domain.coupon.repository.CouponIssuedRepository;
 import noonchissaum.backend.domain.coupon.repository.CouponRepository;
 import noonchissaum.backend.domain.user.entity.User;
@@ -72,6 +73,9 @@ public class CouponIssueService {
             wallet.charge(amount);
 
             walletTransactionRecordService.record(wallet, TransactionType.COUPON_USE, amount, couponIssuedId);
+
+            // 사용된 쿠폰 삭제
+            couponIssuedRepository.delete(couponIssued);
         });
 
         // Clear cache
@@ -104,13 +108,17 @@ public class CouponIssueService {
     }
 
     /**
-     * 발급된 쿠폰 확인
+     * 발급된 쿠폰 확인 (사용된 쿠폰 제외)
      * */
     @Transactional(readOnly = true)
     public List<IssuedCouponRes> getIssuedCouponsByUserId(Long userId) {
         User user = userService.getUserByUserId(userId);
 
-        List<CouponIssued> issuedCoupons = couponIssuedRepository.findByVictim(user);
+        // 사용된 쿠폰(USED)은 제외하고 조회
+        List<CouponIssued> issuedCoupons = couponIssuedRepository.findByVictimAndStatusNot(
+                user,
+                CouponStatus.USED
+        );
         List<IssuedCouponRes> resList = new ArrayList<>();
 
         for (CouponIssued issued : issuedCoupons) {
