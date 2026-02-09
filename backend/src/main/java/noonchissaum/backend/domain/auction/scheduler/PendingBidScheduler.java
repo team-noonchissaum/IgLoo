@@ -7,6 +7,8 @@ import noonchissaum.backend.domain.auction.service.BidRecordService;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
 import noonchissaum.backend.global.RedisKeys;
+import noonchissaum.backend.global.exception.ApiException;
+import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -76,18 +78,19 @@ public class PendingBidScheduler {
 
                 // Wallet 저장
                 Wallet newWallet = walletRepository.findByUserId(userId)
-                        .orElseThrow(() -> new RuntimeException("신규 입찰자 지갑 없음"));
+                        .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
                 newWallet.bid(bidAmount);
 
                 if (previousBidderId != null && previousBidderId != -1L) {
                     Wallet prevWallet = walletRepository.findByUserId(previousBidderId)
-                            .orElseThrow(() -> new RuntimeException("이전 입찰자 지갑 없음"));
+                            .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
                     prevWallet.bidCanceled(refundAmount);
                 }
 
             } catch (Exception e) {
                 log.error("Pending bid 저장 실패. requestId={}, reason={}", requestId, e.toString());
-                throw new RuntimeException(e.getMessage());
+                // 스케줄러 전체 중단 방지: 다음 요청으로 진행
+                continue;
             }
         }
     }

@@ -14,6 +14,9 @@ import noonchissaum.backend.domain.notification.entity.NotificationType;
 import noonchissaum.backend.domain.notification.service.AuctionNotificationService;
 import noonchissaum.backend.domain.order.service.OrderService;
 import noonchissaum.backend.domain.user.entity.User;
+import noonchissaum.backend.domain.wallet.service.WalletService;
+import noonchissaum.backend.global.exception.ApiException;
+import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -34,6 +37,8 @@ public class AuctionSchedulerService {
     private final AuctionRealtimeSnapshotService snapshotService;
     private final AuctionMessageService auctionMessageService;
     private final AuctionNotificationService auctionNotificationService;
+    private final AuctionRedisService auctionRedisService;
+    private final WalletService walletService;
 
 
     /**
@@ -62,12 +67,17 @@ public class AuctionSchedulerService {
         LocalDateTime threshold = now.minusMinutes(5);
 
         long startMs = System.currentTimeMillis();
-        int updated = auctionRepository.exposeReadyAuctions(
-                AuctionStatus.READY,
-                AuctionStatus.RUNNING,
-                threshold,
-                now
-        );
+
+        List<Auction> auctions = auctionRepository.findReadyAuctions(AuctionStatus.READY, threshold)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
+        int updated=0;
+        for(Auction auction :auctions){
+            auction.run();
+            int amount = (int) Math.min( auction.getCurrentPrice().longValue() * 0.05 , 1000);
+            walletService.setAuctionDeposit(auction.getItem().getSeller().getId(), auction.getId(), amount, "refund");
+            auctionRedisService.setRedis(auction.getId());
+            updated++;
+        }
         long elapsed = System.currentTimeMillis() - startMs;
 
         if (updated > 0) {
@@ -75,6 +85,7 @@ public class AuctionSchedulerService {
         } else {
             log.debug("[AuctionExpose] running=0 elapsedMs={}", elapsed);
         }
+
         return updated;
     }
 
@@ -82,7 +93,7 @@ public class AuctionSchedulerService {
      * RUNNING -> DEADLINE
      */
     @Transactional
-    public void markDeadLine() {
+    public void markDeadline() {
         LocalDateTime now = LocalDateTime.now();
 
         // 1. DEADLINE으로 변경될 대상 ID 조회 (상태가 RUNNING인 것만)
@@ -95,6 +106,7 @@ public class AuctionSchedulerService {
 
         // 3. 알림 발송 (확보된 ID 리스트 기반)
         for (Long auctionId : toDeadlineIds) {
+            auctionRedisService.setRedis(auctionId);
             auctionNotificationService.notifyImminent(auctionId);
         }
     }
@@ -115,6 +127,7 @@ public class AuctionSchedulerService {
         // 종료 이벤트 발송
         for (Long auctionId : toEndIds) {
             try {
+                auctionRedisService.setRedis(auctionId);
                 // 스냅샷 기반으로 종료 payload 구성 (DB 접근 최소화)
                 var snap = snapshotService.getSnapshot(auctionId);
 
@@ -142,6 +155,7 @@ public class AuctionSchedulerService {
     /**
      * ended -> success or failed
      */
+
     @Transactional
     public void result() {
         // ENDED 상태인 경매를 페이지 단위로 가져옴
@@ -179,6 +193,7 @@ public class AuctionSchedulerService {
 
             // 2) 선점 성공한 경우에만 주문 생성 + 이벤트 발송
             if (changed == 1) {
+                auctionRedisService.setRedis(auctionId);
                 // 주문 생성
                 orderService.createOrder(auction, winnerBid.getBidder());
 
@@ -202,6 +217,7 @@ public class AuctionSchedulerService {
 
             // 2) 선점 성공한 경우에만 이벤트 발송
             if (changed == 1) {
+                auctionRedisService.setRedis(auctionId);
                 // 알림 발송 (판매자)
                 sendFailureNotifications(auction);
 

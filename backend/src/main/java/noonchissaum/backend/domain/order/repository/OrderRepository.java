@@ -1,4 +1,4 @@
-package noonchissaum.backend.domain.order.repositroy;
+package noonchissaum.backend.domain.order.repository;
 
 import java.util.Optional;
 import noonchissaum.backend.domain.order.entity.Order;

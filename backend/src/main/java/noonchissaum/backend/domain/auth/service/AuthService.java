@@ -57,7 +57,7 @@ public class AuthService {
         userAuthRepository.save(userAuth);
 
         Wallet wallet = walletService.createWallet(saved);
-        saved.registWallet(wallet);
+        saved.registerWallet(wallet);
 
         return new SignupRes(
                 user.getId(),
@@ -81,14 +81,6 @@ public class AuthService {
 
         User user = userAuth.getUser();
 
-        // 차단된 사용자 체크
-        if (user.getStatus() == UserStatus.BLOCKED) {
-            String reason = user.getBlockReason();
-            String message = (reason != null && !reason.isBlank())
-                    ? "차단된 사용자입니다. 사유: " + reason
-                    : "차단된 사용자입니다. 관리자에게 문의하세요.";
-            throw new CustomException(ErrorCode.USER_BLOCKED, message);
-        }
 
         String accessToken = jwtTokenProvider.createAccessToken(user.getId(),user.getRole());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
@@ -158,7 +150,7 @@ public class AuthService {
         userAuthRepository.save(userAuth);
 
         Wallet wallet = walletService.createWallet(saved);
-        saved.registWallet(wallet);
+        saved.registerWallet(wallet);
 
         return new LoginResult(userAuth, true);
     }

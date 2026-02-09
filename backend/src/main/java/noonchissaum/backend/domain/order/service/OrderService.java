@@ -4,9 +4,8 @@ import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.order.entity.Order;
 import noonchissaum.backend.domain.order.entity.OrderStatus;
-import noonchissaum.backend.domain.order.repositroy.OrderRepository;
+import noonchissaum.backend.domain.order.repository.OrderRepository;
 import noonchissaum.backend.domain.user.entity.User;
-import noonchissaum.backend.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

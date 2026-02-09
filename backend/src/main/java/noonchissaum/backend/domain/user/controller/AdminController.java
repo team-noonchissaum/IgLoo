@@ -3,6 +3,9 @@ package noonchissaum.backend.domain.user.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import noonchissaum.backend.domain.inquiry.dto.res.InquiryListRes;
+import noonchissaum.backend.domain.inquiry.service.InquiryService;
+import noonchissaum.backend.domain.report.entity.ReportTargetType;
 import noonchissaum.backend.domain.user.dto.request.AdminBlockAuctionReq;
 import noonchissaum.backend.domain.user.dto.request.AdminBlockUserReq;
 import noonchissaum.backend.domain.user.dto.request.AdminReportProcessReq;
@@ -13,7 +16,6 @@ import noonchissaum.backend.global.security.UserPrincipal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -22,11 +24,10 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 @EnableMethodSecurity(prePostEnabled = true)
 public class AdminController {
     private final AdminService adminService;
-
+    private final InquiryService inquiryService;
     /* ================= 신고 관리 ================= */
 
     /**
@@ -64,6 +65,19 @@ public class AdminController {
     ) {
         adminService.processReport(reportId, req);
         return ResponseEntity.ok(ApiResponse.success("신고 처리 완료"));
+    }
+
+    /**
+     * 특정 대상에 대한 신고 목록 조회
+     */
+    @GetMapping("/reports/by-target")
+    public ResponseEntity<ApiResponse<java.util.List<AdminReportListRes>>> getReportsByTarget(
+            @RequestParam String targetType,
+            @RequestParam Long targetId
+    ) {
+        ReportTargetType type = ReportTargetType.valueOf(targetType);
+        java.util.List<AdminReportListRes> result = adminService.getReportsByTarget(type, targetId);
+        return ResponseEntity.ok(ApiResponse.success("신고 목록 조회 성공", result));
     }
 
     /* ================== 통계 ====================== */
@@ -119,6 +133,15 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success("사용자 차단 해제 완료"));
     }
 
+    /**
+     * 차단된 사용자 목록 조회
+     */
+    @GetMapping("/users/blocked")
+    public ResponseEntity<ApiResponse<Page<AdminBlockedUserRes>>> getBlockedUsers(Pageable pageable) {
+        Page<AdminBlockedUserRes> result = adminService.getBlockedUsers(pageable);
+        return ResponseEntity.ok(ApiResponse.success("차단된 사용자 목록 조회 성공", result));
+    }
+
     /* ================= 경매 게시글 관리 ================= */
 
     /**
@@ -154,5 +177,27 @@ public class AdminController {
     ) {
         AdminAuctionRestoreRes result = adminService.restoreAuction(auctionId);
         return ResponseEntity.ok(ApiResponse.success("경매 복구 완료", result));
+    }
+
+    /* ================= 문의 및 유저 차단 관련 ===================== */
+
+    /**
+     * 차단 해제 요청 목록 조회
+     */
+    @GetMapping("/inquiries")
+    public ResponseEntity<ApiResponse<Page<InquiryListRes>>> getInquiries(Pageable pageable) {
+        Page<InquiryListRes> result = inquiryService.getInquiries(pageable);
+        return ResponseEntity.ok(ApiResponse.success("차단 해제 요청 목록 조회 성공",result));
+    }
+
+    /**
+     * 닉네임으로 유저 차단 해제
+     */
+    @PatchMapping("/users/unblock-by-nickname")
+    public ResponseEntity<ApiResponse<Void>> unblockUserByNickname(
+            @RequestParam String nickname
+    ) {
+        adminService.unblockUserByNickname(nickname);
+        return ResponseEntity.ok(ApiResponse.success("차단 해제 완료"));
     }
 }

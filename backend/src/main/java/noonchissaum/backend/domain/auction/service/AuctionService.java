@@ -20,12 +20,13 @@ import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.RedisKeys;
+import noonchissaum.backend.global.exception.CustomException;
+import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.data.domain.*;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -55,7 +56,7 @@ public class AuctionService {
     @Transactional
     public Long registerAuction(Long userId, AuctionRegisterReq request) {
         User seller = userService.getUserByUserId(userId);
-        Category category = categoryService.getcategory(request.getCategoryId());
+        Category category = categoryService.getCategory(request.getCategoryId());
 
         // 1. 상품(Item) 정보 생성 + 이미지 등록
         Item item = itemService.createItem(seller,category,request);
@@ -114,7 +115,7 @@ public class AuctionService {
      */
     public AuctionRes getAuctionDetail(Long userId, Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new IllegalArgumentException("Auction not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
         boolean isWished = wishService.isWished(userId, auction.getItem().getId());
         return AuctionRes.from(auction, isWished);
     }
@@ -126,16 +127,16 @@ public class AuctionService {
     @Transactional
     public void cancelAuction(Long userId, Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new IllegalArgumentException("Auction not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
 
         // 판매자 본인 여부 확인
         if (!auction.getItem().getSeller().getId().equals(userId)) {
-            throw new IllegalStateException("Only the seller can cancel the auction");
+            throw new CustomException(ErrorCode.AUCTION_NOT_OWNER);
         }
 
         // 이미 입찰이 진행된 경우 취소 불가 (비즈니스 규칙)
         if (auction.getBidCount() > 0) {
-            throw new IllegalStateException("Cannot cancel auction with existing bids");
+            throw new CustomException(ErrorCode.AUCTION_HAS_BIDS);
         }
 
         /**
@@ -143,7 +144,7 @@ public class AuctionService {
          * 5분 이후 취소도 처리하려면 RUNNING 상태도 취소 허용
          */
         if (!(auction.getStatus() == AuctionStatus.READY || auction.getStatus() == AuctionStatus.RUNNING)) {
-            throw new IllegalStateException("Cannot cancel auction in current status: " + auction.getStatus());
+            throw new CustomException(ErrorCode.AUCTION_INVALID_STATUS);
         }
 
         // 정책 기준: 등록 + 5분
@@ -161,6 +162,7 @@ public class AuctionService {
             // 5분 이후 취소 → 보증금 몰수 확정(패널티)
             // 5분 이후 취소 -> 보증금 환불 없음
             auction.forfeitDeposit();
+            walletService.setAuctionDeposit(userId, auctionId, amount, "forfeit");
         }
 
 
@@ -171,7 +173,7 @@ public class AuctionService {
         auctionRedisService.cancelAuction(auctionId);
     }
 
-    public void checkDeadLine(Long auctionId) {
+    public void checkDeadline(Long auctionId) {
         String rawEndTime = redisTemplate.opsForValue().get(RedisKeys.auctionEndTime(auctionId));
         String rawImminentMinutes = redisTemplate.opsForValue().get(RedisKeys.auctionImminentMinutes(auctionId));
         String isExtended = redisTemplate.opsForValue().get(RedisKeys.auctionIsExtended(auctionId));
@@ -207,44 +209,8 @@ public class AuctionService {
      * 내가 등록한 경매 목록 조회
      */
     public Page<AuctionRes> getMyAuctions(Long userId, Pageable pageable) {
-        Page<Auction> auctions = auctionRepository.findAll(pageable);
-
-        // 내가 등록한 경매만 필터링
-        List<AuctionRes> myAuctions = auctions.getContent().stream()
-                .filter(a -> a.getItem().getSeller().getId().equals(userId))
-                .map(AuctionRes::from)
-                .toList();
-
-        return new PageImpl<>(myAuctions, pageable, myAuctions.size());
-    }
-
-    /**
-     * 관리자 통계용 - 날짜별 전체 경매 수
-     */
-    public long countByDate(LocalDate date) {
-        return auctionRepository.findAll().stream()
-                .filter(a -> a.getCreatedAt().toLocalDate().equals(date))
-                .count();
-    }
-
-    /**
-     * 관리자 통계용 - 날짜별 낙찰 성공 경매 수
-     */
-    public long countSuccessByDate(LocalDate date) {
-        return auctionRepository.findAll().stream()
-                .filter(a -> a.getStatus() == AuctionStatus.SUCCESS)
-                .filter(a -> a.getEndAt() != null && a.getEndAt().toLocalDate().equals(date))
-                .count();
-    }
-
-    /**
-     * 관리자 통계용 - 날짜별 유찰 경매 수
-     */
-    public long countFailedByDate(LocalDate date) {
-        return auctionRepository.findAll().stream()
-                .filter(a -> a.getStatus() == AuctionStatus.FAILED)
-                .filter(a -> a.getEndAt() != null && a.getEndAt().toLocalDate().equals(date))
-                .count();
+        Page<Auction> auctions = auctionRepository.findAllByItem_Seller_Id(userId, pageable);
+        return auctions.map(AuctionRes::from);
     }
 
     @Transactional(readOnly = true)

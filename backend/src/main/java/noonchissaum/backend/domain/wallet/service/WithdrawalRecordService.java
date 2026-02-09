@@ -58,7 +58,6 @@ public class WithdrawalRecordService {
         // Redis 반영
         registerAfterCommitRedisBalanceAndLockedDelta(userId, total, total);
 
-
         return saved.getId();
     }
 
@@ -92,9 +91,6 @@ public class WithdrawalRecordService {
                 .orElseThrow(() -> new ApiException(ErrorCode.WITHDRAW_NOT_FOUND));
         walletTransaction.confirmWithdrawal();
 
-        //지갑 내역에 추가
-        //walletTransactionRecordService.record(wallet, TransactionType.WITHDRAW_CONFIRM,total, withdrawal.getId());
-
         // Redis 반영
         registerAfterCommitRedisBalanceAndLockedDelta(userId, BigDecimal.ZERO, total.negate());
     }
@@ -125,7 +121,7 @@ public class WithdrawalRecordService {
         withdrawal.reject();
 
         //지갑 내역에 추가
-        walletTransactionRecordService.record(wallet, TransactionType.WITHDRAW_REQUEST,total, withdrawal.getId());
+        walletTransactionRecordService.record(wallet, TransactionType.WITHDRAW_REJECT,total, withdrawal.getId());
 
         //Redis 반영
         registerAfterCommitRedisBalanceAndLockedDelta(userId, total, total.negate());
