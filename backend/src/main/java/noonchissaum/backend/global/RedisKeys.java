@@ -22,6 +22,10 @@ public final class RedisKeys {
         return "pending:user:" + userId;
     }
 
+    public static String deleteAttemptUser(Long userId) {
+        return "delete:attempt:user:" + userId;
+    }
+
     /**
      * auction
      */
@@ -39,6 +43,10 @@ public final class RedisKeys {
 
     public static String auctionCurrentBidCount(Long auctionId) {
         return "auction:" + auctionId + ":currentBidCount";
+    }
+
+    public static String auctionStatus(Long auctionId) {
+        return "auction:" + auctionId + ":status";
     }
 
     public static String auctionEndTime(Long auctionId) {

@@ -37,6 +37,7 @@ public class AuctionSchedulerService {
     private final AuctionRealtimeSnapshotService snapshotService;
     private final AuctionMessageService auctionMessageService;
     private final AuctionNotificationService auctionNotificationService;
+    private final AuctionRedisService auctionRedisService;
     private final WalletService walletService;
 
 
@@ -74,6 +75,7 @@ public class AuctionSchedulerService {
             auction.run();
             int amount = (int) Math.min( auction.getCurrentPrice().longValue() * 0.05 , 1000);
             walletService.setAuctionDeposit(auction.getItem().getSeller().getId(), auction.getId(), amount, "refund");
+            auctionRedisService.setRedis(auction.getId());
             updated++;
         }
         long elapsed = System.currentTimeMillis() - startMs;
@@ -91,7 +93,7 @@ public class AuctionSchedulerService {
      * RUNNING -> DEADLINE
      */
     @Transactional
-    public void markDeadLine() {
+    public void markDeadline() {
         LocalDateTime now = LocalDateTime.now();
 
         // 1. DEADLINE으로 변경될 대상 ID 조회 (상태가 RUNNING인 것만)
@@ -104,6 +106,7 @@ public class AuctionSchedulerService {
 
         // 3. 알림 발송 (확보된 ID 리스트 기반)
         for (Long auctionId : toDeadlineIds) {
+            auctionRedisService.setRedis(auctionId);
             auctionNotificationService.notifyImminent(auctionId);
         }
     }
@@ -124,6 +127,7 @@ public class AuctionSchedulerService {
         // 종료 이벤트 발송
         for (Long auctionId : toEndIds) {
             try {
+                auctionRedisService.setRedis(auctionId);
                 // 스냅샷 기반으로 종료 payload 구성 (DB 접근 최소화)
                 var snap = snapshotService.getSnapshot(auctionId);
 
@@ -189,6 +193,7 @@ public class AuctionSchedulerService {
 
             // 2) 선점 성공한 경우에만 주문 생성 + 이벤트 발송
             if (changed == 1) {
+                auctionRedisService.setRedis(auctionId);
                 // 주문 생성
                 orderService.createOrder(auction, winnerBid.getBidder());
 
@@ -212,6 +217,7 @@ public class AuctionSchedulerService {
 
             // 2) 선점 성공한 경우에만 이벤트 발송
             if (changed == 1) {
+                auctionRedisService.setRedis(auctionId);
                 // 알림 발송 (판매자)
                 sendFailureNotifications(auction);
 

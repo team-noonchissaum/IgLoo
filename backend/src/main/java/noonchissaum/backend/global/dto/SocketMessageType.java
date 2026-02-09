@@ -11,4 +11,5 @@ public enum SocketMessageType {
     AUCTION_ENDED,
     AUCTION_RESULT,
     NOTIFICATION, //알람
+    CHAT_MESSAGE //채팅
 }

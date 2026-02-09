@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.order.dto.charge.res.ChargeCheckRes;
 import noonchissaum.backend.domain.order.entity.ChargeCheck;
 import noonchissaum.backend.domain.order.entity.CheckStatus;
-import noonchissaum.backend.domain.order.repositroy.ChargeCheckRepository;
+import noonchissaum.backend.domain.order.repository.ChargeCheckRepository;
 import noonchissaum.backend.domain.task.service.TaskService;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;

@@ -40,6 +40,7 @@ public class UserController {
         OtherUserProfileRes response = userService.getOtherUserProfile(userId);
         return ResponseEntity.ok(ApiResponse.success("요청 성공", response));
     }
+
     /**
      * 프로필 수정
      * PATCH /api/users/me
@@ -51,6 +52,7 @@ public class UserController {
         ProfileUpdateUserRes response = userService.updateProfile(principal.getUserId(), request);
         return ResponseEntity.ok(ApiResponse.success("수정 성공", response));
     }
+
     /**
      * 탈퇴 시도 (첫 클릭)
      */
