@@ -54,8 +54,8 @@ public class User extends BaseTimeEntity {
 
     private String blockReason;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private final List<UserAuth> auths = new ArrayList<>();
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private UserAuth userAuth;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Wallet wallet;

@@ -41,6 +41,10 @@ public final class RedisKeys {
         return "auction:" + auctionId + ":currentBidCount";
     }
 
+    public static String auctionStatus(Long auctionId) {
+        return "auction:" + auctionId + ":status";
+    }
+
     public static String auctionEndTime(Long auctionId) {
         return "auction:" + auctionId + ":endTime";
     }

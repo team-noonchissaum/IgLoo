@@ -209,15 +209,8 @@ public class AuctionService {
      * 내가 등록한 경매 목록 조회
      */
     public Page<AuctionRes> getMyAuctions(Long userId, Pageable pageable) {
-        Page<Auction> auctions = auctionRepository.findAll(pageable);
-
-        // 내가 등록한 경매만 필터링
-        List<AuctionRes> myAuctions = auctions.getContent().stream()
-                .filter(a -> a.getItem().getSeller().getId().equals(userId))
-                .map(AuctionRes::from)
-                .toList();
-
-        return new PageImpl<>(myAuctions, pageable, myAuctions.size());
+        Page<Auction> auctions = auctionRepository.findAllByItem_Seller_Id(userId, pageable);
+        return auctions.map(AuctionRes::from);
     }
 
     @Transactional(readOnly = true)
