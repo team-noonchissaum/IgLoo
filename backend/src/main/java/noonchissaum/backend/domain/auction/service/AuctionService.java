@@ -56,7 +56,7 @@ public class AuctionService {
     @Transactional
     public Long registerAuction(Long userId, AuctionRegisterReq request) {
         User seller = userService.getUserByUserId(userId);
-        Category category = categoryService.getcategory(request.getCategoryId());
+        Category category = categoryService.getCategory(request.getCategoryId());
 
         // 1. 상품(Item) 정보 생성 + 이미지 등록
         Item item = itemService.createItem(seller,category,request);
@@ -173,7 +173,7 @@ public class AuctionService {
         auctionRedisService.cancelAuction(auctionId);
     }
 
-    public void checkDeadLine(Long auctionId) {
+    public void checkDeadline(Long auctionId) {
         String rawEndTime = redisTemplate.opsForValue().get(RedisKeys.auctionEndTime(auctionId));
         String rawImminentMinutes = redisTemplate.opsForValue().get(RedisKeys.auctionImminentMinutes(auctionId));
         String isExtended = redisTemplate.opsForValue().get(RedisKeys.auctionIsExtended(auctionId));

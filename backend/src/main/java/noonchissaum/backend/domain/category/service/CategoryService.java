@@ -23,7 +23,7 @@ public class CategoryService {
     private final ItemRepository itemRepository;
 
     @Transactional(readOnly = true)
-    public Category getcategory(Long categoryId) {
+    public Category getCategory(Long categoryId) {
         return categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new CustomException(ErrorCode.CATEGORY_NOT_FOUND));
     }
@@ -40,7 +40,7 @@ public class CategoryService {
     public CategoryRes addCategory(AddCategoryReq req) {
         Category parent = null;
         if (req.parentId() != null) {
-            parent = getcategory(req.parentId());
+            parent = getCategory(req.parentId());
         }
 
         Category category = new Category(req.name(), parent);

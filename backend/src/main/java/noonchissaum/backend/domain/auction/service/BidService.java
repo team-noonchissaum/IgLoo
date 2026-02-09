@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.auction.dto.res.BidHistoryItemRes;
 import noonchissaum.backend.domain.auction.dto.res.MyBidAuctionRes;
-import noonchissaum.backend.domain.auction.dto.ws.BidSuccessedPayload;
+import noonchissaum.backend.domain.auction.dto.ws.BidSucceededPayload;
 import noonchissaum.backend.domain.auction.dto.ws.OutbidPayload;
 import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
@@ -131,7 +131,7 @@ public class BidService {
                 // Stomp 메세지 발행 로직 - 갱신된 경매 정보로 payload 구성 (모든 시청자 화면 실시간 반영)
                 Auction updatedAuction = auctionRepository.findById(auctionId)
                         .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
-                BidSuccessedPayload bidSuccessedPayload = BidSuccessedPayload
+                BidSucceededPayload bidSucceededPayload = BidSucceededPayload
                         .builder()
                         .auctionId(auctionId)
                         .currentPrice(bidAmount.longValueExact())
@@ -139,7 +139,7 @@ public class BidService {
                         .bidCount(updatedAuction.getBidCount())
                         .endAt(updatedAuction.getEndAt())
                         .build();
-                auctionMessageService.sendBidSuccessed(auctionId, bidSuccessedPayload);
+                auctionMessageService.sendBidSucceeded(auctionId, bidSucceededPayload);
 
                 if (previousBidderId != -1L){
                     String msg = NotificationConstants.MSG_AUCTION_OUTBID;

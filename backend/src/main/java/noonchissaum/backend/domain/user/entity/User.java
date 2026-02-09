@@ -119,7 +119,7 @@ public class User extends BaseTimeEntity {
         this.blockReason = null;
     }
 
-    public void registWallet(Wallet wallet) {
+    public void registerWallet(Wallet wallet) {
         this.wallet = wallet;
     }
 

@@ -1,4 +1,4 @@
-package noonchissaum.backend.domain.order.repositroy;
+package noonchissaum.backend.domain.order.repository;
 
 import jakarta.persistence.LockModeType;
 import noonchissaum.backend.domain.order.entity.Payment;

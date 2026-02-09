@@ -29,4 +29,5 @@ public interface UserRepository extends JpaRepository<User,Long> {
             "FROM User u WHERE u.nickname = :nickname AND u.status != 'DELETED'")
     boolean existsByNicknameAndNotDeleted(@Param("nickname") String nickname);
 
+    Optional<User> findByNickname(String nickname);
 }
