@@ -24,7 +24,9 @@ public enum TransactionType {
     WITHDRAW_CONFIRM("출금 성공", TransactionRefType.WITHDRAW, -1),
 
     SETTLEMENT_IN("판매 정산금 지급", TransactionRefType.ORDER, +1),
-    SETTLEMENT_OUT("제품 구매", TransactionRefType.ORDER, -1);
+    SETTLEMENT_OUT("제품 구매", TransactionRefType.ORDER, -1),
+
+    COUPON_USE("쿠폰 사용", TransactionRefType.COUPON, +1);
 
     private final String memo;
     private final TransactionRefType defaultRefType;

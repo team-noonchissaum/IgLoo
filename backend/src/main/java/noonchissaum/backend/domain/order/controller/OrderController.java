@@ -13,7 +13,7 @@ import noonchissaum.backend.domain.order.dto.delivery.req.ChooseDeliveryTypeReq;
 import noonchissaum.backend.domain.order.dto.delivery.res.ChooseDeliveryTypeRes;
 import noonchissaum.backend.domain.order.entity.Order;
 import noonchissaum.backend.domain.order.entity.DeliveryType;
-import noonchissaum.backend.domain.order.repositroy.OrderRepository;
+import noonchissaum.backend.domain.order.repository.OrderRepository;
 import noonchissaum.backend.domain.chat.service.ChatRoomService;
 import noonchissaum.backend.domain.chat.dto.res.ChatRoomRes;
 

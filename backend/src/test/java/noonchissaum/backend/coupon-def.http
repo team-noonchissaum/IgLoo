@@ -1,0 +1,41 @@
+### 로컬 로그인 (토큰 저장)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "1234",
+  "authType": "LOCAL"
+}
+
+> {%
+    client.global.set("accessToken", response.body.accessToken);
+    client.global.set("refreshToken", response.body.refreshToken);
+%}
+
+### 쿠폰 정의 생성 (POST)
+POST http://localhost:8080/api/coupons
+Content-Type: application/json
+
+{
+  "name": "TEST_COUPON_1000",
+  "amount": 1000
+}
+
+### 모든 쿠폰 정의 조회 (GET)
+GET http://localhost:8080/api/coupons
+
+### 특정 쿠폰 정의 조회 (GET)
+GET http://localhost:8080/api/coupons/1
+
+### 쿠폰 정의 업데이트 (PUT)
+PUT http://localhost:8080/api/coupons/1
+Content-Type: application/json
+
+{
+  "name": "UPDATED_TEST_COUPON_2000",
+  "amount": 2000
+}
+
+### 쿠폰 정의 삭제 (DELETE)
+DELETE http://localhost:8080/api/coupons/1
