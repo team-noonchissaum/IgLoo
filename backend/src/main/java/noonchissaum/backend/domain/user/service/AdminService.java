@@ -4,21 +4,19 @@ import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
-import noonchissaum.backend.domain.auction.service.AuctionService;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.inquiry.service.InquiryService;
 import noonchissaum.backend.domain.item.entity.Item;
-import noonchissaum.backend.domain.order.service.OrderService;
 import noonchissaum.backend.domain.report.entity.Report;
 import noonchissaum.backend.domain.report.entity.ReportStatus;
 import noonchissaum.backend.domain.report.entity.ReportTargetType;
 import noonchissaum.backend.domain.report.repository.ReportRepository;
+import noonchissaum.backend.domain.statistics.repository.DailyStatisticsRepository;
 import noonchissaum.backend.domain.user.dto.request.AdminReportProcessReq;
 import noonchissaum.backend.domain.user.dto.response.*;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.entity.UserStatus;
 import noonchissaum.backend.domain.user.repository.*;
-import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.data.domain.Page;
@@ -45,6 +43,7 @@ public class AdminService {
     private final OrderService orderService;
     private final WalletService walletService;
     private final InquiryService inquiryService;
+    private final DailyStatisticsRepository dailyStatisticsRepository;
 
     /* ================= 신고 관리 ================= */
 
@@ -422,51 +421,20 @@ public class AdminService {
                 .map(AdminBlockedUserRes::from);
     }
 
-    /* =================== 일일 통계 ==================== */
+    /**
+     * 일일 통계 조회
+     * date가 없으면 어제 날짜 조회 (배치가 어제 데이터를 집계)
+     * date가 있으면 해당 날짜 조회
+     */
 
     public AdminStatisticsRes getDailyStatistics(String date) {
-        LocalDate targetDate = (date == null) ? LocalDate.now() : LocalDate.parse(date);
+        LocalDate targetDate = (date == null || date.isBlank())
+                ? LocalDate.now().minusDays(1)
+                : LocalDate.parse(date);
 
-        // 거래 통계
-        long orderTotal = orderService.countByDate(targetDate);
-        long orderCompleted = orderService.countCompletedByDate(targetDate);
-        long orderCanceled = orderService.countCanceledByDate(targetDate);
-
-        AdminStatisticsRes.TransactionStats transaction =
-                new AdminStatisticsRes.TransactionStats(
-                        (int) orderTotal,
-                        (int) orderCompleted,
-                        (int) orderCanceled
-                );
-
-        // 경매 통계
-        long auctionTotal = auctionService.countByDate(targetDate);
-        long auctionSuccess = auctionService.countSuccessByDate(targetDate);
-        long auctionFailed = auctionService.countFailedByDate(targetDate);
-        double successRate = (auctionTotal > 0) ? (double) auctionSuccess / auctionTotal * 100 : 0.0;
-
-        AdminStatisticsRes.AuctionStats auction =
-                new AdminStatisticsRes.AuctionStats(
-                        (int) auctionTotal,
-                        (int) auctionSuccess,
-                        (int) auctionFailed,
-                        Math.round(successRate * 10) / 10.0  // 소수점 1자리
-                );
-
-        // 크레딧 통계
-        long totalCharged = walletService.sumChargeByDate(targetDate);
-        long totalUsed = walletService.sumUsedByDate(targetDate);
-        long totalWithdrawn = walletService.sumWithdrawnByDate(targetDate);
-
-        AdminStatisticsRes.CreditStats credit =
-                new AdminStatisticsRes.CreditStats(totalCharged, totalUsed, totalWithdrawn);
-
-        return new AdminStatisticsRes(
-                targetDate.toString(),
-                transaction,
-                auction,
-                credit
-        );
+        return dailyStatisticsRepository.findByStatDate(targetDate)
+                .map(AdminStatisticsRes::from)
+                .orElse(null);
     }
 
 }
