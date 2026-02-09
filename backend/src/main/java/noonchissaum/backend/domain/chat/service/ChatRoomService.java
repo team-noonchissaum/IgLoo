@@ -9,6 +9,7 @@ import noonchissaum.backend.domain.chat.repository.ChatRoomRepository;
 import noonchissaum.backend.domain.order.entity.Order;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
+import noonchissaum.backend.global.security.UserPrincipal;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -77,34 +78,56 @@ public class ChatRoomService {
                 .toList();
     }
 
+    /**
+     * 채팅방 상세 조회
+     * 관리자(ADMIN)이거나 방 참여자(Member)인 경우에만 허용
+     */
     @Transactional(readOnly = true)
-    public ChatRoomRes getRoom(Long roomId, Long userId) {
+    public ChatRoomRes getRoom(Long roomId, UserPrincipal userPrincipal) {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new ApiException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
-        boolean isMember =
-                room.getBuyer().getId().equals(userId) ||
-                        room.getSeller().getId().equals(userId);
+        // 1. 권한 확인
+        boolean isAdmin = isAdmin(userPrincipal);
+        boolean isMember = isParticipant(room, userPrincipal.getUserId());
 
-        if (!isMember) {
+        // 2. 관리자도 아니고 참여자도 아니면 차단
+        if (!isMember && !isAdmin) {
             throw new ApiException(ErrorCode.ACCESS_DENIED);
         }
 
-        return ChatRoomRes.from(room, userId);
+        Long viewBasisUserId = isMember ? userPrincipal.getUserId() : room.getBuyer().getId();
+
+        return ChatRoomRes.from(room, viewBasisUserId);
     }
 
-
     /**
-     * 직거래 채팅방 생성이 가능한 주문인지 유효성 검증
+     * [관리자 전용] 관리자 페이지 등에서 사용할 채팅방 정보 조회 (참여자 체크 없음)
      */
+    @Transactional(readOnly = true)
+    public ChatRoomRes getRoomForAdmin(Long roomId) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new ApiException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        // 관리자 뷰에서는 구매자를 기준으로 상대방(판매자) 정보를 렌더링하도록 설정
+        return ChatRoomRes.from(room, room.getBuyer().getId());
+    }
+
+    // 공통 검증 로직
+
+    private boolean isAdmin(UserPrincipal userPrincipal) {
+        return userPrincipal.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+    }
+
+    private boolean isParticipant(ChatRoom room, Long userId) {
+        return room.getBuyer().getId().equals(userId) ||
+                room.getSeller().getId().equals(userId);
+    }
+
     private void validateOrderForDirectTrade(Order order) {
-        if (order == null) {
-            throw new ApiException(ErrorCode.INVALID_REQUEST);
-        }
-        if (order.getAuction() == null) {
-            throw new ApiException(ErrorCode.INVALID_REQUEST);
-        }
-        if (order.getBuyer() == null || order.getSeller() == null) {
+        if (order == null || order.getAuction() == null ||
+                order.getBuyer() == null || order.getSeller() == null) {
             throw new ApiException(ErrorCode.INVALID_REQUEST);
         }
     }

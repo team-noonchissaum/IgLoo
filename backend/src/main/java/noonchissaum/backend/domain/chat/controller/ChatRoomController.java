@@ -37,7 +37,7 @@ public class ChatRoomController {
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
         Long userId = userPrincipal.getUserId();
-        ChatRoomRes res = chatRoomService.getRoom(roomId, userId);
+        ChatRoomRes res = chatRoomService.getRoom(roomId, userPrincipal);
         return ApiResponse.success("채팅방 조회 성공", res);
     }
 
@@ -63,6 +63,5 @@ public class ChatRoomController {
         ChatMessagePageRes res = chatMessageService.getMessages(roomId, userId, cursor, size);
         return ApiResponse.success("채팅 메시지 조회 성공", res);
     }
-
 
 }
