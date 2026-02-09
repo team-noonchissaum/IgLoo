@@ -138,7 +138,11 @@ public enum ErrorCode {
     CHAT_OPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT-003", "Chat option not found."),
 
     //Lock
-    LOCK_ACQUISITION(HttpStatus.TOO_MANY_REQUESTS, "L001", "락 획득에 실패했습니다. 다시 시도해주세요");
+    LOCK_ACQUISITION(HttpStatus.TOO_MANY_REQUESTS, "L001", "락 획득에 실패했습니다. 다시 시도해주세요"),
+
+    // Coupons Error
+    COUPON_NOT_FOUND(HttpStatus.NOT_FOUND, "CPN-001", "쿠폰을 찾을 수 없습니다."),
+    NO_AUTHORIZED_COUPON_USE(HttpStatus.FORBIDDEN, "CPN-002", "쿠폰을 사용할 권한이 없습니다.");
 
     private final HttpStatus status;
     private final String code;

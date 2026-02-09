@@ -113,6 +113,10 @@ public class SecurityConfig {
                         // websocket
                         .requestMatchers("/ws/**").permitAll()
 
+                        // coupon
+                        .requestMatchers("/api/coupons/issues/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/api/coupons/**").hasRole("ADMIN")
+
                         //그 외 모두 차단
                         .anyRequest().authenticated()
                 )
