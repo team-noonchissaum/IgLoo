@@ -3,7 +3,7 @@ package noonchissaum.backend.domain.order.scheduler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.order.entity.CheckStatus;
-import noonchissaum.backend.domain.order.repositroy.ChargeCheckRepository;
+import noonchissaum.backend.domain.order.repository.ChargeCheckRepository;
 import noonchissaum.backend.domain.order.service.ChargeRecordService;
 import noonchissaum.backend.domain.task.service.TaskService;
 import noonchissaum.backend.global.RedisKeys;

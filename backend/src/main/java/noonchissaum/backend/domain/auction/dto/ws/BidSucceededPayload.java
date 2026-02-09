@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class BidSuccessedPayload {
+public class BidSucceededPayload {
 
     private Long auctionId;
     private Long currentPrice;

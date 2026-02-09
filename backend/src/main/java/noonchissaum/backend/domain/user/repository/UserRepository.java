@@ -33,4 +33,5 @@ public interface UserRepository extends JpaRepository<User,Long> {
     @EntityGraph(attributePaths = {"items"})
     Optional<User> findById(Long id);
 
+    Optional<User> findByNickname(String nickname);
 }

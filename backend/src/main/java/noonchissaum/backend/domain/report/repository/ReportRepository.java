@@ -63,4 +63,11 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
             @Param("oldStatus") ReportStatus oldStatus,
             @Param("newStatus") ReportStatus newStatus
     );
+
+    // 특정 대상에 대한 신고 목록 조회
+    @Query("SELECT r FROM Report r JOIN FETCH r.reporter WHERE r.targetType = :targetType AND r.targetId = :targetId ORDER BY r.createdAt DESC")
+    List<Report> findByTargetTypeAndTargetId(
+            @Param("targetType") ReportTargetType targetType,
+            @Param("targetId") Long targetId
+    );
 }

@@ -3,7 +3,7 @@ package noonchissaum.backend.domain.order.service;
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.order.entity.ChargeCheck;
 import noonchissaum.backend.domain.order.entity.CheckStatus;
-import noonchissaum.backend.domain.order.repositroy.ChargeCheckRepository;
+import noonchissaum.backend.domain.order.repository.ChargeCheckRepository;
 import noonchissaum.backend.domain.wallet.entity.TransactionType;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.entity.WalletTransaction;
