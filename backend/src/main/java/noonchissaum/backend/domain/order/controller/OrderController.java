@@ -2,7 +2,6 @@ package noonchissaum.backend.domain.order.controller;
 import lombok.RequiredArgsConstructor;
 
 import noonchissaum.backend.global.security.UserPrincipal;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -13,10 +12,11 @@ import noonchissaum.backend.domain.order.dto.delivery.req.ChooseDeliveryTypeReq;
 import noonchissaum.backend.domain.order.dto.delivery.res.ChooseDeliveryTypeRes;
 import noonchissaum.backend.domain.order.entity.Order;
 import noonchissaum.backend.domain.order.entity.DeliveryType;
-import noonchissaum.backend.domain.order.repositroy.OrderRepository;
+import noonchissaum.backend.domain.order.repository.OrderRepository;
 import noonchissaum.backend.domain.chat.service.ChatRoomService;
+import noonchissaum.backend.domain.order.service.OrderService;
 import noonchissaum.backend.domain.chat.dto.res.ChatRoomRes;
-
+import noonchissaum.backend.global.dto.ApiResponse;
 
 
 @RestController
@@ -25,6 +25,7 @@ import noonchissaum.backend.domain.chat.dto.res.ChatRoomRes;
 public class OrderController {
     private final OrderRepository orderRepository;
     private final ChatRoomService chatRoomService;
+    private final OrderService orderService;
 
     /**
      * 거래 방식 선택
@@ -33,7 +34,7 @@ public class OrderController {
      * - SHIPMENT면 roomId=null
      */
     @PatchMapping("/{orderId}/delivery-type")
-    public ResponseEntity<ChooseDeliveryTypeRes> chooseDeliveryType(
+    public ApiResponse<ChooseDeliveryTypeRes> chooseDeliveryType(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long orderId,
             @RequestBody ChooseDeliveryTypeReq req
@@ -51,6 +52,19 @@ public class OrderController {
             roomId = res.getRoomId();
         }
 
-        return ResponseEntity.ok(new ChooseDeliveryTypeRes(order.getId(), order.getDeliveryType(), roomId));
+        return ApiResponse.success(
+                "거래 방식 선택 완료",
+                new ChooseDeliveryTypeRes(order.getId(), order.getDeliveryType(), roomId)
+        );
     }
+    /** 구매자: 배송완료 후 구매확정 */
+    @PatchMapping("/{orderId}/confirm")
+    public ApiResponse<Void> confirm(
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        orderService.confirmAfterDelivered(orderId, principal.getUserId());
+        return ApiResponse.success("구매확정 완료", null);
+    }
+
 }

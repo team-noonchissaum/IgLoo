@@ -1,13 +1,19 @@
 package noonchissaum.backend.domain.order.service;
 
 import lombok.RequiredArgsConstructor;
+import noonchissaum.backend.domain.order.entity.Shipment;
 import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.order.entity.Order;
 import noonchissaum.backend.domain.order.entity.OrderStatus;
 import noonchissaum.backend.domain.order.repository.OrderRepository;
+import noonchissaum.backend.domain.order.repository.ShipmentRepository;
 import noonchissaum.backend.domain.user.entity.User;
+import noonchissaum.backend.global.exception.ApiException;
+import noonchissaum.backend.global.exception.ErrorCode;
+import noonchissaum.backend.domain.order.entity.ShipmentStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDateTime;
 
 import java.time.LocalDate;
 
@@ -15,6 +21,7 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class OrderService {
     private final OrderRepository orderRepository;
+    private final ShipmentRepository shipmentRepository;
 
     @Transactional
     public void createOrder(Auction auction, User buyer) {
@@ -29,6 +36,11 @@ public class OrderService {
         orderRepository.save(order);
     }
 
+    @Transactional(readOnly = true)
+    public Order getOrder(Long orderId){
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new ApiException(ErrorCode.ORDER_NOT_FOUND));
+    }
     /**
      * 관리자 통계용 - 날짜별 전체 거래 수
      */
@@ -56,6 +68,30 @@ public class OrderService {
                 .filter(o -> o.getStatus() == OrderStatus.CANCELED)
                 .filter(o -> o.getCreatedAt().toLocalDate().equals(date))
                 .count();
+    }
+    /** (구매자) 배송완료 후 구매확정 */
+    @Transactional
+    public void confirmAfterDelivered(Long orderId, Long buyerId) {
+        Order order = orderRepository.findByIdAndBuyerId(orderId, buyerId)
+                .orElseThrow(() -> new IllegalArgumentException("권한 없음 또는 주문 없음"));
+
+        Shipment shipment = shipmentRepository.findByOrder_Id(orderId)
+                .orElseThrow(() -> new IllegalStateException("배송 정보 없음"));
+
+        if (shipment.getStatus() != ShipmentStatus.DELIVERED) {
+            throw new IllegalStateException("배송완료 후에만 구매확정이 가능합니다.");
+        }
+
+        // 엔티티 메서드(너가 추가한 confirmAfterDelivered) 사용
+        order.confirmAfterDelivered();
+    }
+
+    /** (스케줄러) 배송완료 + 3일 자동확정 */
+    @Transactional
+    public int autoConfirmDeliveredOrders() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime threshold = now.minusDays(3);
+        return orderRepository.autoConfirmAfterDelivered(threshold, now);
     }
 
 

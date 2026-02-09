@@ -6,6 +6,7 @@ import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.item.entity.Item;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "orders")
@@ -49,10 +50,21 @@ public class Order extends BaseTimeEntity {
     @OneToOne(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Shipment shipment;
 
+    // 구매확정(수동/자동) 시각
+    @Column(name = "confirmed_at")
+    private LocalDateTime confirmedAt;
+
     public void chooseDeliveryType(DeliveryType type){
         if(this.deliveryType != null){
             throw new IllegalStateException("이미 거래방식이 선택되었습니다.");
         }
         this.deliveryType = type;
     }
+    // 배송완료 후 구매확정
+    public void confirmAfterDelivered() {
+        if (this.status == OrderStatus.COMPLETED) return; // 멱등
+        this.status = OrderStatus.COMPLETED;
+        this.confirmedAt = LocalDateTime.now();
+    }
+
 }
