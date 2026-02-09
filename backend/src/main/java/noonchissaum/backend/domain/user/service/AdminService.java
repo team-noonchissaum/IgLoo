@@ -6,6 +6,7 @@ import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.auction.service.AuctionService;
+import noonchissaum.backend.domain.auction.service.BidRollbackService;
 import noonchissaum.backend.domain.inquiry.service.InquiryService;
 import noonchissaum.backend.domain.item.entity.Item;
 import noonchissaum.backend.domain.order.service.OrderService;
@@ -47,6 +48,7 @@ public class AdminService {
     private final WalletService walletService;
     private final InquiryService inquiryService;
     private final DailyStatisticsRepository dailyStatisticsRepository;
+    private final BidRollbackService bidRollbackService;
 
     /* ================= 신고 관리 ================= */
 
@@ -367,6 +369,9 @@ public class AdminService {
         if (user.getStatus() == UserStatus.BLOCKED) {
             throw new CustomException(ErrorCode.USER_ALREADY_BLOCKED);
         }
+
+        // 차단 유저가 최상위 입찰자인 경매를 롤백 (경쟁 입찰이 있는 경우)
+        bidRollbackService.rollbackAuctionsForBlockedUser(userId);
 
         user.block(reason);
 
