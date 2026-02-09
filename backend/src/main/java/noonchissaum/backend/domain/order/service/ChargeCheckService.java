@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.order.dto.charge.res.ChargeCheckRes;
 import noonchissaum.backend.domain.order.entity.ChargeCheck;
 import noonchissaum.backend.domain.order.entity.CheckStatus;
-import noonchissaum.backend.domain.order.repositroy.ChargeCheckRepository;
+import noonchissaum.backend.domain.order.repository.ChargeCheckRepository;
 import noonchissaum.backend.domain.task.service.TaskService;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
@@ -37,7 +37,6 @@ public class ChargeCheckService {
     private final ChargeCheckRepository chargeCheckRepository;
     private final UserLockExecutor userLockExecutor;
 
-
     public void confirmCharge(Long chargeCheckId, Long userId) {
         //userLock
         userLockExecutor.withUserLock(userId, () -> {
@@ -49,7 +48,6 @@ public class ChargeCheckService {
             chargeRecordService.confirmChargeTx(chargeCheckId, userId);
         });
     }
-
 
     public void cancelCharge(Long chargeCheckId, Long userId,String cancelReason) {
        userLockExecutor.withUserLock(userId,()->{

@@ -21,6 +21,9 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
     @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
     Page<Auction> findAll(Pageable pageable);
 
+    @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
+    Page<Auction> findAllByItem_Seller_Id(Long sellerId, Pageable pageable);
+
     List<Auction> findAllByStatusIn(List<AuctionStatus> statuses);
 
     // Redis id 리스트 상세 로딩용
@@ -44,6 +47,18 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
             @Param("toStatus") AuctionStatus toStatus,
             @Param("threshold") LocalDateTime threshold,
             @Param("now") LocalDateTime now
+    );
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+    select  a
+    from Auction a
+    WHERE a.status = :fromStatus
+      AND a.createdAt <= :threshold
+""")
+    Optional<List<Auction>> findReadyAuctions(
+            @Param("fromStatus") AuctionStatus fromStatus,
+            @Param("threshold") LocalDateTime threshold
     );
 
     List<Auction> findByStartAt(LocalDateTime startAt);

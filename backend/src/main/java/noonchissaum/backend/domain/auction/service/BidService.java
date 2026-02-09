@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.auction.dto.res.BidHistoryItemRes;
 import noonchissaum.backend.domain.auction.dto.res.MyBidAuctionRes;
-import noonchissaum.backend.domain.auction.dto.ws.BidSuccessedPayload;
+import noonchissaum.backend.domain.auction.dto.ws.BidSucceededPayload;
 import noonchissaum.backend.domain.auction.dto.ws.OutbidPayload;
 import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -128,34 +129,37 @@ public class BidService {
                 // 경매 정보 및 시간 연장은 동기적으로 즉시 업데이트 (데이터 정합성 유지)
                 auctionRecordService.updateAuctionWithExtension(auctionId, userId, bidAmount);
 
-            // Stomp 메세지 발행 로직
-            // messageService.sendPriceUpdate(auctionId, bidAmount);
-            BidSuccessedPayload bidSuccessedPayload = BidSuccessedPayload
-                    .builder()
-                    .auctionId(auctionId)
-                    .currentPrice(bidAmount.longValueExact())
-                    .currentBidderId(userId)
-                    .build();
-            auctionMessageService.sendBidSuccessed(auctionId, bidSuccessedPayload);
-
-            if (previousBidderId != -1L){
-                String msg = NotificationConstants.MSG_AUCTION_OUTBID;
-                OutbidPayload outbidPayload = OutbidPayload
+                // Stomp 메세지 발행 로직 - 갱신된 경매 정보로 payload 구성 (모든 시청자 화면 실시간 반영)
+                Auction updatedAuction = auctionRepository.findById(auctionId)
+                        .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
+                BidSucceededPayload bidSucceededPayload = BidSucceededPayload
                         .builder()
                         .auctionId(auctionId)
-                        .myBidPrice(currentPrice)
-                        .newCurrentPrice(bidAmount)
-                        .message(msg)
+                        .currentPrice(bidAmount.longValueExact())
+                        .currentBidderId(userId)
+                        .bidCount(updatedAuction.getBidCount())
+                        .endAt(updatedAuction.getEndAt())
                         .build();
-                auctionMessageService.sendOutbid(previousBidderId, outbidPayload);
-                notificationService.create(
-                        previousBidderId,
-                        NotificationType.OUTBID,
-                        msg,
-                        NotificationConstants.REF_TYPE_AUCTION,
-                        auctionId
-                );
-            }
+                auctionMessageService.sendBidSucceeded(auctionId, bidSucceededPayload);
+
+                if (previousBidderId != -1L){
+                    String msg = NotificationConstants.MSG_AUCTION_OUTBID;
+                    OutbidPayload outbidPayload = OutbidPayload
+                            .builder()
+                            .auctionId(auctionId)
+                            .myBidPrice(currentPrice)
+                            .newCurrentPrice(bidAmount)
+                            .message(msg)
+                            .build();
+                    auctionMessageService.sendOutbid(previousBidderId, outbidPayload);
+                    notificationService.create(
+                            previousBidderId,
+                            NotificationType.OUTBID,
+                            msg,
+                            NotificationConstants.REF_TYPE_AUCTION,
+                            auctionId
+                    );
+                }
 
 
 
@@ -210,7 +214,7 @@ public class BidService {
     @Transactional(readOnly = true)
     public Page<BidHistoryItemRes> getBidHistory(Long auctionId, Pageable pageable){
         Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(()-> new RuntimeException(ErrorCode.NOT_FOUND_AUCTIONS.getMessage()));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
         Page<Bid> bidPage = bidRepository.findByAuctionIdOrderByCreatedAtDesc(auction.getId(), pageable);
 
         return bidPage.map(BidHistoryItemRes::from);
@@ -268,20 +272,24 @@ public class BidService {
     ) {
         String priceKey = RedisKeys.auctionCurrentPrice(auctionId);
         String bidderKey = RedisKeys.auctionCurrentBidder(auctionId);
+        String bidCountKey = RedisKeys.auctionCurrentBidCount(auctionId);
+        String statusKey = RedisKeys.auctionStatus(auctionId);
+        String endTimeKey = RedisKeys.auctionEndTime(auctionId);
         String userBalance = RedisKeys.userBalance(userId);
 
         String rawPrice = redisTemplate.opsForValue().get(priceKey);
+        String rawBidCount = redisTemplate.opsForValue().get(bidCountKey);
         BigDecimal currentPrice = (rawPrice == null || rawPrice.isBlank()) ? BigDecimal.ZERO : new BigDecimal(rawPrice);
         log.info("currentPrice:" + currentPrice);
 
-        //10% 이상 체크 (10원 단위 올림),
-        if (currentPrice.compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal minBid = currentPrice.multiply(new BigDecimal("1.1"))
-                    .setScale(-1, RoundingMode.CEILING);
+        // 첫 입찰은 현재가(등록가) 이상 허용, 이후는 10% 이상 체크 (10원 단위 올림)
+        int bidCount = parseIntOrDefault(rawBidCount, 0);
+        BigDecimal minBid = (bidCount == 0)
+                ? currentPrice
+                : currentPrice.multiply(new BigDecimal("1.1")).setScale(-1, RoundingMode.CEILING);
 
-            if (bidAmount.compareTo(minBid) < 0) {
-                throw new ApiException(ErrorCode.LOW_BID_AMOUNT);
-            }
+        if (bidAmount.compareTo(minBid) < 0) {
+            throw new ApiException(ErrorCode.LOW_BID_AMOUNT);
         }
 
         //연속 입찰 체크
@@ -293,10 +301,20 @@ public class BidService {
             }
         }
 
-        //경매 상태 체크
-        Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new RuntimeException("해당 경매는 존재하지 않습니다."));
-        if (!auction.getStatus().equals(AuctionStatus.RUNNING) && !auction.getStatus().equals(AuctionStatus.DEADLINE)) {
+        // 경매 상태/시간 체크 Redis 기반
+        String rawStatus = redisTemplate.opsForValue().get(statusKey);
+        String rawEndTime = redisTemplate.opsForValue().get(endTimeKey);
+        if (isBlank(rawStatus) || isBlank(rawEndTime)) {
+            throw new ApiException(ErrorCode.AUCTION_STATUS_UNAVAILABLE);
+        }
+
+        AuctionStatus status = AuctionStatus.valueOf(rawStatus);
+        LocalDateTime endAt = LocalDateTime.parse(rawEndTime);
+
+        if (status != AuctionStatus.RUNNING && status != AuctionStatus.DEADLINE) {
+            throw new ApiException(ErrorCode.NOT_FOUND_AUCTIONS);
+        }
+        if (LocalDateTime.now().isAfter(endAt)) {
             throw new ApiException(ErrorCode.NOT_FOUND_AUCTIONS);
         }
 
@@ -305,6 +323,21 @@ public class BidService {
         BigDecimal currentUserBalance = BigDecimal.valueOf(Long.parseLong(rawUserBalance));
         if (currentUserBalance.compareTo(bidAmount) < 0) {
             throw new ApiException(ErrorCode.INSUFFICIENT_BALANCE);
+        }
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    private int parseIntOrDefault(String value, int fallback) {
+        if (isBlank(value)) {
+            return fallback;
+        }
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return fallback;
         }
     }
 

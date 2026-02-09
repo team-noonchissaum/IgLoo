@@ -1,4 +1,4 @@
-package noonchissaum.backend.domain.order.repositroy;
+package noonchissaum.backend.domain.order.repository;
 
 import noonchissaum.backend.domain.order.entity.Order;
 import org.springframework.data.jpa.repository.JpaRepository;

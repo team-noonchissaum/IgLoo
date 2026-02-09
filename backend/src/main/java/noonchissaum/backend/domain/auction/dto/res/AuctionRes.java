@@ -28,8 +28,10 @@ public class AuctionRes {
     private AuctionStatus status;
     private LocalDateTime startAt;
     private LocalDateTime endAt;
+    private Long sellerId;
     private String sellerNickname;
     private List<String> imageUrls;
+    private Long itemId;
     private Long categoryId;
     private String categoryName;
     private Integer wishCount;
@@ -39,6 +41,7 @@ public class AuctionRes {
         Item item = auction.getItem();
         return AuctionRes.builder()
                 .auctionId(auction.getId())
+                .itemId(item.getId())
                 .title(item.getTitle())
                 .description(item.getDescription())
                 .currentPrice(auction.getCurrentPrice())
@@ -47,6 +50,7 @@ public class AuctionRes {
                 .status(auction.getStatus())
                 .startAt(auction.getStartAt())
                 .endAt(auction.getEndAt())
+                .sellerId(item.getSeller().getId())
                 .sellerNickname(item.getSeller().getNickname())
                 .imageUrls(item.getImages().stream()
                         .map(ItemImage::getImageUrl)
@@ -61,6 +65,7 @@ public class AuctionRes {
         Item item = auction.getItem();
         return AuctionRes.builder()
                 .auctionId(auction.getId())
+                .itemId(item.getId())
                 .title(item.getTitle())
                 .description(item.getDescription())
                 .currentPrice(auction.getCurrentPrice())
@@ -69,6 +74,7 @@ public class AuctionRes {
                 .status(auction.getStatus())
                 .startAt(auction.getStartAt())
                 .endAt(auction.getEndAt())
+                .sellerId(item.getSeller().getId())
                 .sellerNickname(item.getSeller().getNickname())
                 .imageUrls(item.getImages().stream()
                         .map(ItemImage::getImageUrl)

@@ -3,7 +3,7 @@ package noonchissaum.backend.domain.order.service;
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.order.entity.ChargeCheck;
 import noonchissaum.backend.domain.order.entity.CheckStatus;
-import noonchissaum.backend.domain.order.repositroy.ChargeCheckRepository;
+import noonchissaum.backend.domain.order.repository.ChargeCheckRepository;
 import noonchissaum.backend.domain.wallet.entity.TransactionType;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.entity.WalletTransaction;
@@ -29,6 +29,7 @@ public class ChargeRecordService {
     private final StringRedisTemplate redisTemplate;
     private final PaymentService paymentService;
     private final WalletTransactionRecordService walletTransactionRecordService;
+
     // DB 트랜잭션 영역
     @Transactional
     public void confirmChargeTx(Long chargeCheckId, Long userId) {
@@ -65,10 +66,10 @@ public class ChargeRecordService {
         walletTransactionRecordService.record(wallet, TransactionType.CHARGE,amount,chargeCheckId);
     }
 
-
-    public void cancelChargeTx(Long chargeCheckId, Long userId,String cancelReason) {
+    @Transactional
+    public void cancelChargeTx(Long chargeCheckId, Long userId, String cancelReason) {
         ChargeCheck chargeCheck = chargeCheckRepository.findWithLockById(chargeCheckId)
-                .orElseThrow(() -> new ApiException(ErrorCode.CHARGE_LOCK_ACQUISITION));
+                .orElseThrow(() -> new ApiException(ErrorCode.CHARGE_CHECK_NOT_FOUND));
 
         if(!chargeCheck.getUser().getId().equals(userId)){
             throw new ApiException(ErrorCode.NOT_FOUND_CHARGE);
@@ -79,14 +80,10 @@ public class ChargeRecordService {
         if(chargeCheck.getStatus().equals(CheckStatus.CHECKED)){
             throw new ApiException(ErrorCode.CHARGE_CONFIRMED);
         }
-        // todo: pg사에 환불 요청 로직 필요
-        paymentService.cancelPayment(userId,"내맴",chargeCheckId);
-
+        paymentService.cancelPayment(userId,cancelReason,chargeCheckId);
 
         chargeCheck.cancel();
     }
-
-
 
     private void registerAfterCommitRedisCharge(Long userId, BigDecimal amount) {
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
@@ -103,6 +100,4 @@ public class ChargeRecordService {
             }
         });
     }
-
-
 }

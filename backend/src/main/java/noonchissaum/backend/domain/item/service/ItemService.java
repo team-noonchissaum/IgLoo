@@ -8,6 +8,8 @@ import noonchissaum.backend.domain.item.entity.ItemImage;
 import noonchissaum.backend.domain.item.repository.ItemImageRepository;
 import noonchissaum.backend.domain.item.repository.ItemRepository;
 import noonchissaum.backend.domain.user.entity.User;
+import noonchissaum.backend.global.exception.CustomException;
+import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,12 +22,12 @@ public class ItemService {
 
     public Item getActiveById(Long itemId){
         return itemRepository.findByIdAndStatusTrue(itemId)
-                .orElseThrow(() -> new IllegalArgumentException("삭제된 상품이거나 존재하지 않는 상품입니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
     }
 
     public Item getById(Long itemId) {
         return itemRepository.findById(itemId)
-                .orElseThrow(() -> new IllegalArgumentException("Item not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
     }
 
     //상품 정보 생성 및 이미지 등록
@@ -59,7 +61,7 @@ public class ItemService {
             itemImageRepository.save(image);
             item.addImage(image);
 
-            if (image.getSortOrder() == null && image.getSortOrder() == 0) {
+            if (image.getSortOrder() != null && image.getSortOrder() == 0) {
                 item.setThumbnailUrl(url);
             }
         }

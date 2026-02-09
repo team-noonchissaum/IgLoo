@@ -33,7 +33,7 @@ public class AuctionMessageService {
 
 
     // 입찰 성공 브로드캐스트
-    public void sendBidSuccessed(Long auctionId, BidSuccessedPayload payload) {
+    public void sendBidSucceeded(Long auctionId, BidSucceededPayload payload) {
         sendToAuctionTopic(auctionId, SocketMessageType.BID_SUCCESSED, payload);
     }
 

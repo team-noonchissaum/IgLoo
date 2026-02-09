@@ -5,6 +5,7 @@ import noonchissaum.backend.domain.report.dto.ReportReq;
 import noonchissaum.backend.domain.report.entity.Report;
 import noonchissaum.backend.domain.report.entity.ReportTargetType;
 import noonchissaum.backend.domain.report.repository.ReportRepository;
+import noonchissaum.backend.domain.user.dto.response.AdminReportListRes;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 import noonchissaum.backend.global.exception.CustomException;

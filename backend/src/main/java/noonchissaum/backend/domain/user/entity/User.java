@@ -6,10 +6,13 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import noonchissaum.backend.domain.auth.entity.UserAuth;
+import noonchissaum.backend.domain.item.entity.Item;
 import noonchissaum.backend.domain.order.entity.ChargeCheck;
 import noonchissaum.backend.domain.order.entity.Payment;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
+import noonchissaum.backend.global.exception.CustomException;
+import noonchissaum.backend.global.exception.ErrorCode;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -52,8 +55,8 @@ public class User extends BaseTimeEntity {
 
     private String blockReason;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private final List<UserAuth> auths = new ArrayList<>();
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private UserAuth userAuth;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Wallet wallet;
@@ -63,6 +66,9 @@ public class User extends BaseTimeEntity {
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ChargeCheck> chargeChecks = new ArrayList<>();
+
+    @OneToMany(mappedBy = "seller", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<Item> items = new ArrayList<>();
 
     @Builder
     public User(String email, String nickname, UserRole role, UserStatus status) {
@@ -98,7 +104,7 @@ public class User extends BaseTimeEntity {
      */
     public void block(String reason) {
         if (this.status == UserStatus.BLOCKED) {
-            throw new IllegalArgumentException("이미 차단된 사용자입니다.");
+            throw new CustomException(ErrorCode.USER_ALREADY_BLOCKED);
         }
         this.status = UserStatus.BLOCKED;
         this.blockedAt = LocalDateTime.now();
@@ -110,14 +116,14 @@ public class User extends BaseTimeEntity {
      */
     public void unblock() {
         if (this.status != UserStatus.BLOCKED) {
-            throw new IllegalArgumentException("차단된 사용자가 아닙니다");
+            throw new CustomException(ErrorCode.USER_NOT_BLOCKED);
         }
         this.status = UserStatus.ACTIVE;
         this.blockedAt = null;
         this.blockReason = null;
     }
 
-    public void registWallet(Wallet wallet) {
+    public void registerWallet(Wallet wallet) {
         this.wallet = wallet;
     }
 

@@ -3,7 +3,7 @@ package noonchissaum.backend.domain.order.scheduler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.order.entity.CheckStatus;
-import noonchissaum.backend.domain.order.repositroy.ChargeCheckRepository;
+import noonchissaum.backend.domain.order.repository.ChargeCheckRepository;
 import noonchissaum.backend.domain.order.service.ChargeRecordService;
 import noonchissaum.backend.domain.task.service.TaskService;
 import noonchissaum.backend.global.RedisKeys;
@@ -26,7 +26,6 @@ public class ChargeConfirmScheduler {
     private final ChargeCheckRepository chargeCheckRepository;
     private final ChargeRecordService chargeRecordService;
     private final TaskService taskService;
-    private final RedissonClient redissonClient;
     private final UserLockExecutor userLockExecutor;
 
     private static final int BATCH_SIZE = 100;
@@ -50,7 +49,10 @@ public class ChargeConfirmScheduler {
         for (Long chargeCheckId : expiredIds) {
             try {
                 Long userId = chargeCheckRepository.findUser_IdById(chargeCheckId);
-                if (userId == null) continue;
+                if (userId == null) {
+                    log.error("[AutoConfirm] charge check id not found");
+                    continue;
+                }
 
                 try {
                     userLockExecutor.withUserLock(userId, () -> {

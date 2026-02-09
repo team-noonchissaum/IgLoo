@@ -1,4 +1,4 @@
-package noonchissaum.backend.domain.category.dto;
+package noonchissaum.backend.domain.category.dto.res;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

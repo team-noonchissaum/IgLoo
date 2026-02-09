@@ -10,72 +10,75 @@ public enum ErrorCode {
 
     // ========== COMMON (공통 에러) ==========
     /** 서버 내부 오류 */
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.", "COMMON-001"),
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON-001", "서버 내부 오류가 발생했습니다."),
     /** 요청 값 검증 실패 */
-    INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "요청 값이 올바르지 않습니다.", "COMMON-002"),
+    INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "COMMON-002", "요청 값이 올바르지 않습니다."),
 
     // ========== AUTH (인증/인가 에러) ==========
     /** 로그인 실패 - 이메일 또는 비밀번호 불일치 */
-    INVALID_LOGIN(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다.", "AUTH-001"),
+    INVALID_LOGIN(HttpStatus.UNAUTHORIZED, "AUTH-001", "이메일 또는 비밀번호가 올바르지 않습니다."),
     /** 접근 권한 없음 (ADMIN 전용 API 등) */
-    ACCESS_DENIED(HttpStatus.FORBIDDEN, "접근 권한이 없습니다.", "AUTH-002"),
+    ACCESS_DENIED(HttpStatus.FORBIDDEN, "AUTH-002", "접근 권한이 없습니다."),
     /** 인증 필요 - 토큰 없이 접근 */
-    AUTH_REQUIRED(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.", "AUTH-003"),
+    AUTH_REQUIRED(HttpStatus.UNAUTHORIZED, "AUTH-003", "인증이 필요합니다."),
     /** 토큰 만료 */
-    TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "토큰이 만료되었습니다.", "AUTH-004"),
+    TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "AUTH-004", "토큰이 만료되었습니다."),
     /** 유효하지 않은 토큰 */
-    TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다.", "AUTH-005"),
+    TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "AUTH-005", "유효하지 않은 토큰입니다."),
     /** 리프레시 토큰 오류 */
-    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 올바르지 않습니다.", "AUTH-006"),
+    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH-006", "리프레시 토큰이 올바르지 않습니다."),
     /** 차단된 사용자 - 로그인 불가능 */
-    USER_BLOCKED(HttpStatus.FORBIDDEN, "차단된 사용자입니다. 관리자에게 문의하세요.", "AUTH-007"),
+    USER_BLOCKED(HttpStatus.FORBIDDEN, "AUTH-007", "차단된 사용자입니다. 관리자에게 문의하세요."),
 
-    OAUTH2_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "소셜 로그인에 실패했습니다.", "AUTH-008"),
+    OAUTH2_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "AUTH-008", "소셜 로그인에 실패했습니다."),
 
     // ========== USER (사용자 에러) ==========
     /** 이메일 중복 */
-    DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다.", "USER-001"),
+    DUPLICATE_EMAIL(HttpStatus.CONFLICT, "USER-001", "이미 사용 중인 이메일입니다."),
     /** 닉네임 중복 */
-    DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다.", "USER-002"),
+    DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "USER-002", "이미 사용 중인 닉네임입니다."),
     /** 사용자 조회 실패 */
-    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 사용자입니다.", "USER-003"),
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER-003", "존재하지 않는 사용자입니다."),
 
-    BALANCE_EXISTS(HttpStatus.CONFLICT,"잔액이 남아있습니다.","USER-004"),
+    BALANCE_EXISTS(HttpStatus.CONFLICT,"USER-004","잔액이 남아있습니다."),
 
     // ========== BLOCK (차단 에러) ==========
     /** 이미 차단된 아이템 */
-    ITEM_ALREADY_BLOCKED(HttpStatus.BAD_REQUEST, "이미 차단된 게시글입니다.", "BLOCK-001"),
+    ITEM_ALREADY_BLOCKED(HttpStatus.BAD_REQUEST, "BLOCK-001", "이미 차단된 게시글입니다."),
     /** 차단되지 않은 아이템 복구 시도 */
-    ITEM_NOT_BLOCKED(HttpStatus.BAD_REQUEST, "차단된 게시글이 아닙니다.", "BLOCK-002"),
+    ITEM_NOT_BLOCKED(HttpStatus.BAD_REQUEST, "BLOCK-002", "차단된 게시글이 아닙니다."),
     /** 차단되지 않은 경매 복구 시도 */
-    AUCTION_NOT_BLOCKED(HttpStatus.BAD_REQUEST, "차단된 경매가 아닙니다.", "BLOCK-003"),
+    AUCTION_NOT_BLOCKED(HttpStatus.BAD_REQUEST, "BLOCK-003", "차단된 경매가 아닙니다."),
     /** 이미 차단된 경매 */
-    AUCTION_ALREADY_BLOCKED(HttpStatus.BAD_REQUEST, "이미 차단된 경매입니다.", "BLOCK-004"),
+    AUCTION_ALREADY_BLOCKED(HttpStatus.BAD_REQUEST, "BLOCK-004", "이미 차단된 경매입니다."),
     /** 이미 차단된 사용자 재차단 시도 */
-    USER_ALREADY_BLOCKED(HttpStatus.BAD_REQUEST, "이미 차단된 사용자입니다.", "BLOCK-005"),
+    USER_ALREADY_BLOCKED(HttpStatus.BAD_REQUEST, "BLOCK-005", "이미 차단된 사용자입니다."),
     /** 차단되지 않은 사용자 해제 시도 */
-    USER_NOT_BLOCKED(HttpStatus.BAD_REQUEST, "차단되지 않은 사용자입니다.", "BLOCK-006"),
+    USER_NOT_BLOCKED(HttpStatus.BAD_REQUEST, "BLOCK-006", "차단되지 않은 사용자입니다."),
     /** 진행중인 게시물이 아닌 것을 차단 시도 */
-    AUCTION_CANNOT_BLOCK(HttpStatus.BAD_REQUEST, "진행 중인 경매만 차단할 수 있습니다.", "BLOCK-007"),
+    AUCTION_CANNOT_BLOCK(HttpStatus.BAD_REQUEST, "BLOCK-007", "진행 중인 경매만 차단할 수 있습니다."),
 
     // ===== FILE 관련 =====
     FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "F001", "파일 업로드에 실패했습니다."),
 
     // ========== REPORT (신고 에러) ==========
     /** 신고 조회 실패 */
-    REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "신고를 찾을 수 없습니다.", "REPORT-001"),
+    REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT-001", "신고를 찾을 수 없습니다."),
     /**이미 처리된 신고*/
-    REPORT_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "이미 처리된 신고입니다.", "REPORT-002"),
+    REPORT_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "REPORT-002", "이미 처리된 신고입니다."),
     /**이미 신고했던 기록이 있는 경매*/
-    ALREADY_REPORTED(HttpStatus.ALREADY_REPORTED,"이미 신고된 경매입니다" ,"REPORT-003" ),
+    ALREADY_REPORTED(HttpStatus.ALREADY_REPORTED, "REPORT-003", "이미 신고된 경매입니다"),
     /**옳지 않은 신고 대상*/
-    INVALID_REPORT_TARGET(HttpStatus.NOT_FOUND,"대상 유저를 찾을 수 없습니다","REPORT-004"),
+    INVALID_REPORT_TARGET(HttpStatus.NOT_FOUND, "REPORT-004", "대상 유저를 찾을 수 없습니다"),
 
     // ========== ITEM (상품/게시글 에러) ==========
     /**게시글 없음*/
-    ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다.", "ITEM-001"),
+    ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "ITEM-001", "게시글을 찾을 수 없습니다."),
     /**이미 삭제된 게시글 재 삭제 시도*/
-    ITEM_ALREADY_DELETED(HttpStatus.NOT_FOUND, "이미 삭제된 게시글입니다", "ITEM-002"),
+    ITEM_ALREADY_DELETED(HttpStatus.NOT_FOUND, "ITEM-002", "이미 삭제된 게시글입니다"),
+
+    // ========== CATEGORY (카테고리 에러) ==========
+    CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "CATEGORY-001", "카테고리를 찾을 수 없습니다."),
 
     // Bid Error
     LOW_BID_AMOUNT(HttpStatus.BAD_REQUEST, "B001", "현재가보다 같거나 낮은 가격에 입찰할 수 없습니다."),
@@ -91,6 +94,10 @@ public enum ErrorCode {
 
     // Auction Error
     NOT_FOUND_AUCTIONS(HttpStatus.NOT_FOUND, "A001", "경매를 찾을 수 없습니다."),
+    AUCTION_NOT_OWNER(HttpStatus.FORBIDDEN, "A002", "해당 경매의 판매자가 아닙니다."),
+    AUCTION_HAS_BIDS(HttpStatus.BAD_REQUEST, "A003", "입찰이 존재하는 경매는 취소할 수 없습니다."),
+    AUCTION_INVALID_STATUS(HttpStatus.BAD_REQUEST, "A004", "현재 상태에서는 경매를 취소할 수 없습니다."),
+    AUCTION_STATUS_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "A005", "경매 상태 정보를 불러올 수 없습니다."),
 
     // Notification Error
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "알림을 찾을 수 없습니다."),
