@@ -15,6 +15,8 @@ public enum ErrorCode {
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "요청 값이 올바르지 않습니다.", "COMMON-002"),
     /** 잘못된 요청 */
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "COMMON-003", "잘못된 요청입니다."),
+    /** 리소스를 찾을 수 없음 */
+    NOT_FOUND(HttpStatus.NOT_FOUND, "COMMON-004", "요청한 리소스를 찾을 수 없습니다."),
     // ========== AUTH (인증/인가 에러) ==========
     /** 로그인 실패 - 이메일 또는 비밀번호 불일치 */
     INVALID_LOGIN(HttpStatus.UNAUTHORIZED, "AUTH-001", "이메일 또는 비밀번호가 올바르지 않습니다."),

@@ -34,4 +34,26 @@ public class WalletRecordService {
 
     }
 
+    /**
+     * 입찰 롤백 시 DB 지갑 역처리
+     * - 차단 유저: bidCanceled (환불)
+     * - 이전 입찰자: bid (재동결)
+     */
+    @Transactional
+    public void rollbackWalletRecord(Long blockedUserId, Long previousBidderId,
+                                     BigDecimal blockedUserRefundAmount, BigDecimal previousBidderRelockAmount,
+                                     Long auctionId) {
+        Wallet blockedUserWallet = walletRepository.findByUserId(blockedUserId)
+                .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+        blockedUserWallet.bidCanceled(blockedUserRefundAmount);
+        walletTransactionRecordService.record(blockedUserWallet, TransactionType.BID_RELEASE, blockedUserRefundAmount, auctionId);
+
+        if (previousBidderId != null && previousBidderId != -1L) {
+            Wallet prevBidUserWallet = walletRepository.findByUserId(previousBidderId)
+                    .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+            prevBidUserWallet.bid(previousBidderRelockAmount);
+            walletTransactionRecordService.record(prevBidUserWallet, TransactionType.BID_HOLD, previousBidderRelockAmount, auctionId);
+        }
+    }
+
 }

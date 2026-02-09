@@ -134,5 +134,13 @@ where a.status = :status
   and a.endAt <= :now
 """)
     List<Long> findIdsToEnd(@Param("status") AuctionStatus status, @Param("now") LocalDateTime now);
+
+
+    /**
+     * 차단 유저가 최상위 입찰자인 진행 중 경매 조회 (롤백 대상)
+     */
+    @EntityGraph(attributePaths = {"item", "item.seller", "item.category", "currentBidder"})
+    List<Auction> findByCurrentBidder_IdAndStatusIn(Long userId, List<AuctionStatus> statuses);
 }
+
 

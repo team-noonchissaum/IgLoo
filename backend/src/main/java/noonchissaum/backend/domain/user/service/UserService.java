@@ -11,6 +11,7 @@ import noonchissaum.backend.domain.user.dto.response.*;
 import noonchissaum.backend.domain.user.entity.User;
 
 import noonchissaum.backend.domain.report.repository.ReportRepository;
+import noonchissaum.backend.domain.user.entity.UserStatus;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 
 import noonchissaum.backend.domain.wallet.service.WalletService;
@@ -39,13 +40,16 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        return new ProfileRes(
+        String blockReason = user.getStatus() == UserStatus.BLOCKED ? user.getBlockReason() : null;
+
+        return ProfileRes.of(
                 user.getId(),
                 user.getNickname(),
                 user.getProfileUrl(),
                 user.getEmail(),
                 user.getRole().name(),
-                user.getStatus().name()
+                user.getStatus().name(),
+                blockReason
         );
     }
 
