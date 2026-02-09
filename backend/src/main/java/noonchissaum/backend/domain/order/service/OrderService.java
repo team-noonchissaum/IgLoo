@@ -9,6 +9,7 @@ import noonchissaum.backend.domain.user.entity.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
@@ -23,8 +24,39 @@ public class OrderService {
                 .buyer(buyer)
                 .seller(auction.getSeller())
                 .status(OrderStatus.CREATED)
+                .deliveryType(null)// 아직 선택전
                 .build();
         orderRepository.save(order);
     }
+
+    /**
+     * 관리자 통계용 - 날짜별 전체 거래 수
+     */
+    public long countByDate(LocalDate date) {
+        return orderRepository.findAll().stream()
+                .filter(o -> o.getCreatedAt().toLocalDate().equals(date))
+                .count();
+    }
+
+    /**
+     * 관리자 통계용 - 날짜별 완료 거래 수
+     */
+    public long countCompletedByDate(LocalDate date) {
+        return orderRepository.findAll().stream()
+                .filter(o -> o.getStatus() == OrderStatus.COMPLETED)
+                .filter(o -> o.getCreatedAt().toLocalDate().equals(date))
+                .count();
+    }
+
+    /**
+     * 관리자 통계용 - 날짜별 취소 거래 수
+     */
+    public long countCanceledByDate(LocalDate date) {
+        return orderRepository.findAll().stream()
+                .filter(o -> o.getStatus() == OrderStatus.CANCELED)
+                .filter(o -> o.getCreatedAt().toLocalDate().equals(date))
+                .count();
+    }
+
 
 }

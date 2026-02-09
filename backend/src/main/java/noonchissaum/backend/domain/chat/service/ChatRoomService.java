@@ -1,0 +1,111 @@
+package noonchissaum.backend.domain.chat.service;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import noonchissaum.backend.domain.chat.dto.res.ChatRoomRes;
+import noonchissaum.backend.domain.chat.dto.res.MyChatRoomRes;
+import noonchissaum.backend.domain.chat.entity.ChatRoom;
+import noonchissaum.backend.domain.chat.repository.ChatRoomRepository;
+import noonchissaum.backend.domain.order.entity.Order;
+import noonchissaum.backend.global.exception.ApiException;
+import noonchissaum.backend.global.exception.ErrorCode;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class ChatRoomService {
+    private final ChatRoomRepository chatRoomRepository;
+
+    /**
+     * DIRECT 거래 선택 시 채팅방 생성
+     * auctionId 기준으로 UNIQUE를 걸어두면 "경매당 채팅방 1개"가 보장되며 중복 클릭/재시도/동시 요청에도 멱등하게 동작한다.
+     * deliveryType == DIRECT 인 경우에만 호출
+     */
+    @Transactional
+    public ChatRoomRes createRoom(Order order){
+
+        // 1. 직거래 가능 상태인지 필수 값 체크
+        validateOrderForDirectTrade(order);
+
+        Long auctionId = order.getAuction().getId();
+        Long userId = order.getBuyer().getId();
+
+        // 2. 이미 해당 경매에 대한 채팅방이 존재하는지 1차 확인 (성능 최적화)
+        // 존재하면 즉시 반환, 없으면 생성 로직(createRoomDedup) 실행
+        return chatRoomRepository.findByAuctionId(auctionId)
+                .map(room -> ChatRoomRes.from(room, userId))
+                .orElseGet(() -> createRoomDedup(order, userId));
+    }
+
+    private ChatRoomRes createRoomDedup(Order order, Long userId) {
+        Long auctionId = order.getAuction().getId();
+
+        try {
+            ChatRoom room = ChatRoom.builder()
+                    .auction(order.getAuction())
+                    .seller(order.getSeller())
+                    .buyer(order.getBuyer())
+                    .build();
+
+            ChatRoom saved = chatRoomRepository.save(room);
+            return ChatRoomRes.from(saved, userId);
+
+        } catch (DataIntegrityViolationException e) {
+
+            /**
+             * [동시성 처리] 동시에 save() 호출 시 하나는 성공하고 하나는 중복 에러 발생
+            에러 발생 시 로그를 남기고, 먼저 생성된 방을 다시 조회해서 반환
+             */
+            log.info("ChatRoom unique conflict (auctionId={}), re-fetching...", auctionId);
+
+            return chatRoomRepository.findByAuctionId(auctionId)
+                    .map(room -> ChatRoomRes.from(room, userId))
+                    .orElseThrow(() -> e);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<MyChatRoomRes> getMyRooms(Long userId) {
+        List<ChatRoom> rooms = chatRoomRepository.findMyRooms(userId);
+        return rooms.stream()
+                .map(room -> MyChatRoomRes.from(room, userId))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ChatRoomRes getRoom(Long roomId, Long userId) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new ApiException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        boolean isMember =
+                room.getBuyer().getId().equals(userId) ||
+                        room.getSeller().getId().equals(userId);
+
+        if (!isMember) {
+            throw new ApiException(ErrorCode.ACCESS_DENIED);
+        }
+
+        return ChatRoomRes.from(room, userId);
+    }
+
+
+    /**
+     * 직거래 채팅방 생성이 가능한 주문인지 유효성 검증
+     */
+    private void validateOrderForDirectTrade(Order order) {
+        if (order == null) {
+            throw new ApiException(ErrorCode.INVALID_REQUEST);
+        }
+        if (order.getAuction() == null) {
+            throw new ApiException(ErrorCode.INVALID_REQUEST);
+        }
+        if (order.getBuyer() == null || order.getSeller() == null) {
+            throw new ApiException(ErrorCode.INVALID_REQUEST);
+        }
+    }
+}

@@ -12,8 +12,9 @@ public enum ErrorCode {
     /** 서버 내부 오류 */
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON-001", "서버 내부 오류가 발생했습니다."),
     /** 요청 값 검증 실패 */
-    INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "COMMON-002", "요청 값이 올바르지 않습니다."),
-
+    INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "요청 값이 올바르지 않습니다.", "COMMON-002"),
+    /** 잘못된 요청 */
+    INVALID_REQUEST(HttpStatus.BAD_REQUEST, "COMMON-003", "잘못된 요청입니다."),
     // ========== AUTH (인증/인가 에러) ==========
     /** 로그인 실패 - 이메일 또는 비밀번호 불일치 */
     INVALID_LOGIN(HttpStatus.UNAUTHORIZED, "AUTH-001", "이메일 또는 비밀번호가 올바르지 않습니다."),
@@ -127,6 +128,9 @@ public enum ErrorCode {
     WITHDRAW_NOT_FOUND(HttpStatus.NOT_FOUND, "WD002", "출금 신청 내역을 찾을 수 없습니다."),
     WITHDRAW_NOT_REQUESTED(HttpStatus.BAD_REQUEST, "WD003", "출금 승인 대기 상태가 아닙니다."),
     WITHDRAW_NOT_CANCELABLE(HttpStatus.BAD_REQUEST, "WD004", "취소할 수 없는 출금 상태입니다."),
+
+    // Chat Error
+    CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT-001", "존재하지 않는 채팅방입니다."),
 
     // Chatbot Error
     CHAT_SCENARIO_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT-001", "Chat scenario not found."),
