@@ -74,7 +74,7 @@ public class AuctionSchedulerService {
         int updated=0;
         for(Auction auction :auctions){
             auction.run();
-            int amount = MoneyUtil.calcDeposit(auction.getCurrentPrice().intValue());
+            int amount = MoneyUtil.calcDeposit(auction.getStartPrice().intValue());
             walletService.setAuctionDeposit(auction.getItem().getSeller().getId(), auction.getId(), amount, "refund");
             auctionRedisService.setRedis(auction.getId());
             updated++;

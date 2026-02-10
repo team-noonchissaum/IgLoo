@@ -240,7 +240,7 @@ public class AdminService {
         }
         auction.block();
 
-        int basePrice = auction.getCurrentPrice() == null ? 0 : auction.getCurrentPrice().intValue();
+        int basePrice = auction.getStartPrice() == null ? 0 : auction.getStartPrice().intValue();
         int amount = MoneyUtil.calcDeposit(basePrice);
         auction.forfeitDeposit();
         walletService.setAuctionDeposit(auction.getSeller().getId(), auction.getId(), amount, "forfeit");

@@ -75,7 +75,7 @@ public class AuctionService {
                 .build();
         auctionRepository.save(auction);
 
-        int amount = MoneyUtil.calcDeposit(auction.getCurrentPrice().intValue());
+        int amount = MoneyUtil.calcDeposit(auction.getStartPrice().intValue());
 
         walletService.setAuctionDeposit(userId, auction.getId(), amount, "set");
 
@@ -157,7 +157,7 @@ public class AuctionService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime penaltyAt = auction.getCreatedAt().plusMinutes(5);
 
-        int amount = MoneyUtil.calcDeposit(auction.getCurrentPrice().intValue());
+        int amount = MoneyUtil.calcDeposit(auction.getStartPrice().intValue());
 
         if (now.isBefore(penaltyAt)) {
             // 5분 이내 취소 → 보증금 환불 처리

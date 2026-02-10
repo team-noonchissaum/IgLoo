@@ -34,6 +34,9 @@ public class Auction extends BaseTimeEntity {
     @Column(name = "current_price", precision = 15, scale = 0)
     private BigDecimal currentPrice;
 
+    @Column(name = "start_price", precision = 15, scale = 0)
+    private BigDecimal startPrice;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "current_bidder_id")
     private User currentBidder;
@@ -72,6 +75,7 @@ public class Auction extends BaseTimeEntity {
     @Builder
     public Auction(Item item, BigDecimal startPrice, LocalDateTime startAt, LocalDateTime endAt) {
         this.item = item;
+        this.startPrice = startPrice;
         this.currentPrice = startPrice;
         this.bidCount = 0;
         this.startAt = startAt;
