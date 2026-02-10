@@ -76,23 +76,5 @@ public class UserController {
         userService.userDelete(principal.getUserId());
         return ResponseEntity.ok(ApiResponse.success("회원 탈퇴 완료"));
     }
-
-    /**
-     * 사용자 위치 업데이트
-     * POST /api/users/me/location
-     */
-    @PostMapping("/me/location")
-    public ResponseEntity<ApiResponse<Void>> updateMyLocation(
-            @AuthenticationPrincipal UserPrincipal principal,
-            @RequestBody UserLocationUpdateReq request
-    ) {
-        User user = userService.getById(principal.getUserId());
-
-        userService.updateUserLocation(user, request.getAddress());
-
-        return ResponseEntity.ok(
-                ApiResponse.success("사용자 위치가 업데이트되었습니다.")
-        );
-    }
 }
 

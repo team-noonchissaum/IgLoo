@@ -4,9 +4,8 @@ import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.item.entity.Item;
 import noonchissaum.backend.domain.item.service.ItemService;
 import noonchissaum.backend.global.dto.LocationSearchResult;
-import noonchissaum.backend.global.dto.SearchItemsResponse;
+import noonchissaum.backend.global.dto.SearchItemsRes;
 import noonchissaum.backend.global.exception.ApiException;
-import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,7 +49,7 @@ public class ItemController {
 
         Double searchedRadius = calculateSearchRadius(radiusKm);
 
-        SearchItemsResponse response = SearchItemsResponse.builder()
+        SearchItemsRes response = SearchItemsRes.builder()
                 .requestedRadius(radiusKm)
                 .searchedRadius(searchedRadius)
                 .count(results.size())

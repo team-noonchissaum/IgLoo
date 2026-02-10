@@ -194,65 +194,6 @@ public class UserService {
         redisTemplate.delete(attemptKey);
     }
 
-    /**
-     * 사용자 위치 업데이트 (주소 기반)
-     * 판매자면 기존 물품도 함께 업데이트됨
-     */
-    public void updateUserLocation(User user, String address) {
-        if (address == null || address.trim().isEmpty()) {
-            throw new ApiException(ErrorCode.INVALID_ADDRESS);
-        }
-
-        // 네이버 지오코딩 API로 좌표 변환
-        LocationDto locationDto = locationService.getCoordinates(address);
-
-        if (locationDto == null) {
-            throw new ApiException(ErrorCode.ADDRESS_NOT_FOUND);
-        }
-
-        // 주소에서 동(dong) 추출
-        String dong = extractDongFromAddress(address);
-
-        // 사용자 위치 정보 업데이트
-        user.updateLocation(
-                address,
-                dong,
-                locationDto.getLatitude(),
-                locationDto.getLongitude()
-        );
-
-        userRepository.save(user);
-
-        //  판매자의 모든 활성 물품도 새로운 위치로 업데이트
-        itemService.updateSellerItemLocations(user);
-    }
-
-    /**
-     * 주소에서 동(dong) 추출
-     */
-    private String extractDongFromAddress(String address) {
-        Pattern pattern = Pattern.compile("([가-힣]{2,}동)");
-        Matcher matcher = pattern.matcher(address);
-
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-
-        pattern = Pattern.compile("([가-힣]{2,}구)");
-        matcher = pattern.matcher(address);
-
-        return matcher.find() ? matcher.group(1) : "알 수 없음";
-    }
-
-    public User getById(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_INPUT_VALUE));
-    }
-
-    public void updateProfile(User user, String nickname, String profileUrl) {
-        user.updateProfile(nickname, profileUrl);
-        userRepository.save(user);
-    }
 
 
 }

@@ -97,11 +97,9 @@ jwt:
   access-token-validity: 3600000
   refresh-token-validity: 604800000
 
-naver:
+kakao:
   map:
-    client-id: ${NAVER_MAP_CLIENT_ID}
-    client-secret: ${NAVER_MAP_CLIENT_SECRET}
-    geocode-url: https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode
+    rest-api-key: ${KAKAO_MAP_REST_API_KEY}
 
 #logging:
 #  level:

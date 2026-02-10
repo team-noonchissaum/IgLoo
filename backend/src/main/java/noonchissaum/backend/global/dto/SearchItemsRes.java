@@ -11,7 +11,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SearchItemsResponse {
+public class SearchItemsRes {
     private Double requestedRadius;
     private Double searchedRadius;
     private Integer count;
