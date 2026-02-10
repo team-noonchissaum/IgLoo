@@ -96,21 +96,22 @@ public class ReportService {
         auction.tempBlock();
         auctionRedisService.setRedis(auction.getId());
         notifyAuctionParticipants(
-                auctionId,
+                auction,
                 NotificationType.AUCTION_TEMP_BLOCKED,
-                String.format(NotificationConstants.MSG_AUCTION_TEMP_BLOCKED,auction.getItem().getThumbnailUrl())
+                String.format(NotificationConstants.MSG_AUCTION_TEMP_BLOCKED,auction.getItem().getTitle())
         );
     }
 
-    private void notifyAuctionParticipants(Long auctionId, NotificationType type, String message) {
-        List<Long> participantIds = bidRepository.findDistinctBidderIdsByAuctionId(auctionId);
+    private void notifyAuctionParticipants(Auction auction, NotificationType type, String message) {
+        List<Long> participantIds = bidRepository.findDistinctBidderIdsByAuctionId(auction.getId());
+        participantIds.add(auction.getSeller().getId());
         for (Long userId : participantIds) {
             auctionNotificationService.sendNotification(
                     userId,
                     type,
                     message,
                     NotificationConstants.REF_TYPE_AUCTION,
-                    auctionId
+                    auction.getId()
             );
         }
     }

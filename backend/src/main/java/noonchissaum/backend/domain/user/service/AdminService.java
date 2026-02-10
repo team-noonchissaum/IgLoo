@@ -30,6 +30,7 @@ import noonchissaum.backend.domain.wallet.service.WalletRecordService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
+import noonchissaum.backend.global.util.MoneyUtil;
 import noonchissaum.backend.global.util.UserLockExecutor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -239,8 +240,8 @@ public class AdminService {
         }
         auction.block();
 
-        long basePrice = auction.getCurrentPrice() == null ? 0L : auction.getCurrentPrice().longValue();
-        int amount = (int) Math.min(basePrice * 0.05, 1000);
+        int basePrice = auction.getCurrentPrice() == null ? 0 : auction.getCurrentPrice().intValue();
+        int amount = MoneyUtil.calcDeposit(basePrice);
         auction.forfeitDeposit();
         walletService.setAuctionDeposit(auction.getSeller().getId(), auction.getId(), amount, "forfeit");
 
@@ -367,6 +368,7 @@ public class AdminService {
      */
     private void notifyAuctionStatusChange(Auction auction, NotificationType type, String message) {
         List<Long> participantIds = bidRepository.findDistinctBidderIdsByAuctionId(auction.getId());
+        participantIds.add(auction.getSeller().getId());
         for (Long userId : participantIds) {
             auctionNotificationService.sendNotification(
                     userId,

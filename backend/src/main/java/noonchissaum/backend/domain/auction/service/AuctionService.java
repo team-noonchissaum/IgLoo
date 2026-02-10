@@ -22,6 +22,7 @@ import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
+import noonchissaum.backend.global.util.MoneyUtil;
 import org.springframework.data.domain.*;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -74,7 +75,7 @@ public class AuctionService {
                 .build();
         auctionRepository.save(auction);
 
-        int amount = (int) Math.min( auction.getCurrentPrice().longValue() * 0.05 , 1000);
+        int amount = MoneyUtil.calcDeposit(auction.getCurrentPrice().intValue());
 
         walletService.setAuctionDeposit(userId, auction.getId(), amount, "set");
 
@@ -156,7 +157,7 @@ public class AuctionService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime penaltyAt = auction.getCreatedAt().plusMinutes(5);
 
-        int amount = (int) Math.min( auction.getCurrentPrice().longValue() * 0.05 , 1000);
+        int amount = MoneyUtil.calcDeposit(auction.getCurrentPrice().intValue());
 
         if (now.isBefore(penaltyAt)) {
             // 5분 이내 취소 → 보증금 환불 처리
