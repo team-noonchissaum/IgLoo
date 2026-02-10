@@ -25,11 +25,6 @@ public class ItemService {
                 .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
     }
 
-    public Item getById(Long itemId) {
-        return itemRepository.findById(itemId)
-                .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
-    }
-
     //상품 정보 생성 및 이미지 등록
     public Item createItem(User seller, Category category, AuctionRegisterReq request) {
         Item item = Item.builder()

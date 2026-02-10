@@ -58,11 +58,13 @@ public class ChatMessageService {
                 saved.getMessage(),
                 saved.getCreatedAt()
         );
+
         // 브로드캐스트
         messagingTemplate.convertAndSend("/topic/chat." + room.getId(), payload);
 
         return payload;
     }
+
     @Transactional(readOnly = true)
     public ChatMessagePageRes getMessages(Long roomId, Long userId, Long cursor, int size) {
         ChatRoom room = chatRoomRepository.findById(roomId)
@@ -108,7 +110,4 @@ public class ChatMessageService {
         }
         return chatMessageRepository.markAllAsReadInRoom(roomId, userId);
     }
-
-
-
 }

@@ -6,7 +6,6 @@ import noonchissaum.backend.domain.order.entity.CheckStatus;
 import noonchissaum.backend.domain.order.repository.ChargeCheckRepository;
 import noonchissaum.backend.domain.wallet.entity.TransactionType;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
-import noonchissaum.backend.domain.wallet.entity.WalletTransaction;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
 import noonchissaum.backend.domain.wallet.service.WalletTransactionRecordService;
 import noonchissaum.backend.global.RedisKeys;

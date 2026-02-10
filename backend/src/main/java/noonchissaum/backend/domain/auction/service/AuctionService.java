@@ -41,7 +41,6 @@ public class AuctionService {
     private final UserService userService;
     private final CategoryService categoryService;
     private final WishService wishService;
-    private final StringRedisTemplate redisTemplate;
     private final AuctionRedisService auctionRedisService;
     private final AuctionRealtimeSnapshotService snapshotService;
     private final AuctionQueryService auctionQueryService;
@@ -171,38 +170,6 @@ public class AuctionService {
 
         //radis에서 삭제
         auctionRedisService.cancelAuction(auctionId);
-    }
-
-    public void checkDeadline(Long auctionId) {
-        String rawEndTime = redisTemplate.opsForValue().get(RedisKeys.auctionEndTime(auctionId));
-        String rawImminentMinutes = redisTemplate.opsForValue().get(RedisKeys.auctionImminentMinutes(auctionId));
-        String isExtended = redisTemplate.opsForValue().get(RedisKeys.auctionIsExtended(auctionId));
-
-        if (rawEndTime == null || rawImminentMinutes == null || isExtended == null) {
-            auctionRedisService.setRedis(auctionId);
-
-            rawEndTime = redisTemplate.opsForValue().get(RedisKeys.auctionEndTime(auctionId));
-            rawImminentMinutes = redisTemplate.opsForValue().get(RedisKeys.auctionImminentMinutes(auctionId));
-            isExtended = redisTemplate.opsForValue().get(RedisKeys.auctionIsExtended(auctionId));
-        }
-
-        LocalDateTime endTime = LocalDateTime.parse(rawEndTime);
-        Integer imminentMinutes = Integer.parseInt(rawImminentMinutes);
-
-        LocalDateTime now = LocalDateTime.now();
-
-        if (now.isAfter(endTime) || now.isBefore(endTime.minusMinutes(imminentMinutes))) {
-            return;
-        }
-
-        if (isExtended.equals("true")) {
-            return;
-        }
-
-        endTime = endTime.plusMinutes(3);
-
-        redisTemplate.opsForValue().set(RedisKeys.auctionEndTime(auctionId), endTime.toString());
-        redisTemplate.opsForValue().set(RedisKeys.auctionIsExtended(auctionId), "true");
     }
 
     /**

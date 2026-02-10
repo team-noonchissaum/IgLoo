@@ -96,7 +96,6 @@ public class ChatRoomService {
         return ChatRoomRes.from(room, userId);
     }
 
-
     /**
      * 직거래 채팅방 생성이 가능한 주문인지 유효성 검증
      */
