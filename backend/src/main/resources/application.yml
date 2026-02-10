@@ -97,6 +97,12 @@ jwt:
   access-token-validity: 3600000
   refresh-token-validity: 604800000
 
+naver:
+  map:
+    client-id: ${NAVER_MAP_CLIENT_ID}
+    client-secret: ${NAVER_MAP_CLIENT_SECRET}
+    geocode-url: https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode
+
 #logging:
 #  level:
 #    org.hibernate.SQL: debug

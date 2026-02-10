@@ -5,11 +5,13 @@ import noonchissaum.backend.domain.item.entity.Item;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -36,4 +38,45 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
     List<Item>findByCategoryIn(List<Category> categories);
 
 
+/** 추가부분*/
+
+    @Query(value = """
+    SELECT * FROM items i
+    WHERE i.status = true
+    AND ST_Distance_Sphere(
+        ST_GeomFromText(CONCAT('POINT(', :longitude, ' ', :latitude, ')'), 4326),
+        ST_GeomFromText(i.item_location, 4326)
+    ) <= :radiusInMeters
+    ORDER BY i.created_at DESC
+    """, nativeQuery = true)
+    List<Item> findItemsWithinRadius(
+            @Param("latitude") Double latitude,
+            @Param("longitude") Double longitude,
+            @Param("radiusInMeters") Double radiusInMeters
+    );
+
+    @Query(value = """
+    SELECT 
+        i.item_id,
+        i.title,
+        i.seller_dong,
+        ST_Distance_Sphere(
+            ST_GeomFromText(CONCAT('POINT(', :longitude, ' ', :latitude, ')'), 4326),
+            ST_GeomFromText(i.item_location, 4326)
+        ) / 1000 AS distance_km
+    FROM items i
+    WHERE i.status = true
+    AND ST_Distance_Sphere(
+        ST_GeomFromText(CONCAT('POINT(', :longitude, ' ', :latitude, ')'), 4326),
+        ST_GeomFromText(i.item_location, 4326)
+    ) <= :radiusInMeters
+    ORDER BY distance_km ASC
+    """, nativeQuery = true)
+    List<Map<String, Object>> findItemsWithDistance(
+            @Param("latitude") Double latitude,
+            @Param("longitude") Double longitude,
+            @Param("radiusInMeters") Double radiusInMeters
+    );
+
+    List<Item> findBySellerId(Long sellerId);
 }

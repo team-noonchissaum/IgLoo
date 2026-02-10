@@ -1,0 +1,36 @@
+### 로컬 로그인 (토큰 저장)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test1@test.com",
+  "password": "12345",
+  "authType": "LOCAL"
+}
+
+> {%
+    client.global.set("accessToken", response.body.accessToken);
+    client.global.set("refreshToken", response.body.refreshToken);
+%}
+### 로컬 회원가입
+POST http://localhost:8080/api/auth/signup
+Content-Type: application/json
+
+{
+  "email": "test1@test.com",
+  "nickname": "테스터",
+  "password": "12345",
+  "authType": "LOCAL"
+}
+
+### 사용자 위치 설정 (강남)
+POST http://localhost:8080/api/users/me/location
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzA2ODI5MzQsImV4cCI6MTc3MDY4NDczNH0._sKKBQ2lNTm-0n63TfTRMtLHbiu4Wsoh_LKKTOOjUjU
+
+{
+  "address": "서울특별시 강남구 테헤란로 152"
+}
+###
+GET http://localhost:8080/api/users/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzA2MjUxNzksImV4cCI6MTc3MDYyNjk3OX0.B93_pd2sS19FhMUhxV82elhM7mSeL5Cck7gcQAwsvX0
