@@ -117,7 +117,9 @@ public class AuctionService {
     public AuctionRes getAuctionDetail(Long userId, Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
-        if (auction.getStatus() == AuctionStatus.BLOCKED || auction.getStatus() == AuctionStatus.BLOCKED_ENDED) {
+        if (auction.getStatus() == AuctionStatus.TEMP_BLOCKED ||
+                auction.getStatus() == AuctionStatus.BLOCKED ||
+                auction.getStatus() == AuctionStatus.BLOCKED_ENDED) {
             throw new CustomException(ErrorCode.AUCTION_BLOCKED);
         }
         boolean isWished = wishService.isWished(userId, auction.getItem().getId());

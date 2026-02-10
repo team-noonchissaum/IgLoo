@@ -14,7 +14,6 @@ import noonchissaum.backend.domain.notification.entity.NotificationType;
 import noonchissaum.backend.domain.notification.service.AuctionNotificationService;
 import noonchissaum.backend.domain.order.service.OrderService;
 import noonchissaum.backend.domain.user.entity.User;
-import noonchissaum.backend.domain.wallet.service.WalletRecordService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
@@ -40,7 +39,6 @@ public class AuctionSchedulerService {
     private final AuctionNotificationService auctionNotificationService;
     private final AuctionRedisService auctionRedisService;
     private final WalletService walletService;
-    private final WalletRecordService walletRecordService;
 
 
     /**
@@ -177,20 +175,6 @@ public class AuctionSchedulerService {
                 log.error("Failed to finalize result for auctionId={}", auctionId, e);
             }
         }
-
-        // 차단된 경매 중 종료 시간이 지난 건 처리
-        List<Auction> blockedEnded = auctionRepository.findAllByStatusAndEndAtLessThanEqual(
-                AuctionStatus.BLOCKED,
-                LocalDateTime.now()
-        );
-
-        for (Auction auction : blockedEnded) {
-            try {
-                processBlockedAuctionEnd(auction);
-            } catch (Exception e) {
-                log.error("Failed to finalize blocked auction for auctionId={}", auction.getId(), e);
-            }
-        }
     }
 
     private void processAuctionResult(Auction auction) {
@@ -243,18 +227,6 @@ public class AuctionSchedulerService {
                 log.debug("[AuctionResult] skip duplicated failed finalize auctionId={}", auctionId);
             }
         }
-    }
-
-    private void processBlockedAuctionEnd(Auction auction) {
-        if (auction.getCurrentBidder() != null && auction.getCurrentPrice() != null
-                && auction.getCurrentPrice().compareTo(java.math.BigDecimal.ZERO) > 0) {
-            walletRecordService.refundBlockedAuctionBid(
-                    auction.getCurrentBidder().getId(),
-                    auction.getCurrentPrice(),
-                    auction.getId()
-            );
-        }
-        auction.markBlockedEnded();
     }
 
     private void sendSuccessNotifications(Auction auction, Bid winnerBid) {

@@ -308,9 +308,19 @@ public class BidService {
             throw new ApiException(ErrorCode.AUCTION_STATUS_UNAVAILABLE);
         }
 
-        AuctionStatus status = AuctionStatus.valueOf(rawStatus);
-        LocalDateTime endAt = LocalDateTime.parse(rawEndTime);
-
+        AuctionStatus status;
+        LocalDateTime endAt;
+        try {
+            status = AuctionStatus.valueOf(rawStatus);
+            endAt = LocalDateTime.parse(rawEndTime);
+        } catch (Exception e) {
+            throw new ApiException(ErrorCode.AUCTION_STATUS_UNAVAILABLE);
+        }
+        if (status == AuctionStatus.TEMP_BLOCKED ||
+                status == AuctionStatus.BLOCKED ||
+                status == AuctionStatus.BLOCKED_ENDED) {
+            throw new ApiException(ErrorCode.AUCTION_BLOCKED);
+        }
         if (status != AuctionStatus.RUNNING && status != AuctionStatus.DEADLINE) {
             throw new ApiException(ErrorCode.NOT_FOUND_AUCTIONS);
         }

@@ -5,6 +5,7 @@ import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.repository.BidRepository;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
+import noonchissaum.backend.domain.auction.service.AuctionRedisService;
 import noonchissaum.backend.domain.auction.service.AuctionService;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.item.entity.Item;
@@ -21,9 +22,11 @@ import noonchissaum.backend.domain.user.dto.response.*;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.entity.UserStatus;
 import noonchissaum.backend.domain.user.repository.*;
+import noonchissaum.backend.domain.wallet.service.WalletRecordService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
+import noonchissaum.backend.global.util.UserLockExecutor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -46,9 +49,12 @@ public class AdminService {
     private final AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
     private final AuctionService auctionService;
+    private final AuctionRedisService auctionRedisService;
     private final OrderService orderService;
     private final WalletService walletService;
+    private final WalletRecordService walletRecordService;
     private final AuctionNotificationService auctionNotificationService;
+    private final UserLockExecutor userLockExecutor;
 
     /* ================= 신고 관리 ================= */
 
@@ -176,7 +182,7 @@ public class AdminService {
     /**
      * 경매 차단 공통 로직
      */
-    private Auction doBlockAuction(Long auctionId) {
+    private void doBlockAuction(Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
 
@@ -185,22 +191,32 @@ public class AdminService {
             throw new CustomException(ErrorCode.ITEM_NOT_FOUND);
         }
 
-        if (item.isDeleted()) {
+        if (item.isDeleted() && auction.getStatus() != AuctionStatus.TEMP_BLOCKED) {
             throw new CustomException(ErrorCode.ITEM_ALREADY_BLOCKED);
         }
 
-        // 진행 중인 경매만 차단 가능
         if (auction.getStatus() != AuctionStatus.READY &&
                 auction.getStatus() != AuctionStatus.RUNNING &&
-                auction.getStatus() != AuctionStatus.DEADLINE)
+                auction.getStatus() != AuctionStatus.DEADLINE &&
+                auction.getStatus() != AuctionStatus.TEMP_BLOCKED)
         {
             throw new CustomException(ErrorCode.AUCTION_CANNOT_BLOCK);
         }
 
-        item.delete();
+        if (!item.isDeleted()) {
+            item.delete();
+        }
         auction.block();
+
+        long basePrice = auction.getCurrentPrice() == null ? 0L : auction.getCurrentPrice().longValue();
+        int amount = (int) Math.min(basePrice * 0.05, 1000);
+        auction.forfeitDeposit();
+        walletService.setAuctionDeposit(auction.getSeller().getId(), auction.getId(), amount, "forfeit");
+
+        refundCurrentBidder(auction);
+
+        auctionRedisService.setRedis(auction.getId());
         notifyAuctionStatusChange(auction, NotificationType.AUCTION_BLOCKED, NotificationConstants.MSG_AUCTION_BLOCKED);
-        return auction;
     }
 
     /**
@@ -272,21 +288,18 @@ public class AdminService {
             throw new CustomException(ErrorCode.ITEM_NOT_BLOCKED);
         }
 
-        if (auction.getStatus() != AuctionStatus.BLOCKED) {
+        if (auction.getStatus() != AuctionStatus.TEMP_BLOCKED) {
             throw new CustomException(ErrorCode.AUCTION_NOT_BLOCKED);
         }
-        if (auction.getEndAt() != null && auction.getEndAt().isBefore(LocalDateTime.now())) {
-            throw new CustomException(ErrorCode.AUCTION_RESTORE_EXPIRED);
-        }
-
         item.restore();
         auction.reopen();
-        notifyAuctionStatusChange(auction, NotificationType.AUCTION_RESTORED, NotificationConstants.MSG_AUCTION_RESTORED);
+        auctionRedisService.setRedis(auction.getId());
+        notifyAuctionStatusChange(auction, NotificationType.AUCTION_UNBLOCKED, NotificationConstants.MSG_AUCTION_UNBLOCKED);
 
         reportRepository.updateStatusByTargetTypeAndTargetIdAndStatus(
                 ReportTargetType.AUCTION,
                 auctionId,
-                ReportStatus.PROCESSED,
+                ReportStatus.PENDING,
                 ReportStatus.REJECTED
         );
 
@@ -297,6 +310,21 @@ public class AdminService {
                 "ACTIVE",
                 LocalDateTime.now()
         );
+    }
+
+    private void refundCurrentBidder(Auction auction) {
+        Long bidderId = auction.getCurrentBidder() != null ? auction.getCurrentBidder().getId() : null;
+        if (bidderId == null || auction.getCurrentPrice() == null ||
+                auction.getCurrentPrice().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            return;
+        }
+        userLockExecutor.withUserLock(bidderId, () -> {
+            walletRecordService.refundBlockedAuctionBid(
+                    bidderId,
+                    auction.getCurrentPrice(),
+                    auction.getId()
+            );
+        });
     }
 
     private void notifyAuctionStatusChange(Auction auction, NotificationType type, String message) {
@@ -319,7 +347,8 @@ public class AdminService {
         List<Auction> allAuctions = auctionRepository.findAll();
 
         List<AdminBlockedAuctionRes> blockedList = allAuctions.stream()
-                .filter(auction -> auction.getStatus() == AuctionStatus.BLOCKED)
+                .filter(auction -> auction.getStatus() == AuctionStatus.BLOCKED ||
+                        auction.getStatus() == AuctionStatus.TEMP_BLOCKED)
                 .map(auction -> {
                     Item item = auction.getItem();
 

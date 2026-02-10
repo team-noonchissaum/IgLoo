@@ -21,6 +21,7 @@ public class WalletRecordService {
     private final WalletRepository walletRepository;
     private final WalletTransactionRecordService walletTransactionRecordService;
     private final StringRedisTemplate redisTemplate;
+    private final WalletService walletService;
 
     @Transactional
     public void saveWalletRecord(Long userId, BigDecimal bidAmount, Long previousBidderId , BigDecimal refundAmount,Long auctionId){
@@ -46,6 +47,7 @@ public class WalletRecordService {
         wallet.bidCanceled(refundAmount);
         walletTransactionRecordService.record(wallet, TransactionType.BID_RELEASE, refundAmount, auctionId);
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            walletService.getBalance(userId);
             redisTemplate.opsForValue().increment(RedisKeys.userBalance(userId), refundAmount.longValue());
             redisTemplate.opsForValue().increment(RedisKeys.userLockedBalance(userId), refundAmount.negate().longValue());
             return;
@@ -54,6 +56,7 @@ public class WalletRecordService {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
+                walletService.getBalance(userId);
                 redisTemplate.opsForValue().increment(RedisKeys.userBalance(userId), refundAmount.longValue());
                 redisTemplate.opsForValue().increment(RedisKeys.userLockedBalance(userId), refundAmount.negate().longValue());
             }

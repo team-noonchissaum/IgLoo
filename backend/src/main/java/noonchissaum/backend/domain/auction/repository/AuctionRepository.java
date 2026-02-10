@@ -134,7 +134,5 @@ where a.status = :status
   and a.endAt <= :now
 """)
     List<Long> findIdsToEnd(@Param("status") AuctionStatus status, @Param("now") LocalDateTime now);
-
-    List<Auction> findAllByStatusAndEndAtLessThanEqual(AuctionStatus status, LocalDateTime now);
 }
 

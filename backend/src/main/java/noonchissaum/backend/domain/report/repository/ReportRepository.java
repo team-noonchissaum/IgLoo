@@ -34,8 +34,13 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
             @Param("targetType") ReportTargetType targetType,
             Pageable pageable);
 
-    //reporterId로 직접조회
-    boolean existsByReporterIdAndTargetTypeAndTargetId(Long reporterId, ReportTargetType targetType, Long targetId);
+    // reporterId로 직접조회 (상태 필터 포함)
+    boolean existsByReporterIdAndTargetTypeAndTargetIdAndStatusIn(
+            Long reporterId,
+            ReportTargetType targetType,
+            Long targetId,
+            List<ReportStatus> statuses
+    );
 
     // 유저별 신고 당한 횟수 조회
     long countByTargetTypeAndTargetId(ReportTargetType targetType, Long targetId);
