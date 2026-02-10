@@ -14,8 +14,8 @@ import noonchissaum.backend.domain.user.entity.*;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.service.WalletService;
+import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.security.JwtTokenProvider;
-import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -36,10 +36,10 @@ public class AuthService {
     @Transactional
     public SignupRes signup(SignupReq signupReq) {
         if(userRepository.existsByEmailAndNotDeleted(signupReq.getEmail())) {
-            throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
+            throw new ApiException(ErrorCode.DUPLICATE_EMAIL);
         }
         if(userRepository.existsByNicknameAndNotDeleted(signupReq.getNickname())) {
-            throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
+            throw new ApiException(ErrorCode.DUPLICATE_NICKNAME);
         }
         User user= new User(
                 signupReq.getEmail(),
@@ -106,10 +106,10 @@ public class AuthService {
     private UserAuth localLogin(LoginReq req) {
         UserAuth userAuth = userAuthRepository
                 .findByAuthTypeAndIdentifier(AuthType.LOCAL,req.getEmail())
-                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_LOGIN));
+                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_LOGIN));
 
         if (!passwordEncoder.matches(req.getPassword(), userAuth.getPasswordHash())) {
-            throw new CustomException(ErrorCode.INVALID_LOGIN);
+            throw new ApiException(ErrorCode.INVALID_LOGIN);
         }
 
         return userAuth;
@@ -130,11 +130,11 @@ public class AuthService {
     protected LoginResult oauthSignup(LoginReq req, String identifier) {
 
         if (userAuthRepository.existsByIdentifierAndAuthType(req.getAuthType(),identifier)) {
-            throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
+            throw new ApiException(ErrorCode.DUPLICATE_EMAIL);
         }
 
         if (req.getNickname() == null || req.getNickname().isBlank()) {
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new ApiException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
         User user = new User(
@@ -159,17 +159,17 @@ public class AuthService {
         String refreshToken= req.getRefreshToken();
 
         if(!jwtTokenProvider.validateToken(refreshToken)) {
-            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
+            throw new ApiException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
         Long userId=jwtTokenProvider.getUserId(refreshToken);
 
         //Redis에 저장된 RT와 비교+ 중복로그인/재사용 방지
         if(!refreshTokenService.isValid(userId, refreshToken)) {
-            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
+            throw new ApiException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(()-> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(()-> new ApiException(ErrorCode.USER_NOT_FOUND));
         //기존 RT제거(rotation)
         refreshTokenService.delete(userId);
 
@@ -190,7 +190,7 @@ public class AuthService {
     /**로그아웃*/
     public void logout(String refreshToken) {
         if(!jwtTokenProvider.validateToken(refreshToken)) {
-            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
+            throw new ApiException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 
         Long userId=jwtTokenProvider.getUserId(refreshToken);

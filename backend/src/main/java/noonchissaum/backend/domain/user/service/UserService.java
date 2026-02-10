@@ -1,7 +1,5 @@
 package noonchissaum.backend.domain.user.service;
 
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.item.service.ItemService;
@@ -12,25 +10,19 @@ import noonchissaum.backend.domain.report.entity.ReportStatus;
 import noonchissaum.backend.domain.user.dto.request.ProfileUpdateUserReq;
 import noonchissaum.backend.domain.user.dto.response.*;
 import noonchissaum.backend.domain.user.entity.User;
-
 import noonchissaum.backend.domain.report.repository.ReportRepository;
 import noonchissaum.backend.domain.user.entity.UserStatus;
 import noonchissaum.backend.domain.user.repository.UserRepository;
-
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.RedisKeys;
-import noonchissaum.backend.global.dto.LocationDto;
 import noonchissaum.backend.global.exception.ApiException;
-import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import noonchissaum.backend.global.service.LocationService;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
 
 @Slf4j
 @Service
@@ -47,7 +39,7 @@ public class UserService {
     /**본인 프로필 조회*/
     public ProfileRes getMyProfile(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
         String blockReason = user.getStatus() == UserStatus.BLOCKED ? user.getBlockReason() : null;
 
@@ -66,7 +58,7 @@ public class UserService {
     public OtherUserProfileRes getOtherUserProfile(Long userId) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
         return new OtherUserProfileRes(
                 user.getId(),
@@ -81,11 +73,11 @@ public class UserService {
     public ProfileUpdateUserRes updateProfile(Long userId, ProfileUpdateUserReq request) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
         if (!user.getNickname().equals(request.getNickname())
                 && userRepository.existsByNickname(request.getNickname())) {
-            throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
+            throw new ApiException(ErrorCode.DUPLICATE_NICKNAME);
         }
 
         user.updateProfile(request.getNickname(), request.getProfileUrl());
@@ -107,7 +99,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserDeleteAttemptRes attemptDelete(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
         BigDecimal balance = walletService.getCurrentBalance(userId);
 
@@ -132,7 +124,7 @@ public class UserService {
     @Transactional
     public void userDelete(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
         BigDecimal balance = walletService.getCurrentBalance(userId);
 
@@ -151,12 +143,12 @@ public class UserService {
     @Transactional
     public void createReport(Long reporterId, ReportReq request) {
         User reporter=userRepository.findById(reporterId)
-                .orElseThrow(()->new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(()->new ApiException(ErrorCode.USER_NOT_FOUND));
 
         //중복 신고 방지
         if (reportRepository.existsByReporterIdAndTargetTypeAndTargetId(
                 reporterId, request.getTargetType(), request.getTargetId())) {
-            throw new CustomException(ErrorCode.ALREADY_REPORTED);
+            throw new ApiException(ErrorCode.ALREADY_REPORTED);
         }
 
         Report report = Report.builder()
@@ -173,7 +165,7 @@ public class UserService {
 
     public User getUserByUserId(Long userId) {
         return userRepository.findById(userId).
-                orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
     }
 
     /**탈퇴 첫 시도인지 확인*/

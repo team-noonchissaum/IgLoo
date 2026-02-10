@@ -15,7 +15,7 @@ public class KakaoKeywordRes {
 
     @Data
     @NoArgsConstructor
-    public static class Meta {
+    public static class Meta { // 형식
         @JsonProperty("total_count")
         private Integer totalCount;
 
@@ -30,7 +30,7 @@ public class KakaoKeywordRes {
     @NoArgsConstructor
     public static class Document {
         @JsonProperty("place_name")
-        private String placeName;
+        private String placeName;//장소이름
 
         @JsonProperty("address_name")
         private String addressName;

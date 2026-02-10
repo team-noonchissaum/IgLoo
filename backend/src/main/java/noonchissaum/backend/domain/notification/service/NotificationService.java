@@ -7,7 +7,7 @@ import noonchissaum.backend.domain.notification.entity.NotificationType;
 import noonchissaum.backend.domain.notification.repository.NotificationRepository;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.service.UserService;
-import noonchissaum.backend.global.exception.CustomException;
+import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,10 +57,10 @@ public class NotificationService {
     @Transactional(readOnly = true)
     public NotificationResponse findById(Long userId, Long notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
-                 .orElseThrow(() -> new CustomException(ErrorCode.NOTIFICATION_NOT_FOUND));
+                 .orElseThrow(() -> new ApiException(ErrorCode.NOTIFICATION_NOT_FOUND));
         // 본인의 알림인지 확인
         if (!notification.getUser().getId().equals(userId)) {
-                 throw new CustomException(ErrorCode.ACCESS_DENIED);
+                 throw new ApiException(ErrorCode.ACCESS_DENIED);
         }
         return NotificationResponse.from(notification);
     }
@@ -70,7 +70,7 @@ public class NotificationService {
     @Transactional
     public NotificationResponse markAsRead(Long userId, Long notificationId) {
         Notification notification = notificationRepository.findByIdAndUserId(notificationId, userId)
-                .orElseThrow(()-> new CustomException(ErrorCode.NOTIFICATION_NOT_FOUND));
+                .orElseThrow(()-> new ApiException(ErrorCode.NOTIFICATION_NOT_FOUND));
 
         notification.markAsRead(LocalDateTime.now());
         return NotificationResponse.from(notification);

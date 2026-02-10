@@ -17,7 +17,7 @@ public class KakaoGeocodeRes {
     @NoArgsConstructor
     public static class Meta {
         @JsonProperty("total_count")
-        private Integer totalCount;
+        private Integer totalCount; //카카오api응답구조여서 사용하는부분
 
         @JsonProperty("pageable_count")
         private Integer pageableCount;

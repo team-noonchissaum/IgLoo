@@ -8,6 +8,8 @@ import noonchissaum.backend.domain.item.repository.ItemRepository;
 import noonchissaum.backend.domain.item.repository.WishRepository;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.service.UserService;
+import noonchissaum.backend.global.exception.ApiException;
+import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,7 +46,7 @@ public class WishService {
                         wishRepository.save(Wish.of(user, item));
                         int updated = itemRepository.incrementWishCountIfActive(itemId);
                         if (updated == 0){
-                            throw new IllegalStateException("삭제된 상품은 찜할 수 없습니다.");
+                            throw new ApiException(ErrorCode.ITEM_ALREADY_BLOCKED);
                         }
                         return true;
                     } catch (DataIntegrityViolationException e) {

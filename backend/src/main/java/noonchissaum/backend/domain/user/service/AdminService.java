@@ -21,7 +21,7 @@ import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.entity.UserStatus;
 import noonchissaum.backend.domain.user.repository.*;
 import noonchissaum.backend.domain.wallet.service.WalletService;
-import noonchissaum.backend.global.exception.CustomException;
+import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -114,7 +114,7 @@ public class AdminService {
      */
     public AdminReportDetailRes getReportDetail(Long reportId) {
         Report report = reportRepository.findByIdWithReporter(reportId)
-                .orElseThrow(() -> new CustomException(ErrorCode.REPORT_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.REPORT_NOT_FOUND));
 
         AdminReportDetailRes.ReporterInfo reporterInfo = new AdminReportDetailRes.ReporterInfo(
                 report.getReporter().getId(),
@@ -159,11 +159,11 @@ public class AdminService {
     @Transactional
     public void processReport(Long reportId, AdminReportProcessReq req) {
         Report report = reportRepository.findById(reportId)
-                .orElseThrow(() -> new CustomException(ErrorCode.REPORT_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.REPORT_NOT_FOUND));
 
         // 이미 처리된 신고인지 체크
         if (report.getStatus() != ReportStatus.PENDING) {
-            throw new CustomException(ErrorCode.REPORT_ALREADY_PROCESSED);
+            throw new ApiException(ErrorCode.REPORT_ALREADY_PROCESSED);
         }
 
         report.process(ReportStatus.valueOf(req.getStatus()));
@@ -190,7 +190,7 @@ public class AdminService {
                 blockAuctionByReport(targetId, reason);
                 break;
             default:
-                throw new CustomException(ErrorCode.INVALID_REPORT_TARGET);
+                throw new ApiException(ErrorCode.INVALID_REPORT_TARGET);
         }
     }
 
@@ -201,15 +201,15 @@ public class AdminService {
      */
     private void doBlockAuction(Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
 
         Item item = auction.getItem();
         if (item == null) {
-            throw new CustomException(ErrorCode.ITEM_NOT_FOUND);
+            throw new ApiException(ErrorCode.ITEM_NOT_FOUND);
         }
 
         if (item.isDeleted()) {
-            throw new CustomException(ErrorCode.ITEM_ALREADY_BLOCKED);
+            throw new ApiException(ErrorCode.ITEM_ALREADY_BLOCKED);
         }
 
         // 진행 중인 경매만 차단 가능
@@ -217,7 +217,7 @@ public class AdminService {
                 auction.getStatus() != AuctionStatus.RUNNING &&
                 auction.getStatus() != AuctionStatus.DEADLINE)
         {
-            throw new CustomException(ErrorCode.AUCTION_CANNOT_BLOCK);
+            throw new ApiException(ErrorCode.AUCTION_CANNOT_BLOCK);
         }
 
         item.delete();
@@ -252,7 +252,7 @@ public class AdminService {
             );
         } else {
             User admin = userRepository.findById(adminId)
-                    .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                    .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
             Report report = Report.builder()
                     .reporter(admin)
@@ -282,19 +282,19 @@ public class AdminService {
     @Transactional
     public AdminAuctionRestoreRes restoreAuction(Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
 
         Item item = auction.getItem();
         if (item == null) {
-            throw new CustomException(ErrorCode.ITEM_NOT_FOUND);
+            throw new ApiException(ErrorCode.ITEM_NOT_FOUND);
         }
 
         if (!item.isDeleted()) {
-            throw new CustomException(ErrorCode.ITEM_NOT_BLOCKED);
+            throw new ApiException(ErrorCode.ITEM_NOT_BLOCKED);
         }
 
         if (auction.getStatus() != AuctionStatus.BLOCKED) {
-            throw new CustomException(ErrorCode.AUCTION_NOT_BLOCKED);
+            throw new ApiException(ErrorCode.AUCTION_NOT_BLOCKED);
         }
 
         item.restore();
@@ -363,11 +363,11 @@ public class AdminService {
     @Transactional
     public AdminBlockUserRes blockUser(Long userId, String reason) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
         // 이미 차단된 사용자인지 체크
         if (user.getStatus() == UserStatus.BLOCKED) {
-            throw new CustomException(ErrorCode.USER_ALREADY_BLOCKED);
+            throw new ApiException(ErrorCode.USER_ALREADY_BLOCKED);
         }
 
         // 차단 유저가 최상위 입찰자인 경매를 롤백 (경쟁 입찰이 있는 경우)
@@ -382,11 +382,11 @@ public class AdminService {
     @Transactional
     public void unblockUser(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
         // 차단되지 않은 사용자인지 체크
         if (user.getStatus() != UserStatus.BLOCKED) {
-            throw new CustomException(ErrorCode.USER_NOT_BLOCKED);
+            throw new ApiException(ErrorCode.USER_NOT_BLOCKED);
         }
 
         user.unblock();
@@ -396,7 +396,7 @@ public class AdminService {
     @Transactional
     public void unblockUserByNickname(String nickname) {
         User user = userRepository.findByNickname(nickname)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
         // 차단되지 않은 사용자인 경우 요청만 삭제하고 종료
         if (user.getStatus() != UserStatus.BLOCKED) {

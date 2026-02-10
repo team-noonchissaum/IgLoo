@@ -11,7 +11,6 @@ import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.entity.Bid;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.repository.BidRepository;
-
 import noonchissaum.backend.domain.notification.constants.NotificationConstants;
 import noonchissaum.backend.domain.notification.entity.NotificationType;
 import noonchissaum.backend.domain.notification.service.NotificationService;
@@ -29,7 +28,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;

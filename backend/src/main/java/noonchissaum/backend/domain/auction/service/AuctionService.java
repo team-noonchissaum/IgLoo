@@ -10,17 +10,15 @@ import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.spec.AuctionSpecs;
 import noonchissaum.backend.domain.category.entity.Category;
-
 import noonchissaum.backend.domain.category.service.CategoryService;
 import noonchissaum.backend.domain.item.entity.Item;
-
 import noonchissaum.backend.domain.item.service.ItemService;
 import noonchissaum.backend.domain.item.service.WishService;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.RedisKeys;
-import noonchissaum.backend.global.exception.CustomException;
+import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.data.domain.*;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -115,7 +113,7 @@ public class AuctionService {
      */
     public AuctionRes getAuctionDetail(Long userId, Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
         boolean isWished = wishService.isWished(userId, auction.getItem().getId());
         return AuctionRes.from(auction, isWished);
     }
@@ -127,16 +125,16 @@ public class AuctionService {
     @Transactional
     public void cancelAuction(Long userId, Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
 
         // 판매자 본인 여부 확인
         if (!auction.getItem().getSeller().getId().equals(userId)) {
-            throw new CustomException(ErrorCode.AUCTION_NOT_OWNER);
+            throw new ApiException(ErrorCode.AUCTION_NOT_OWNER);
         }
 
         // 이미 입찰이 진행된 경우 취소 불가 (비즈니스 규칙)
         if (auction.getBidCount() > 0) {
-            throw new CustomException(ErrorCode.AUCTION_HAS_BIDS);
+            throw new ApiException(ErrorCode.AUCTION_HAS_BIDS);
         }
 
         /**
@@ -144,7 +142,7 @@ public class AuctionService {
          * 5분 이후 취소도 처리하려면 RUNNING 상태도 취소 허용
          */
         if (!(auction.getStatus() == AuctionStatus.READY || auction.getStatus() == AuctionStatus.RUNNING)) {
-            throw new CustomException(ErrorCode.AUCTION_INVALID_STATUS);
+            throw new ApiException(ErrorCode.AUCTION_INVALID_STATUS);
         }
 
         // 정책 기준: 등록 + 5분
