@@ -247,7 +247,7 @@ public class AdminService {
         refundCurrentBidder(auction);
 
         auctionRedisService.setRedis(auction.getId());
-        notifyAuctionStatusChange(auction, NotificationType.AUCTION_BLOCKED, NotificationConstants.MSG_AUCTION_BLOCKED);
+        notifyAuctionStatusChange(auction, NotificationType.AUCTION_BLOCKED, String.format(NotificationConstants.MSG_AUCTION_BLOCKED,auction.getItem().getTitle()));
     }
 
     /**
@@ -326,7 +326,7 @@ public class AdminService {
         item.restore();
         auction.reopen();
         auctionRedisService.setRedis(auction.getId());
-        notifyAuctionStatusChange(auction, NotificationType.AUCTION_UNBLOCKED, NotificationConstants.MSG_AUCTION_UNBLOCKED);
+        notifyAuctionStatusChange(auction, NotificationType.AUCTION_UNBLOCKED, String.format(NotificationConstants.MSG_AUCTION_UNBLOCKED,auction.getItem().getTitle()));
 
         reportRepository.updateStatusByTargetTypeAndTargetIdAndStatus(
                 ReportTargetType.AUCTION,

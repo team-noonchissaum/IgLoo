@@ -98,7 +98,7 @@ public class ReportService {
         notifyAuctionParticipants(
                 auctionId,
                 NotificationType.AUCTION_TEMP_BLOCKED,
-                NotificationConstants.MSG_AUCTION_TEMP_BLOCKED
+                String.format(NotificationConstants.MSG_AUCTION_TEMP_BLOCKED,auction.getItem().getThumbnailUrl())
         );
     }
 
