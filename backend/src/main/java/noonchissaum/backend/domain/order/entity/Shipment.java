@@ -123,10 +123,5 @@ public class Shipment extends BaseTimeEntity {
                 && address1 != null && !address1.isBlank();
     }
 
-    public void registerTracking(String carrierCode, String trackingNumber, LocalDateTime now) {
-        this.carrierCode = carrierCode;
-        this.trackingNumber = trackingNumber;
-        this.status = ShipmentStatus.SHIPPED;
-        this.shippedAt = now;
-    }
+
 }

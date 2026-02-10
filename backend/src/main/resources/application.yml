@@ -97,6 +97,10 @@ jwt:
   access-token-validity: 3600000
   refresh-token-validity: 604800000
 
+sweettracker:
+  base-url: https://info.sweettracker.co.kr
+  api-key: ${SWEETTRACKER_API_KEY}
+
 #logging:
 #  level:
 #    org.hibernate.SQL: debug

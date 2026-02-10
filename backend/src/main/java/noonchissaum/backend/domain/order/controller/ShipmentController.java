@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.order.dto.shipment.req.SaveAddressReq;
 import noonchissaum.backend.domain.order.dto.shipment.req.ShipmentReq;
 import noonchissaum.backend.domain.order.dto.shipment.res.ShipmentRes;
+import noonchissaum.backend.domain.order.dto.shipment.res.ShipmentTrackingRes;
 import noonchissaum.backend.domain.order.service.ShipmentService;
 import noonchissaum.backend.global.dto.ApiResponse;
 import noonchissaum.backend.global.security.UserPrincipal;
@@ -48,7 +49,7 @@ public class ShipmentController {
         return ApiResponse.success("송장 등록 완료", res);
     }
 
-    // 배송 조회
+    // 배송 조회(DB)
     @GetMapping("/{orderId}/shipment")
     public ApiResponse<ShipmentRes> getShipment(
             @PathVariable Long orderId,
@@ -57,5 +58,15 @@ public class ShipmentController {
         Long userId = userPrincipal.getUserId();
         ShipmentRes res = shipmentService.getShipment(orderId, userId);
         return ApiResponse.success("배송 조회 성공", res);
+    }
+    // 배송조회(실시간 배송 추적 조회)
+    @GetMapping("/{orderId}/shipment/tracking")
+    public ApiResponse<ShipmentTrackingRes> getTracking(
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        Long userId = userPrincipal.getUserId();
+        ShipmentTrackingRes res = shipmentService.getTracking(orderId, userId);
+        return ApiResponse.success("배송 추적 조회 성공", res);
     }
 }

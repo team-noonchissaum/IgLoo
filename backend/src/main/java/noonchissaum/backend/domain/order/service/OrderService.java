@@ -1,16 +1,16 @@
 package noonchissaum.backend.domain.order.service;
 
 import lombok.RequiredArgsConstructor;
-import noonchissaum.backend.domain.order.entity.Shipment;
+import noonchissaum.backend.domain.chat.service.ChatRoomService;
+import noonchissaum.backend.domain.order.dto.delivery.req.ChooseDeliveryTypeReq;
+import noonchissaum.backend.domain.order.dto.delivery.res.ChooseDeliveryTypeRes;
+import noonchissaum.backend.domain.order.entity.*;
 import noonchissaum.backend.domain.auction.entity.Auction;
-import noonchissaum.backend.domain.order.entity.Order;
-import noonchissaum.backend.domain.order.entity.OrderStatus;
 import noonchissaum.backend.domain.order.repository.OrderRepository;
 import noonchissaum.backend.domain.order.repository.ShipmentRepository;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
-import noonchissaum.backend.domain.order.entity.ShipmentStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
@@ -22,6 +22,8 @@ import java.time.LocalDate;
 public class OrderService {
     private final OrderRepository orderRepository;
     private final ShipmentRepository shipmentRepository;
+
+    private final ChatRoomService chatRoomService;
 
     @Transactional
     public void createOrder(Auction auction, User buyer) {
@@ -93,6 +95,20 @@ public class OrderService {
         LocalDateTime threshold = now.minusDays(3);
         return orderRepository.autoConfirmAfterDelivered(threshold, now);
     }
+    // 추가
+    @Transactional
+    public ChooseDeliveryTypeRes chooseDeliveryType(Long orderId, Long userId, ChooseDeliveryTypeReq req) {
+        Order order = orderRepository.findByIdAndBuyerId(orderId, userId)
+                .orElseThrow(() -> new ApiException(ErrorCode.ACCESS_DENIED));
 
+        order.chooseDeliveryType(req.type());
+
+        Long roomId = null;
+        if (req.type() == DeliveryType.DIRECT) {
+            roomId = chatRoomService.createRoom(order).getRoomId();
+        }
+
+        return new ChooseDeliveryTypeRes(order.getId(), order.getDeliveryType(), roomId);
+    }
 
 }

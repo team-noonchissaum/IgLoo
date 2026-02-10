@@ -33,6 +33,7 @@ public class OrderController {
      * - DIRECT면 채팅방 생성 후 roomId 반환
      * - SHIPMENT면 roomId=null
      */
+    // 컨트롤러에서 서비스 호출로 변경
     @PatchMapping("/{orderId}/delivery-type")
     public ApiResponse<ChooseDeliveryTypeRes> chooseDeliveryType(
             @AuthenticationPrincipal UserPrincipal principal,
@@ -40,22 +41,8 @@ public class OrderController {
             @RequestBody ChooseDeliveryTypeReq req
     ) {
         Long userId = principal.getUserId();
-
-        Order order = orderRepository.findByIdAndBuyerId(orderId, userId)
-                .orElseThrow(() -> new IllegalArgumentException("권한 없음 또는 주문 없음"));
-
-        order.chooseDeliveryType(req.type());
-
-        Long roomId = null;
-        if (req.type() == DeliveryType.DIRECT) {
-            ChatRoomRes res = chatRoomService.createRoom(order);
-            roomId = res.getRoomId();
-        }
-
-        return ApiResponse.success(
-                "거래 방식 선택 완료",
-                new ChooseDeliveryTypeRes(order.getId(), order.getDeliveryType(), roomId)
-        );
+        ChooseDeliveryTypeRes res = orderService.chooseDeliveryType(orderId, userId, req);
+        return ApiResponse.success("거래 방식 선택 완료", res);
     }
     /** 구매자: 배송완료 후 구매확정 */
     @PatchMapping("/{orderId}/confirm")
