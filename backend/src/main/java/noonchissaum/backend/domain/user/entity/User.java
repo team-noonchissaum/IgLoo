@@ -46,7 +46,21 @@ public class User extends BaseTimeEntity {
     private UserStatus status = UserStatus.ACTIVE;
 
     @Column(length = 100)
-    private String location;
+    private String address; // 사용자 전체주소(비 노출용)
+
+    @Column(length = 50)
+    private String dong; // 노출주소
+
+    // 추가: 위치 정보 필드
+    @Column(columnDefinition = "DOUBLE")
+    private Double latitude;
+
+    @Column(columnDefinition = "DOUBLE")
+    private Double longitude;
+
+    @Column(columnDefinition = "POINT SRID 4326", name = "location")
+    private String location; // WKT 형식: "POINT(longitude latitude)"
+
 
     private LocalDateTime deletedAt;
 
@@ -85,6 +99,16 @@ public class User extends BaseTimeEntity {
         }
         this.profileUrl = profileUrl; // 이미지 삭제시 null
     }
+    /** 위치 정보 업데이트(주소,위도 ,경도)*/
+    public void updateLocation(String address, String dong, Double latitude, Double longitude) {
+        this.address = address;
+        this.dong = dong;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        // WKT 형식으로 저장 (위도 경도 순서 주의)
+        this.location = String.format("POINT(%f %f)", longitude, latitude);
+    }
+
 
     /**
      * 활성된 사용자인지 확인

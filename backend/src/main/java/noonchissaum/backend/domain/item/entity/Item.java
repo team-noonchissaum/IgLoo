@@ -67,6 +67,14 @@ public class Item extends BaseTimeEntity {
     @Column(name = "thumbnail_url")
     private String thumbnailUrl;
 
+    /**아이템 위치 정보*/
+    @Column(columnDefinition = "POINT SRID 4326", name = "item_location")
+    private String itemLocation; // WKT 형식
+
+    @Column(length = 50)
+    private String sellerDong; // 판매자 동 단위 (노출용)
+
+
     @Builder
     public Item(User seller, Category category, String title, String description, BigDecimal startPrice) {
         this.seller = seller;
@@ -89,6 +97,17 @@ public class Item extends BaseTimeEntity {
 
     public void setThumbnailUrl(String thumbnailUrl) {
         this.thumbnailUrl = thumbnailUrl;
+    }
+    /**아이템 등록시 판매자 위치 저장*/
+    public void setSellerLocation(String location, String dong) {
+        this.itemLocation = location;
+        this.sellerDong = dong;
+    }
+
+    /**사용자 위치 변경시 기존 매물 위치 업데이트*/
+    public void updateSellerLocation(String newLocation, String newDong) {
+        this.itemLocation = newLocation;
+        this.sellerDong = newDong;
     }
 
     /**관리자 계정용*/
