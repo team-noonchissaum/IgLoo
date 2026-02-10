@@ -93,7 +93,7 @@ public class AuctionSchedulerService {
      * RUNNING -> DEADLINE
      */
     @Transactional
-    public void markDeadLine() {
+    public void markDeadline() {
         LocalDateTime now = LocalDateTime.now();
 
         // 1. DEADLINE으로 변경될 대상 ID 조회 (상태가 RUNNING인 것만)

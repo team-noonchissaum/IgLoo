@@ -27,7 +27,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -57,7 +56,7 @@ public class AuctionService {
     @Transactional
     public Long registerAuction(Long userId, AuctionRegisterReq request) {
         User seller = userService.getUserByUserId(userId);
-        Category category = categoryService.getcategory(request.getCategoryId());
+        Category category = categoryService.getCategory(request.getCategoryId());
 
         // 1. 상품(Item) 정보 생성 + 이미지 등록
         Item item = itemService.createItem(seller,category,request);
@@ -179,7 +178,7 @@ public class AuctionService {
         auctionRedisService.cancelAuction(auctionId);
     }
 
-    public void checkDeadLine(Long auctionId) {
+    public void checkDeadline(Long auctionId) {
         String rawEndTime = redisTemplate.opsForValue().get(RedisKeys.auctionEndTime(auctionId));
         String rawImminentMinutes = redisTemplate.opsForValue().get(RedisKeys.auctionImminentMinutes(auctionId));
         String isExtended = redisTemplate.opsForValue().get(RedisKeys.auctionIsExtended(auctionId));
@@ -217,35 +216,6 @@ public class AuctionService {
     public Page<AuctionRes> getMyAuctions(Long userId, Pageable pageable) {
         Page<Auction> auctions = auctionRepository.findAllByItem_Seller_Id(userId, pageable);
         return auctions.map(AuctionRes::from);
-    }
-
-    /**
-     * 관리자 통계용 - 날짜별 전체 경매 수
-     */
-    public long countByDate(LocalDate date) {
-        return auctionRepository.findAll().stream()
-                .filter(a -> a.getCreatedAt().toLocalDate().equals(date))
-                .count();
-    }
-
-    /**
-     * 관리자 통계용 - 날짜별 낙찰 성공 경매 수
-     */
-    public long countSuccessByDate(LocalDate date) {
-        return auctionRepository.findAll().stream()
-                .filter(a -> a.getStatus() == AuctionStatus.SUCCESS)
-                .filter(a -> a.getEndAt() != null && a.getEndAt().toLocalDate().equals(date))
-                .count();
-    }
-
-    /**
-     * 관리자 통계용 - 날짜별 유찰 경매 수
-     */
-    public long countFailedByDate(LocalDate date) {
-        return auctionRepository.findAll().stream()
-                .filter(a -> a.getStatus() == AuctionStatus.FAILED)
-                .filter(a -> a.getEndAt() != null && a.getEndAt().toLocalDate().equals(date))
-                .count();
     }
 
     @Transactional(readOnly = true)

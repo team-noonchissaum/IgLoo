@@ -43,12 +43,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Long userId = jwtTokenProvider.getUserId(token);
                 String roleStr = jwtTokenProvider.getRole(token);
 
-                //유저가 차단된 상태인지 검증
                 User user = userRepository.findById(userId).orElseThrow(()->new CustomException(ErrorCode.USER_NOT_FOUND));
-
-                if(user.getStatus()== UserStatus.BLOCKED){
-                    throw new CustomException(ErrorCode.USER_BLOCKED);
-                }
 
                 UserRole role = UserRole.valueOf(roleStr);
                 UserPrincipal principal = UserPrincipal.of(userId, role);
@@ -60,8 +55,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                 principal.getAuthorities()
                         );
 
-                    SecurityContextHolder.getContext()
-                            .setAuthentication(authentication);
+                SecurityContextHolder.getContext()
+                        .setAuthentication(authentication);
             }
         }
 

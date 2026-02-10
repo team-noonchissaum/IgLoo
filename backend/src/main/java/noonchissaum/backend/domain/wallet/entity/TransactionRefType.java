@@ -5,5 +5,6 @@ public enum TransactionRefType {
     BID,
     ORDER,
     WITHDRAW,
-    CHARGE
+    CHARGE,
+    COUPON
 }

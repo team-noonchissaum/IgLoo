@@ -1,9 +1,7 @@
 package noonchissaum.backend.domain.chat.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
 
@@ -11,6 +9,8 @@ import noonchissaum.backend.global.entity.BaseTimeEntity;
 @Table(name = "chat_messages")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 public class ChatMessage extends BaseTimeEntity {
 
     @Id
@@ -19,17 +19,22 @@ public class ChatMessage extends BaseTimeEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "room_id")
+    @JoinColumn(name = "room_id", nullable = false)
     private ChatRoom room;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sender_id")
+    @JoinColumn(name = "sender_id", nullable = false)
     private User sender;
 
     @Lob
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String message;
 
-    @Column(name = "is_read")
+    @Column(name = "is_read", nullable = false)
+    @Builder.Default
     private Boolean isRead = false;
+
+    public void markRead() {
+        this.isRead = true;
+    }
 }

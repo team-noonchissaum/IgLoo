@@ -2,6 +2,7 @@ package noonchissaum.backend.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import noonchissaum.backend.domain.item.dto.SellerItemRes;
 import noonchissaum.backend.domain.report.dto.ReportReq;
 import noonchissaum.backend.domain.report.entity.Report;
 import noonchissaum.backend.domain.report.entity.ReportStatus;
@@ -10,9 +11,11 @@ import noonchissaum.backend.domain.user.dto.response.*;
 import noonchissaum.backend.domain.user.entity.User;
 
 import noonchissaum.backend.domain.report.repository.ReportRepository;
+import noonchissaum.backend.domain.user.entity.UserStatus;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 
 import noonchissaum.backend.domain.wallet.service.WalletService;
+import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -34,14 +37,19 @@ public class UserService {
 
     /**본인 프로필 조회*/
     public ProfileRes getMyProfile(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        return new ProfileRes(
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        String blockReason = user.getStatus() == UserStatus.BLOCKED ? user.getBlockReason() : null;
+
+        return ProfileRes.of(
                 user.getId(),
                 user.getNickname(),
                 user.getProfileUrl(),
                 user.getEmail(),
                 user.getRole().name(),
-                user.getStatus().name()
+                user.getStatus().name(),
+                blockReason
         );
     }
 
@@ -54,9 +62,11 @@ public class UserService {
         return new OtherUserProfileRes(
                 user.getId(),
                 user.getNickname(),
-                user.getProfileUrl()
+                user.getProfileUrl(),
+                user.getItems().stream().map(SellerItemRes::from).toList()
         );
     }
+
     /**프로필 수정*/
     @Transactional
     public ProfileUpdateUserRes updateProfile(Long userId, ProfileUpdateUserReq request) {
@@ -163,19 +173,19 @@ public class UserService {
 
     /**탈퇴 첫 시도인지 확인*/
     public boolean isFirstDeleteAttempt(Long userId) {
-        String attemptKey = "user:delete:attempt:" + userId;
+        String attemptKey = RedisKeys.deleteAttemptUser(userId);
         return !Boolean.TRUE.equals(redisTemplate.hasKey(attemptKey));
     }
 
     /**탈퇴 시도 기록*/
     public void markDeleteAttempt(Long userId) {
-        String attemptKey = "user:delete:attempt:" + userId;
+        String attemptKey = RedisKeys.deleteAttemptUser(userId);
         redisTemplate.opsForValue().set(attemptKey, "1", 10, TimeUnit.MINUTES);
     }
 
     /**탈퇴 시도 기록 삭제*/
     public void clearDeleteAttempt(Long userId) {
-        String attemptKey = "user:delete:attempt:" + userId;
+        String attemptKey = RedisKeys.deleteAttemptUser(userId);
         redisTemplate.delete(attemptKey);
     }
 }

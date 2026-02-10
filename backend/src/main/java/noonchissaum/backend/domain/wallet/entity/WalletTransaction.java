@@ -32,11 +32,11 @@ public class WalletTransaction {
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private TransactionType type;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "ref_type")
+    @Column(name = "ref_type", length = 20)
     private TransactionRefType refType;
 
     @Column(name = "ref_id")

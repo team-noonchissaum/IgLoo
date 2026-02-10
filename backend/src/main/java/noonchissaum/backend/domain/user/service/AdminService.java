@@ -8,6 +8,9 @@ import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.service.AuctionRedisService;
 import noonchissaum.backend.domain.auction.service.AuctionService;
 import lombok.extern.slf4j.Slf4j;
+import noonchissaum.backend.domain.auction.service.AuctionService;
+import noonchissaum.backend.domain.auction.service.BidRollbackService;
+import noonchissaum.backend.domain.inquiry.service.InquiryService;
 import noonchissaum.backend.domain.item.entity.Item;
 import noonchissaum.backend.domain.notification.constants.NotificationConstants;
 import noonchissaum.backend.domain.notification.entity.NotificationType;
@@ -17,6 +20,7 @@ import noonchissaum.backend.domain.report.entity.Report;
 import noonchissaum.backend.domain.report.entity.ReportStatus;
 import noonchissaum.backend.domain.report.entity.ReportTargetType;
 import noonchissaum.backend.domain.report.repository.ReportRepository;
+import noonchissaum.backend.domain.statistics.repository.DailyStatisticsRepository;
 import noonchissaum.backend.domain.user.dto.request.AdminReportProcessReq;
 import noonchissaum.backend.domain.user.dto.response.*;
 import noonchissaum.backend.domain.user.entity.User;
@@ -55,6 +59,9 @@ public class AdminService {
     private final WalletRecordService walletRecordService;
     private final AuctionNotificationService auctionNotificationService;
     private final UserLockExecutor userLockExecutor;
+    private final InquiryService inquiryService;
+    private final DailyStatisticsRepository dailyStatisticsRepository;
+    private final BidRollbackService bidRollbackService;
 
     /* ================= 신고 관리 ================= */
 
@@ -90,6 +97,29 @@ public class AdminService {
                     report.getCreatedAt()
             );
         });
+    }
+
+    /**
+     * 특정 대상에 대한 신고 목록 조회
+     */
+    public List<AdminReportListRes> getReportsByTarget(ReportTargetType targetType, Long targetId) {
+        List<Report> reports = reportRepository.findByTargetTypeAndTargetId(targetType, targetId);
+
+        return reports.stream().map(report -> {
+            String targetName = getTargetName(report.getTargetType(), report.getTargetId());
+
+            return new AdminReportListRes(
+                    report.getId(),
+                    report.getReporter().getId(),
+                    report.getReporter().getNickname(),
+                    report.getTargetType().name(),
+                    report.getTargetId(),
+                    targetName,
+                    report.getReason(),
+                    report.getStatus().name(),
+                    report.getCreatedAt()
+            );
+        }).collect(Collectors.toList());
     }
 
     /**
@@ -195,6 +225,7 @@ public class AdminService {
             throw new CustomException(ErrorCode.ITEM_ALREADY_BLOCKED);
         }
 
+        // 진행 중이거나 임시차단인 경매만 차단 가능
         if (auction.getStatus() != AuctionStatus.READY &&
                 auction.getStatus() != AuctionStatus.RUNNING &&
                 auction.getStatus() != AuctionStatus.DEADLINE &&
@@ -291,6 +322,7 @@ public class AdminService {
         if (auction.getStatus() != AuctionStatus.TEMP_BLOCKED) {
             throw new CustomException(ErrorCode.AUCTION_NOT_BLOCKED);
         }
+
         item.restore();
         auction.reopen();
         auctionRedisService.setRedis(auction.getId());
@@ -312,6 +344,9 @@ public class AdminService {
         );
     }
 
+    /**
+     * 경매 차단 확정시 환불 로직
+     */
     private void refundCurrentBidder(Auction auction) {
         Long bidderId = auction.getCurrentBidder() != null ? auction.getCurrentBidder().getId() : null;
         if (bidderId == null || auction.getCurrentPrice() == null ||
@@ -327,6 +362,9 @@ public class AdminService {
         });
     }
 
+    /**
+     * 경매 차단상태 변경시 알림 발송
+     */
     private void notifyAuctionStatusChange(Auction auction, NotificationType type, String message) {
         List<Long> participantIds = bidRepository.findDistinctBidderIdsByAuctionId(auction.getId());
         for (Long userId : participantIds) {
@@ -395,6 +433,9 @@ public class AdminService {
             throw new CustomException(ErrorCode.USER_ALREADY_BLOCKED);
         }
 
+        // 차단 유저가 최상위 입찰자인 경매를 롤백 (경쟁 입찰이 있는 경우)
+        bidRollbackService.rollbackAuctionsForBlockedUser(userId);
+
         user.block(reason);
 
         return AdminBlockUserRes.from(user);
@@ -412,6 +453,24 @@ public class AdminService {
         }
 
         user.unblock();
+    }
+
+    /**닉네임으로 유저 차단 해제*/
+    @Transactional
+    public void unblockUserByNickname(String nickname) {
+        User user = userRepository.findByNickname(nickname)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 차단되지 않은 사용자인 경우 요청만 삭제하고 종료
+        if (user.getStatus() != UserStatus.BLOCKED) {
+            inquiryService.deleteByNickname(nickname);
+            return;
+        }
+
+        // 차단된 사용자인 경우 차단 해제 수행
+        unblockUser(user.getId());
+        // 차단 해제 성공 시 해당 닉네임의 차단 해제 요청 삭제
+        inquiryService.deleteByNickname(nickname);
     }
 
     /**유저 목록 조회*/
@@ -433,51 +492,20 @@ public class AdminService {
                 .map(AdminBlockedUserRes::from);
     }
 
-    /* =================== 일일 통계 ==================== */
+    /**
+     * 일일 통계 조회
+     * date가 없으면 어제 날짜 조회 (배치가 어제 데이터를 집계)
+     * date가 있으면 해당 날짜 조회
+     */
 
     public AdminStatisticsRes getDailyStatistics(String date) {
-        LocalDate targetDate = (date == null) ? LocalDate.now() : LocalDate.parse(date);
+        LocalDate targetDate = (date == null || date.isBlank())
+                ? LocalDate.now().minusDays(1)
+                : LocalDate.parse(date);
 
-        // 거래 통계
-        long orderTotal = orderService.countByDate(targetDate);
-        long orderCompleted = orderService.countCompletedByDate(targetDate);
-        long orderCanceled = orderService.countCanceledByDate(targetDate);
-
-        AdminStatisticsRes.TransactionStats transaction =
-                new AdminStatisticsRes.TransactionStats(
-                        (int) orderTotal,
-                        (int) orderCompleted,
-                        (int) orderCanceled
-                );
-
-        // 경매 통계
-        long auctionTotal = auctionService.countByDate(targetDate);
-        long auctionSuccess = auctionService.countSuccessByDate(targetDate);
-        long auctionFailed = auctionService.countFailedByDate(targetDate);
-        double successRate = (auctionTotal > 0) ? (double) auctionSuccess / auctionTotal * 100 : 0.0;
-
-        AdminStatisticsRes.AuctionStats auction =
-                new AdminStatisticsRes.AuctionStats(
-                        (int) auctionTotal,
-                        (int) auctionSuccess,
-                        (int) auctionFailed,
-                        Math.round(successRate * 10) / 10.0  // 소수점 1자리
-                );
-
-        // 크레딧 통계
-        long totalCharged = walletService.sumChargeByDate(targetDate);
-        long totalUsed = walletService.sumUsedByDate(targetDate);
-        long totalWithdrawn = walletService.sumWithdrawnByDate(targetDate);
-
-        AdminStatisticsRes.CreditStats credit =
-                new AdminStatisticsRes.CreditStats(totalCharged, totalUsed, totalWithdrawn);
-
-        return new AdminStatisticsRes(
-                targetDate.toString(),
-                transaction,
-                auction,
-                credit
-        );
+        return dailyStatisticsRepository.findByStatDate(targetDate)
+                .map(AdminStatisticsRes::from)
+                .orElse(null);
     }
 
 }

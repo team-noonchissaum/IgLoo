@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import noonchissaum.backend.domain.auth.entity.UserAuth;
+import noonchissaum.backend.domain.coupon.entity.CouponIssued;
+import noonchissaum.backend.domain.item.entity.Item;
 import noonchissaum.backend.domain.order.entity.ChargeCheck;
 import noonchissaum.backend.domain.order.entity.Payment;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
@@ -66,6 +68,12 @@ public class User extends BaseTimeEntity {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ChargeCheck> chargeChecks = new ArrayList<>();
 
+    @OneToMany(mappedBy = "seller", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<Item> items = new ArrayList<>();
+
+    @OneToMany(mappedBy = "victim", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<CouponIssued> issuedList = new ArrayList<>();
+
     @Builder
     public User(String email, String nickname, UserRole role, UserStatus status) {
         this.email = email;
@@ -119,7 +127,7 @@ public class User extends BaseTimeEntity {
         this.blockReason = null;
     }
 
-    public void registWallet(Wallet wallet) {
+    public void registerWallet(Wallet wallet) {
         this.wallet = wallet;
     }
 

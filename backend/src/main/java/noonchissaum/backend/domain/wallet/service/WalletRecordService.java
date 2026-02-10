@@ -40,6 +40,10 @@ public class WalletRecordService {
 
     }
 
+    /**
+     * 경매 차단 확정시 환불 로직
+     */
+
     @Transactional
     public void refundBlockedAuctionBid(Long userId, BigDecimal refundAmount, Long auctionId) {
         Wallet wallet = walletRepository.findByUserId(userId)
@@ -47,6 +51,7 @@ public class WalletRecordService {
         wallet.bidCanceled(refundAmount);
         walletTransactionRecordService.record(wallet, TransactionType.BID_RELEASE, refundAmount, auctionId);
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            //방어적 코드
             walletService.getBalance(userId);
             redisTemplate.opsForValue().increment(RedisKeys.userBalance(userId), refundAmount.longValue());
             redisTemplate.opsForValue().increment(RedisKeys.userLockedBalance(userId), refundAmount.negate().longValue());
@@ -61,6 +66,28 @@ public class WalletRecordService {
                 redisTemplate.opsForValue().increment(RedisKeys.userLockedBalance(userId), refundAmount.negate().longValue());
             }
         });
+    }
+
+    /**
+     * 입찰 롤백 시 DB 지갑 역처리
+     * - 차단 유저: bidCanceled (환불)
+     * - 이전 입찰자: bid (재동결)
+     */
+    @Transactional
+    public void rollbackWalletRecord(Long blockedUserId, Long previousBidderId,
+                                     BigDecimal blockedUserRefundAmount, BigDecimal previousBidderRelockAmount,
+                                     Long auctionId) {
+        Wallet blockedUserWallet = walletRepository.findByUserId(blockedUserId)
+                .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+        blockedUserWallet.bidCanceled(blockedUserRefundAmount);
+        walletTransactionRecordService.record(blockedUserWallet, TransactionType.BID_RELEASE, blockedUserRefundAmount, auctionId);
+
+        if (previousBidderId != null && previousBidderId != -1L) {
+            Wallet prevBidUserWallet = walletRepository.findByUserId(previousBidderId)
+                    .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+            prevBidUserWallet.bid(previousBidderRelockAmount);
+            walletTransactionRecordService.record(prevBidUserWallet, TransactionType.BID_HOLD, previousBidderRelockAmount, auctionId);
+        }
     }
 
 }

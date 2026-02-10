@@ -194,4 +194,16 @@ public class Auction extends BaseTimeEntity {
     public User getSeller() {
         return this.item != null ? this.item.getSeller() : null;
     }
+
+    /**
+     * 입찰 롤백 (차단 유저 제거 시)
+     * @param previousBidder null이면 무입찰 상태 (등록가)
+     * @param rollbackPrice 롤백 후 현재가
+     * @param rollbackBidCount 롤백 후 입찰 횟수
+     */
+    public void rollbackBid(User previousBidder, BigDecimal rollbackPrice, int rollbackBidCount) {
+        this.currentBidder = previousBidder;
+        this.currentPrice = rollbackPrice;
+        this.bidCount = rollbackBidCount;
+    }
 }

@@ -3,7 +3,6 @@ package noonchissaum.backend.domain.wallet.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.user.entity.User;
-import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.domain.wallet.dto.wallet.res.WalletRes;
 import noonchissaum.backend.domain.wallet.entity.TransactionType;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
@@ -12,7 +11,6 @@ import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import noonchissaum.backend.global.util.UserLockExecutor;
-import org.springframework.context.ApplicationEventPublisher;
 import noonchissaum.backend.domain.wallet.repository.WalletTransactionRepository;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -20,8 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Duration;
-import java.time.LocalDate;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -90,39 +86,6 @@ public class WalletService {
         redisTemplate.delete(RedisKeys.userLockedBalance(userId));
     }
 
-    /**
-     * 관리자 통계용 - 날짜별 충전 금액 합계
-     */
-    public long sumChargeByDate(LocalDate date) {
-        return walletTransactionRepository.findAll().stream()
-                .filter(t -> t.getType() == TransactionType.CHARGE)
-                .filter(t -> t.getCreatedAt().toLocalDate().equals(date))
-                .map(t -> t.getAmount().longValue())
-                .reduce(0L, Long::sum);
-    }
-
-    /**
-     * 관리자 통계용 - 날짜별 사용 금액 합계
-     */
-    public long sumUsedByDate(LocalDate date) {
-        return walletTransactionRepository.findAll().stream()
-                .filter(t -> t.getType() == TransactionType.BID_HOLD)
-                .filter(t -> t.getCreatedAt().toLocalDate().equals(date))
-                .map(t -> t.getAmount().longValue())
-                .reduce(0L, Long::sum);
-    }
-
-    /**
-     * 관리자 통계용 - 날짜별 출금 금액 합계
-     */
-    public long sumWithdrawnByDate(LocalDate date) {
-        return walletTransactionRepository.findAll().stream()
-                .filter(t -> t.getType() == TransactionType.WITHDRAW_CONFIRM)
-                .filter(t -> t.getCreatedAt().toLocalDate().equals(date))
-                .map(t -> t.getAmount().longValue())
-                .reduce(0L, Long::sum);
-    }
-
 
     @Transactional
     public void setAuctionDeposit(Long userId, Long auctionId, int amount, String caseName) {
@@ -158,5 +121,37 @@ public class WalletService {
         Wallet wallet = walletRepository.findByUserId(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
         return WalletRes.from(wallet);
+    }
+
+    /**
+     * 입찰 롤백 시 지갑 역처리 (차단 유저 제거)
+     * - 차단 유저: locked → balance (환불)
+     * - 이전 입찰자: balance → locked (재동결)
+     */
+    public void rollbackBidWallet(Long blockedUserId, Long previousBidderId,
+                                  BigDecimal blockedUserRefundAmount, BigDecimal previousBidderRelockAmount) {
+        // Redis 캐시 로드 (없으면 DB에서)
+        getBalance(blockedUserId);
+        if (previousBidderId != null && previousBidderId != -1L) {
+            getBalance(previousBidderId);
+        }
+
+        // 1. 차단 유저 환불: lockedBalance 감소, balance 증가
+        String blockedBalanceKey = RedisKeys.userBalance(blockedUserId);
+        String blockedLockedKey = RedisKeys.userLockedBalance(blockedUserId);
+        redisTemplate.opsForValue().increment(blockedBalanceKey, blockedUserRefundAmount.longValue());
+        redisTemplate.opsForValue().decrement(blockedLockedKey, blockedUserRefundAmount.longValue());
+
+        // 2. 이전 입찰자 재동결: balance 감소, lockedBalance 증가
+        if (previousBidderId != null && previousBidderId != -1L) {
+            String prevBalanceKey = RedisKeys.userBalance(previousBidderId);
+            String prevLockedKey = RedisKeys.userLockedBalance(previousBidderId);
+            Long remain = redisTemplate.opsForValue().decrement(prevBalanceKey, previousBidderRelockAmount.longValue());
+            if (remain != null && remain < 0) {
+                redisTemplate.opsForValue().increment(prevBalanceKey, previousBidderRelockAmount.longValue());
+                throw new ApiException(ErrorCode.INSUFFICIENT_BALANCE);
+            }
+            redisTemplate.opsForValue().increment(prevLockedKey, previousBidderRelockAmount.longValue());
+        }
     }
 }
