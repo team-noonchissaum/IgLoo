@@ -195,7 +195,7 @@ public class AuctionSchedulerService {
             if (changed == 1) {
                 auctionRedisService.setRedis(auctionId);
                 // 주문 생성
-                orderService.createOrder(auction, winnerBid.getBidder());
+                orderService.createOrder(auction, winnerBid.getBidder(), winnerBid.getBidPrice());
 
                 // 알림 발송 (낙찰자, 패찰자, 판매자)
                 sendSuccessNotifications(auction, winnerBid);

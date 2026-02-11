@@ -8,12 +8,16 @@ import noonchissaum.backend.domain.order.entity.*;
 import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.order.repository.OrderRepository;
 import noonchissaum.backend.domain.order.repository.ShipmentRepository;
+import noonchissaum.backend.domain.settlement.service.SettlementService;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import java.time.LocalDate;
 
@@ -24,9 +28,10 @@ public class OrderService {
     private final ShipmentRepository shipmentRepository;
 
     private final ChatRoomService chatRoomService;
+    private final SettlementService settlementService;
 
     @Transactional
-    public void createOrder(Auction auction, User buyer) {
+    public void createOrder(Auction auction, User buyer, BigDecimal finalPrice) {
         Order order = Order.builder()
                 .auction(auction)
                 .item(auction.getItem())
@@ -34,6 +39,7 @@ public class OrderService {
                 .seller(auction.getSeller())
                 .status(OrderStatus.CREATED)
                 .deliveryType(null)// 아직 선택전
+                .finalPrice(finalPrice)
                 .build();
         orderRepository.save(order);
     }
@@ -86,14 +92,32 @@ public class OrderService {
 
         // 엔티티 메서드(너가 추가한 confirmAfterDelivered) 사용
         order.confirmAfterDelivered();
+        // 정산
+        settlementService.settleOnOrderConfirmed(orderId);
+
     }
 
     /** (스케줄러) 배송완료 + 3일 자동확정 */
     @Transactional
     public int autoConfirmDeliveredOrders() {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime threshold = now.minusDays(3);
-        return orderRepository.autoConfirmAfterDelivered(threshold, now);
+        LocalDateTime threshold = LocalDateTime.now().minusDays(3);
+
+        List<Long> targets = orderRepository.findAutoConfirmTargets(threshold);
+        int done = 0;
+
+        for (Long orderId : targets) {
+            Order order = orderRepository.findById(orderId).orElse(null);
+            if (order == null) continue;
+
+            if (order.getConfirmedAt() != null) continue;
+
+            order.confirmAfterDelivered();
+            settlementService.settleOnOrderConfirmed(orderId);
+
+            done++;
+        }
+
+        return done;
     }
     // 추가
     @Transactional
@@ -110,5 +134,17 @@ public class OrderService {
 
         return new ChooseDeliveryTypeRes(order.getId(), order.getDeliveryType(), roomId);
     }
+
+    @Transactional
+    public void confirmDirectTrade(Long orderId, Long buyerId) {
+        Order order = orderRepository.findByIdAndBuyerId(orderId, buyerId)
+                .orElseThrow(() -> new ApiException(ErrorCode.ACCESS_DENIED));
+
+        if (order.getDeliveryType() != DeliveryType.DIRECT) {
+            throw new ApiException(ErrorCode.DELIVERY_TYPE_NOT_DIRECT);
+        }
+        order.confirmDirectTrade();
+    }
+
 
 }

@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import org.springframework.data.jpa.repository.Modifying;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order,Long> {
@@ -25,19 +26,17 @@ public interface OrderRepository extends JpaRepository<Order,Long> {
     Optional<Order> findByIdAndSellerId(Long orderId, Long sellerId);
 
     // 배송완료 + 3일 자동확정 (deliveredAt 기준)
-    @Modifying
+    // 대상 조회 추가
     @Query(value = """
-        UPDATE orders o
+        SELECT o.order_id
+        FROM orders o
         JOIN shipments s ON s.order_id = o.order_id
-        SET o.status = 'COMPLETED',
-            o.confirmed_at = :now
-        WHERE o.status <> 'COMPLETED'
-          AND s.status = 'DELIVERED'
-          AND s.delivered_at <= :threshold
-          AND o.confirmed_at IS NULL
+        WHERE o.confirmed_at IS NULL
+            AND o.status <> 'CANCELED'
+            AND s.status = 'DELIVERED'
+            AND s.delivered_at <= :threshold
+        ORDER BY o.order_id ASC
+        LIMIT 200
     """, nativeQuery = true)
-    int autoConfirmAfterDelivered(@Param("threshold") LocalDateTime threshold,
-                                  @Param("now") LocalDateTime now);
-
-
+    List<Long> findAutoConfirmTargets(@Param("threshold") LocalDateTime threshold);
 }

@@ -116,10 +116,65 @@ public class WalletService {
             }
         });
     }
+    // 정산용 메서드
+    @Transactional
+    public void releaseBuyerLockedForOrder(Long buyerId, BigDecimal amount, Long orderId) {
+        userLockExecutor.withUserLock(buyerId, () -> {
+            Wallet wallet = walletRepository.findByUserId(buyerId)
+                    .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+
+            // DB 기준으로 안전하게 차감
+            wallet.releaseLocked(amount);
+
+            // Redis 캐시 있으면 동기화
+            String lockedKey = RedisKeys.userLockedBalance(buyerId);
+            if (Boolean.TRUE.equals(redisTemplate.hasKey(lockedKey))) {
+                redisTemplate.opsForValue().decrement(lockedKey, amount.longValue());
+            }
+
+            // 거래내역 기록 (정산용 타입 추천)
+            walletTransactionRecordService.record(wallet, TransactionType.SETTLEMENT_OUT, amount, orderId);
+        });
+    }
+    @Transactional
+    public void settleToSellerForOrder(Long sellerId, BigDecimal amount, Long orderId) {
+        userLockExecutor.withUserLock(sellerId, () -> {
+            Wallet wallet = walletRepository.findByUserId(sellerId)
+                    .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+
+            wallet.addBalance(amount);
+
+            String balanceKey = RedisKeys.userBalance(sellerId);
+            if (Boolean.TRUE.equals(redisTemplate.hasKey(balanceKey))) {
+                redisTemplate.opsForValue().increment(balanceKey, amount.longValue());
+            }
+
+            walletTransactionRecordService.record(wallet, TransactionType.SETTLEMENT_IN, amount, orderId);
+        });
+    }
+    @Transactional
+    public void settleFeeToPlatform(Long systemUserId, BigDecimal feeAmount, Long orderId) {
+        userLockExecutor.withUserLock(systemUserId, () -> {
+            Wallet wallet = walletRepository.findByUserId(systemUserId)
+                    .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+
+            wallet.addBalance(feeAmount);
+
+            String balanceKey = RedisKeys.userBalance(systemUserId);
+            if (Boolean.TRUE.equals(redisTemplate.hasKey(balanceKey))) {
+                redisTemplate.opsForValue().increment(balanceKey, feeAmount.longValue());
+            }
+
+            walletTransactionRecordService.record(wallet, TransactionType.SETTLEMENT_IN, feeAmount, orderId);
+        });
+    }
+
 
     public WalletRes getMyWallet(Long userId) {
         Wallet wallet = walletRepository.findByUserId(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
         return WalletRes.from(wallet);
     }
+
+
 }

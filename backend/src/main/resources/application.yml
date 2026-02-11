@@ -101,6 +101,10 @@ sweettracker:
   base-url: https://info.sweettracker.co.kr
   api-key: ${SWEETTRACKER_API_KEY}
 
+platform:
+  system-user-id: 10000
+  fee-rate: 0.10
+
 #logging:
 #  level:
 #    org.hibernate.SQL: debug

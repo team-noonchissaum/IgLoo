@@ -10,12 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import noonchissaum.backend.domain.order.dto.delivery.req.ChooseDeliveryTypeReq;
 import noonchissaum.backend.domain.order.dto.delivery.res.ChooseDeliveryTypeRes;
-import noonchissaum.backend.domain.order.entity.Order;
-import noonchissaum.backend.domain.order.entity.DeliveryType;
-import noonchissaum.backend.domain.order.repository.OrderRepository;
-import noonchissaum.backend.domain.chat.service.ChatRoomService;
 import noonchissaum.backend.domain.order.service.OrderService;
-import noonchissaum.backend.domain.chat.dto.res.ChatRoomRes;
 import noonchissaum.backend.global.dto.ApiResponse;
 
 
@@ -23,8 +18,6 @@ import noonchissaum.backend.global.dto.ApiResponse;
 @RequiredArgsConstructor
 @RequestMapping("/api/orders")
 public class OrderController {
-    private final OrderRepository orderRepository;
-    private final ChatRoomService chatRoomService;
     private final OrderService orderService;
 
     /**
@@ -45,12 +38,23 @@ public class OrderController {
         return ApiResponse.success("거래 방식 선택 완료", res);
     }
     /** 구매자: 배송완료 후 구매확정 */
-    @PatchMapping("/{orderId}/confirm")
-    public ApiResponse<Void> confirm(
+    @PatchMapping("/{orderId}/shipment/confirm")
+    public ApiResponse<Void> confirmDelivered(
             @PathVariable Long orderId,
-            @AuthenticationPrincipal UserPrincipal principal
+            @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        orderService.confirmAfterDelivered(orderId, principal.getUserId());
+        orderService.confirmAfterDelivered(orderId, userPrincipal.getUserId());
+        return ApiResponse.success("구매확정 완료", null);
+    }
+
+    /**
+     * 직거래: 구매확정 */
+    @PatchMapping("/{orderId}/direct/confirm")
+    public ApiResponse<Void> confirmDirect(
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        orderService.confirmDirectTrade(orderId, userPrincipal.getUserId());
         return ApiResponse.success("구매확정 완료", null);
     }
 

@@ -140,7 +140,12 @@ public enum ErrorCode {
     //Lock
     LOCK_ACQUISITION(HttpStatus.TOO_MANY_REQUESTS, "L001", "락 획득에 실패했습니다. 다시 시도해주세요"),
 
+    // Settlement Error
+    INVALID_ORDER_STATUS_FOR_SETTLEMENT(HttpStatus.BAD_REQUEST, "ORDER-002", "정산을 진행할 수 없는 주문 상태입니다."),
+
     // Order Error
+    DELIVERY_TYPE_NOT_DIRECT(HttpStatus.BAD_REQUEST, "DELIVERY-002", "배송 타입이 직거래가 아닙니다."),
+    INVALID_ORDER_AMOUNT(HttpStatus.BAD_REQUEST, "ORDER-003", "주문 금액이 올바르지 않습니다."),
     SHIPMENT_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "SHIP-003", "유효한 배송 요청 건을 찾을 수 없습니다."),
     SHIPMENT_ALREADY_SHIPPED(HttpStatus.BAD_REQUEST, "SHIP-004", "이미 발송 처리가 완료된 배송 건입니다."),
     SHIPMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "SHIP-001", "배송 정보를 찾을 수 없습니다."),
@@ -155,3 +160,4 @@ public enum ErrorCode {
     private final String code;
     private final String message;
 }
+

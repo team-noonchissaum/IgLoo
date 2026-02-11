@@ -6,6 +6,8 @@ import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.item.entity.Item;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -54,6 +56,9 @@ public class Order extends BaseTimeEntity {
     @Column(name = "confirmed_at")
     private LocalDateTime confirmedAt;
 
+    @Column(name = "final_price", precision = 15, scale = 0, nullable = false)
+    private BigDecimal finalPrice;
+
     public void chooseDeliveryType(DeliveryType type){
         if(this.deliveryType != null){
             throw new IllegalStateException("이미 거래방식이 선택되었습니다.");
@@ -66,5 +71,18 @@ public class Order extends BaseTimeEntity {
         this.status = OrderStatus.COMPLETED;
         this.confirmedAt = LocalDateTime.now();
     }
+
+    // 직거래 후 구매확정
+
+    public void confirmDirectTrade() {
+        if (this.deliveryType != DeliveryType.DIRECT) {
+            throw new IllegalStateException("직거래 주문만 구매확정이 가능합니다.");
+        }
+        if (this.status != OrderStatus.CREATED && this.status != OrderStatus.SHIPPED) {
+            throw new IllegalStateException("현재 상태에서는 구매확정이 불가능합니다.");
+        }
+        this.status = OrderStatus.COMPLETED;
+    }
+
 
 }
