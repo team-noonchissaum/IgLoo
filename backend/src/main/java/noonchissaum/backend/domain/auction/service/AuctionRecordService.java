@@ -2,6 +2,7 @@ package noonchissaum.backend.domain.auction.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import noonchissaum.backend.domain.auction.dto.ws.AuctionExtendedPayload;
 import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.user.entity.User;
@@ -62,7 +63,7 @@ public class AuctionRecordService {
         // 4. 연장된 경우 웹소켓 알림 발송
         if (extended) {
             auctionMessageService.sendAuctionExtended(auctionId, 
-                noonchissaum.backend.domain.auction.dto.ws.AuctionExtendedPayload.builder()
+                AuctionExtendedPayload.builder()
                     .auctionId(auctionId)
                     .endAt(auction.getEndAt())
                     .isExtended(true)
