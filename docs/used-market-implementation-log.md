@@ -26,6 +26,8 @@
 - 변경: OpenAI 분석/분류 응답 형식 보정 로직 추가.
 - 변경: 분류 후보 비어있을 때 선택된 카테고리 후보 자동 보강.
 - 변경: `category-aliases.json` 확장 및 카테고리 ID 재매핑.
+- 완료: AI 서비스 Dockerfile 추가 및 docker-compose에 ai-service 포함.
+- 완료: GitHub Actions에 ai-service 빌드/배포 추가.
 - 변경: S3 이미지 URL을 presigned URL로 변경(OpenAI 접근 가능).
 - 변경: AI 설명 생성 시 로그 출력 추가.
 - 변경: AI 설명 생성 로그를 `print`로 강제 출력.
