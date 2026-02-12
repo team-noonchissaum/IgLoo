@@ -12,6 +12,7 @@ import noonchissaum.backend.domain.order.entity.ChargeCheck;
 import noonchissaum.backend.domain.order.entity.Payment;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
+import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 
@@ -144,7 +145,7 @@ public class User extends BaseTimeEntity {
      */
     public void unblock() {
         if (this.status != UserStatus.BLOCKED) {
-            throw new CustomException(ErrorCode.USER_NOT_BLOCKED);
+            throw new ApiException(ErrorCode.USER_NOT_BLOCKED);
         }
         this.status = UserStatus.ACTIVE;
         this.blockedAt = null;

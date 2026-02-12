@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.*;
 public class MyPageController {
 
     private final MyPageService myPageService;
-    private final BidService bidService;
 
     /**마이페이지 조회
      * GET /api/mypage */
@@ -45,14 +44,5 @@ public class MyPageController {
     ) {
         Page<AuctionRes> response = myPageService.getMyAuctions(principal.getUserId(), pageable);
         return ResponseEntity.ok(ApiResponse.success("내 등록 경매 조회 성공", response));
-    }
-
-    /**본인 위치 저장하기*/
-    @PutMapping("/location")
-    public ResponseEntity<String> updateUserLocation(
-            @RequestParam Long userId,  // 임시: 파라미터로 받음
-            @RequestBody LocationUpdateReq request) {
-        myPageService.updateUserLocation(userId, request);
-        return ResponseEntity.ok("위치가 저장되었습니다");
     }
 }

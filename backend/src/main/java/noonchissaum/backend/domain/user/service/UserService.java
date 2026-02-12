@@ -50,7 +50,8 @@ public class UserService {
                 user.getEmail(),
                 user.getRole().name(),
                 user.getStatus().name(),
-                blockReason
+                blockReason,
+                user.getDong()
         );
     }
 
@@ -64,6 +65,7 @@ public class UserService {
                 user.getId(),
                 user.getNickname(),
                 user.getProfileUrl(),
+                user.getDong(),
                 user.getItems().stream().map(SellerItemRes::from).toList()
         );
     }

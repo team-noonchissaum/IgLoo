@@ -17,4 +17,7 @@ public class SignupReq {
 
     @NotBlank
     private String nickname;
+
+    @NotBlank
+    private String address;
 }

@@ -10,11 +10,8 @@ import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
-import noonchissaum.backend.global.dto.LocationDto;
-import noonchissaum.backend.global.dto.LocationUpdateReq;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
-import noonchissaum.backend.global.service.LocationService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -31,7 +28,6 @@ public class MyPageService {
     private final UserRepository userRepository;
     private final WalletRepository walletRepository;
     private final AuctionService auctionService;
-    private final LocationService locationService;
 
     /**마이페이지 조회*/
     public MyPageRes getMyPage(Long userId) {
@@ -68,29 +64,4 @@ public class MyPageService {
     public Page<AuctionRes> getMyAuctions(Long userId, Pageable pageable) {
         return auctionService.getMyAuctions(userId, pageable);
     }
-
-
-    @Transactional
-    public void updateUserLocation(Long userId, LocationUpdateReq request) {
-        request.validate();
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
-
-        // 주소 → 좌표 변환
-        LocationDto locationDto = locationService.getCoordinates(request.getAddress());
-
-        // User 위치 업데이트
-        user.updateLocation(
-                locationDto.getAddress(),
-                locationDto.getDong(),
-                locationDto.getLatitude(),
-                locationDto.getLongitude()
-        );
-
-        userRepository.save(user);
-    }
-
-
-
 }

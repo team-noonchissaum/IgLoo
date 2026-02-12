@@ -10,8 +10,10 @@ import noonchissaum.backend.domain.auth.dto.response.SignupRes;
 import noonchissaum.backend.domain.auth.entity.AuthType;
 import noonchissaum.backend.domain.auth.entity.UserAuth;
 import noonchissaum.backend.domain.auth.repository.UserAuthRepository;
+import noonchissaum.backend.domain.user.dto.request.UserLocationUpdateReq;
 import noonchissaum.backend.domain.user.entity.*;
 import noonchissaum.backend.domain.user.repository.UserRepository;
+import noonchissaum.backend.domain.user.service.UserLocationService;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.ApiException;
@@ -31,6 +33,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
     private final WalletService walletService;
+    private final UserLocationService userLocationService;
 
     /**로컬 회원가입*/
     @Transactional
@@ -48,6 +51,11 @@ public class AuthService {
                 UserStatus.ACTIVE
         );
         User saved = userRepository.save(user);
+
+        userLocationService.updateLocation(
+                saved.getId(),
+                new UserLocationUpdateReq(signupReq.getAddress())
+        );
 
         UserAuth userAuth = UserAuth.createLocal(
                 user,
