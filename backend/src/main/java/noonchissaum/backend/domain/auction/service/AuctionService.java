@@ -15,11 +15,13 @@ import noonchissaum.backend.domain.item.entity.Item;
 import noonchissaum.backend.domain.item.service.ItemService;
 import noonchissaum.backend.domain.item.service.WishService;
 import noonchissaum.backend.domain.user.entity.User;
+import noonchissaum.backend.domain.user.repository.UserRepository;
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
+import noonchissaum.backend.global.service.LocationService;
 import org.springframework.data.domain.*;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -45,6 +47,8 @@ public class AuctionService {
     private final AuctionQueryService auctionQueryService;
     private final AuctionIndexService auctionIndexService;
     private final WalletService walletService;
+    private final LocationService locationService;
+    private final UserRepository userRepository;
 
 
     /**
@@ -267,4 +271,63 @@ public class AuctionService {
                     .orElse(base);
         });
     }
+
+    /**
+     * 사용자의 현재 위치 기준 반경 내 경매 검색
+     */
+    public Page<AuctionRes> searchAuctionsByUserLocation(
+            Long userId,
+            Double radiusKm,
+            Pageable pageable) {
+
+        User user = userService.getUserByUserId(userId);
+
+        if (user.getLatitude() == null || user.getLongitude() == null) {
+            throw new ApiException(ErrorCode.USER_LOCATION_NOT_SET);
+        }
+
+        // 좌표 변환: 반경을 사각형으로
+        double latOffset = radiusKm / 111.0;
+        double lonOffset = radiusKm / (111.0 * Math.cos(Math.toRadians(user.getLatitude())));
+
+
+        // DB에서 사각형 범위 필터링
+        List<Auction> candidates = auctionRepository.findAuctionsInBoundingBox(
+                user.getLatitude() - latOffset,
+                user.getLatitude() + latOffset,
+                user.getLongitude() - lonOffset,
+                user.getLongitude() + lonOffset
+        );
+
+        // 정확한 거리로 필터링
+        List<Auction> filteredAuctions = candidates.stream()
+                .filter(a -> {
+                    Double distance = locationService.calculateDistance(
+                            user.getLatitude(),
+                            user.getLongitude(),
+                            a.getItem().getSeller().getLatitude(),
+                            a.getItem().getSeller().getLongitude()
+                    );
+                    return distance <= radiusKm;
+                })
+                .toList();
+
+        // 찜 여부
+        List<Long> itemIds = filteredAuctions.stream()
+                .map(a -> a.getItem().getId())
+                .distinct()
+                .toList();
+
+        Set<Long> wishedItemIds = wishService.getWishedItemIds(userId, itemIds);
+
+        return new PageImpl<>(
+                filteredAuctions.stream()
+                        .map(a -> AuctionRes.from(a, wishedItemIds.contains(a.getItem().getId())))
+                        .toList(),
+                pageable,
+                filteredAuctions.size()
+        );
+    }
+
+
 }

@@ -124,6 +124,9 @@ public class Item extends BaseTimeEntity {
         }
         this.status = true;
     }
+    public void setSellerDong(String dong) {
+        this.sellerDong = dong;
+    }
 
     public boolean isDeleted() {
         return Boolean.FALSE.equals(this.status);

@@ -2,12 +2,16 @@ package noonchissaum.backend.global.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import noonchissaum.backend.domain.auction.entity.Auction;
+import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.global.dto.KakaoGeocodeRes;
 import noonchissaum.backend.global.dto.KakaoKeywordRes;
 import noonchissaum.backend.global.dto.LocationDto;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -22,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 public class LocationService {
 
     private final RestTemplate restTemplate;
+    private final AuctionRepository auctionRepository;
 
     @Value("${kakao.map.rest-api-key}")
     private String kakaoRestApiKey;
@@ -64,11 +69,10 @@ public class LocationService {
             String encodedAddress = URLEncoder.encode(address, StandardCharsets.UTF_8);
             String urlString = KAKAO_ADDRESS_URL + "?query=" + encodedAddress;
 
-            log.info("=== 주소 검색 URL: {}", urlString);
+//            log.info("=== 주소 검색 URL: {}", urlString);
 
             // URI 객체로 변환해서 이중 인코딩 방지
             URI uri = new URI(urlString);
-
             HttpEntity<Void> entity = new HttpEntity<>(headers);
 
             ResponseEntity<KakaoGeocodeRes> response = restTemplate.exchange(
@@ -78,7 +82,7 @@ public class LocationService {
                     KakaoGeocodeRes.class
             );
 
-            log.info("주소 검색 응답: {}", response.getBody());
+//            log.info("주소 검색 응답: {}", response.getBody());
 
             KakaoGeocodeRes body = response.getBody();
             if (body == null || body.getDocuments() == null || body.getDocuments().isEmpty()) {
@@ -86,17 +90,33 @@ public class LocationService {
             }
 
             KakaoGeocodeRes.Document doc = body.getDocuments().get(0);
+            // ← 로그 추가
+            log.info("=== 카카오 API 응답 ===");
+            log.info("입력 주소: {}", address);
+            log.info("도로명 주소: {}", doc.getRoadAddress());
+            log.info("지번 주소: {}", doc.getAddress());
+
+            String jibunAddress = doc.getAddress() != null
+                    ? doc.getAddress().getAddressName() : null;
+            log.info("지번 주소명: {}", jibunAddress);
+
+            String dongFromJibun = extractDongFromAddress(jibunAddress);
+            log.info("추출된 동: {}", dongFromJibun);
 
             String roadAddress = doc.getRoadAddress() != null
                     ? doc.getRoadAddress().getAddressName() : null;
-            String jibunAddress = doc.getAddress() != null
-                    ? doc.getAddress().getAddressName() : null;
+
+//            String jibunAddress = doc.getAddress() != null
+//                    ? doc.getAddress().getAddressName() : null;
+//            String dongFromJibun = extractDongFromAddress(jibunAddress);
+
 
             return LocationDto.builder()
                     .latitude(Double.parseDouble(doc.getY()))
                     .longitude(Double.parseDouble(doc.getX()))
                     .address(roadAddress != null ? roadAddress : doc.getAddressName())
-                    .jibunAddress(jibunAddress != null ? jibunAddress : doc.getAddressName())
+                    .jibunAddress(jibunAddress)
+                    .dong(dongFromJibun)  // ← 지번에서 추출한 동
                     .build();
 
         } catch (Exception e) {
@@ -120,7 +140,6 @@ public class LocationService {
 
             // URI 객체로 변환해서 이중 인코딩 방지
             URI uri = new URI(urlString);
-
             HttpEntity<Void> entity = new HttpEntity<>(headers);
 
             ResponseEntity<KakaoKeywordRes> response = restTemplate.exchange(
@@ -138,12 +157,15 @@ public class LocationService {
             }
 
             KakaoKeywordRes.Document doc = body.getDocuments().get(0);
+            String jibunAddress = doc.getAddressName();  //도로명 주소 가져오면
+            String dongFromJibun = extractDongFromAddress(jibunAddress);//거기서 dong을 추출함
 
             return LocationDto.builder()
                     .latitude(Double.parseDouble(doc.getY()))
                     .longitude(Double.parseDouble(doc.getX()))
                     .address(doc.getRoadAddressName() != null ? doc.getRoadAddressName() : doc.getAddressName())
                     .jibunAddress(doc.getAddressName())
+                    .dong(dongFromJibun)
                     .build();
 
         } catch (Exception e) {
@@ -169,4 +191,42 @@ public class LocationService {
 
         return EARTH_RADIUS * c;
     }
+
+    /**
+     * KM를 M로전환->ST_Distance_Sphere() 함수계산용
+     */
+    public Double convertKmToMeters(Double radiusKm) {
+        if (radiusKm == null || radiusKm <= 0) {
+            throw new ApiException(ErrorCode.INVALID_RADIUS);
+        }
+        return radiusKm * 1000;
+    }
+
+    private String extractDongFromAddress(String address) {
+        if (address == null || address.isEmpty()) {
+            return null;
+        }
+
+        String[] parts = address.split(" ");
+
+        // "동(洞)"으로 끝나는 부분 찾기
+        for (String part : parts) {
+            if (part.endsWith("동")) {
+                return part;
+            }
+        }
+
+        // "동"이 없으면 "구(區)" 찾기 (fallback)
+        for (String part : parts) {
+            if (part.endsWith("구")) {
+                return part;
+            }
+        }
+
+        // 둘 다 없으면 마지막 부분 반환
+        return parts.length > 0 ? parts[parts.length - 1] : null;
+    }
 }
+
+
+

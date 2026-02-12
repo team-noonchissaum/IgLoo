@@ -39,8 +39,12 @@ public class ItemService {
                 .description(request.getDescription())
                 .startPrice(request.getStartPrice())
                 .build();
-        itemRepository.save(item);
+        //아이템 추가시 판매자 위치 가져오기(위도,경도)
+        if (seller.getDong() != null) {
+            item.setSellerDong(seller.getDong());
+        }
 
+        itemRepository.save(item);
         addImages(item, request.getImageUrls());
         return item;
     }

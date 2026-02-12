@@ -24,13 +24,126 @@ Content-Type: application/json
 }
 
 ### 사용자 위치 설정 (강남)
-POST http://localhost:8080/api/users/me/location
+PUT http://localhost:8080/api/mypage/location?userId=3
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzA2ODI5MzQsImV4cCI6MTc3MDY4NDczNH0._sKKBQ2lNTm-0n63TfTRMtLHbiu4Wsoh_LKKTOOjUjU
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzA4NzM2OTEsImV4cCI6MTc3MDg3NTQ5MX0.yMmunlNqPpBpgNhEab2PLeEulFdO5bK0nhNvKZpyEdM
 
 {
   "address": "서울특별시 강남구 테헤란로 152"
 }
+###새 회원 가입
+POST http://localhost:8080/api/auth/signup
+Content-Type: application/json
+
+{
+"email": "test2@test.com",
+"nickname": "역삼사용자",
+"password": "12345",
+"authType": "LOCAL"
+}
+
+### 로컬 로그인 (토큰 저장)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test3@test.com",
+  "password": "12345",
+  "authType": "LOCAL"
+}
+
+> {%
+    client.global.set("accessToken", response.body.accessToken);
+    client.global.set("refreshToken", response.body.refreshToken);
+%}
+
 ###
-GET http://localhost:8080/api/users/me
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzA2MjUxNzksImV4cCI6MTc3MDYyNjk3OX0.B93_pd2sS19FhMUhxV82elhM7mSeL5Cck7gcQAwsvX0
+PUT http://localhost:8080/api/mypage/location?userId=4
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI0Iiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzA4NjA0OTEsImV4cCI6MTc3MDg2MjI5MX0.Z2Piw8ogH1eW-AyjCVY4cta4cMFtKH0zcnRH5M18d88
+
+{
+  "address": "서울시 강남구 역삼동"
+}
+
+###
+POST http://localhost:8080/api/auctions
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI0Iiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzA4NjA0OTEsImV4cCI6MTc3MDg2MjI5MX0.Z2Piw8ogH1eW-AyjCVY4cta4cMFtKH0zcnRH5M18d88
+Content-Type: application/json
+
+{
+"title": "아이폰 15 팝니다",
+"description": "개봉만 했어요",
+"startPrice": 800000,
+"categoryId": 1,
+"imageUrls": ["https://example.com/image2.jpg"],
+"auctionDuration": 24
+}
+
+###
+GET http://localhost:8080/api/auctions?page=0&size=20
+
+###
+GET http://localhost:8080/api/location/auctions/nearby?userId=3&radiusKm=1&page=0&size=20
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzA4NjE1NDgsImV4cCI6MTc3MDg2MzM0OH0.xDSpRefybJosCugeOTV_guI11RjxhgBZaERFK2fJ-3o
+
+###
+GET http://localhost:8080/api/location/auctions/nearby?userId=3&radiusKm=1&page=0&size=20
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzA4NjE4NzAsImV4cCI6MTc3MDg2MzY3MH0.Hle0lXJ0A1ODvzK-R5c8aJ2FHJVwZiq2Gf5axoFmpnQ
+
+###새 회원 가입
+POST http://localhost:8080/api/auth/signup
+Content-Type: application/json
+
+{
+  "email": "test3@test.com",
+  "nickname": "마포사용자",
+  "password": "12345",
+  "authType": "LOCAL"
+}
+###
+PUT http://localhost:8080/api/mypage/location?userId=5
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI1Iiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzA4NzM3NDQsImV4cCI6MTc3MDg3NTU0NH0.cawrEOMh7GSuML7u0NTdZ8O_Q5dTEeU47MevtVOuatw
+
+{
+"address": "서울시 마포구 홍대입구역"
+}
+
+### 3️⃣ 마포 사용자의 상품 등록
+POST http://localhost:8080/api/auctions
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI1Iiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzA4Njk2ODksImV4cCI6MTc3MDg3MTQ4OX0.Gdt0BK5v9VOIESFE3SXGlTPGp3AeXPDRuDkVFvrWRJM
+Content-Type: application/json
+
+{
+  "title": "애플워치 팝니다",
+  "description": "거의 안 썼어요",
+  "startPrice": 300000,
+  "categoryId": 6,
+  "imageUrls": ["https://example.com/image.jpg"],
+  "auctionDuration": 24
+}
+
+
+### **Test 1: 전국 경매 검색**
+
+GET http://localhost:8080/api/auctions?page=0&size=20
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI1Iiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzA4Nzg2MTUsImV4cCI6MTc3MDg4MDQxNX0.OxuC1B4Oz9SwvAg-XkDc5EVUTdARqYFTKt35SBBJziQ
+Content-Type: application/json
+
+
+### **Test 2: 강남 1km 반경**
+GET http://localhost:8080/api/location/auctions/nearby?userId=3&radiusKm=1&page=0&size=20
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzA4ODE2NTYsImV4cCI6MTc3MDg4MzQ1Nn0.LoRDtRXX3_zewN5kIqQR6eXoPp6s-yODxxb8auoUppc
+Content-Type: application/json
+
+### **Test 3: 강남 10km 반경**
+GET http://localhost:8080/api/location/auctions/nearby?userId=3&radiusKm=10&page=0&size=20
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzA4ODE2NTYsImV4cCI6MTc3MDg4MzQ1Nn0.LoRDtRXX3_zewN5kIqQR6eXoPp6s-yODxxb8auoUppc
+Content-Type: application/json
+
+### **Test 4: 마포 20km 반경**
+GET http://localhost:8080/api/location/auctions/nearby?userId=5&radiusKm=20&page=0&size=20
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI1Iiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzA4ODE0OTQsImV4cCI6MTc3MDg4MzI5NH0.f14JWTLHQ_lJTq6ltjWQ4VAt-Ww36yrCPo-k_7Y5_ps
+Content-Type: application/json
+

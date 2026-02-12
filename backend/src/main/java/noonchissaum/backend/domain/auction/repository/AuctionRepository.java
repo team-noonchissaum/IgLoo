@@ -141,6 +141,24 @@ where a.status = :status
      */
     @EntityGraph(attributePaths = {"item", "item.seller", "item.category", "currentBidder"})
     List<Auction> findByCurrentBidder_IdAndStatusIn(Long userId, List<AuctionStatus> statuses);
+
+
+    @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
+    @Query("""
+    SELECT a FROM Auction a
+    JOIN FETCH a.item i
+    WHERE i.seller.latitude IS NOT NULL
+    AND i.seller.longitude IS NOT NULL
+    AND i.seller.latitude BETWEEN :minLat AND :maxLat
+    AND i.seller.longitude BETWEEN :minLon AND :maxLon
+    AND a.status IN ('RUNNING', 'READY','DEADLINE')
+    """)
+    List<Auction> findAuctionsInBoundingBox(
+            @Param("minLat") Double minLat,
+            @Param("maxLat") Double maxLat,
+            @Param("minLon") Double minLon,
+            @Param("maxLon") Double maxLon
+    );
 }
 
 

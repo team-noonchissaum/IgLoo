@@ -14,4 +14,5 @@ public class LocationDto {
     private Double longitude;
     private String address;
     private String jibunAddress;
+    private String dong;
 }

@@ -30,6 +30,7 @@ public class AuctionRes {
     private LocalDateTime endAt;
     private Long sellerId;
     private String sellerNickname;
+    private String sellerDong;
     private List<String> imageUrls;
     private Long itemId;
     private Long categoryId;
@@ -52,6 +53,7 @@ public class AuctionRes {
                 .endAt(auction.getEndAt())
                 .sellerId(item.getSeller().getId())
                 .sellerNickname(item.getSeller().getNickname())
+                .sellerDong(item.getSeller().getDong())
                 .imageUrls(item.getImages().stream()
                         .map(ItemImage::getImageUrl)
                         .collect(Collectors.toList()))
@@ -76,6 +78,7 @@ public class AuctionRes {
                 .endAt(auction.getEndAt())
                 .sellerId(item.getSeller().getId())
                 .sellerNickname(item.getSeller().getNickname())
+                .sellerDong(item.getSeller().getDong())
                 .imageUrls(item.getImages().stream()
                         .map(ItemImage::getImageUrl)
                         .collect(Collectors.toList()))
