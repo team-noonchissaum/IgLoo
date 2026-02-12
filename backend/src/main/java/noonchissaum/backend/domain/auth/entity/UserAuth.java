@@ -63,4 +63,8 @@ public class UserAuth {
         auth.identifier = identifier;
         return auth;
     }
+
+    public void changePassword(String encodedPassword) {
+        this.passwordHash = encodedPassword;
+    }
 }

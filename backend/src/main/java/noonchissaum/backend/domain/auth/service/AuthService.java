@@ -15,6 +15,8 @@ import noonchissaum.backend.domain.user.repository.UserRepository;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.security.JwtTokenProvider;
+import noonchissaum.backend.global.service.MailService;
+import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,6 +32,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
+    private final PasswordResetTokenService passwordResetTokenService;
+    private final MailService mailService;
     private final WalletService walletService;
 
     /**로컬 회원가입*/
@@ -200,6 +204,38 @@ public class AuthService {
                 60L*60*24*7
         );
         return new RefreshRes(newAccessToken,newRefreshToken);
+    }
+
+    /**
+     * 비밀번호 재설정 요청
+     * */
+    public void forgotPassword(String email) {
+        UserAuth userAuth = userAuthRepository
+                .findByAuthTypeAndIdentifier(AuthType.LOCAL, email)
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
+
+        String token = passwordResetTokenService.createToken(userAuth.getUser().getId());
+        mailService.sendPasswordResetMail(email, token);
+    }
+
+    /**
+     * 비밀번호 재설정
+     * */
+    public void resetPassword(String token, String newPassword) {
+        Long userId = passwordResetTokenService.getUserIdByToken(token);
+        if (userId == null) {
+            throw new ApiException(ErrorCode.PASSWORD_RESET_TOKEN_INVALID);
+        }
+
+        UserAuth userAuth = userAuthRepository
+                .findByUser_IdAndAuthType(userId, AuthType.LOCAL)
+                .orElseThrow(() -> new ApiException(ErrorCode.PASSWORD_RESET_LOCAL_ONLY));
+
+        userAuth.changePassword(passwordEncoder.encode(newPassword));
+
+        // 비밀번호 변경 후 기존 로그인 세션 무효화
+        refreshTokenService.delete(userId);
+        passwordResetTokenService.deleteToken(token);
     }
 
     /**

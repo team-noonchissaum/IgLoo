@@ -4,7 +4,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.auth.dto.request.LoginReq;
 import noonchissaum.backend.domain.auth.dto.request.LogoutReq;
+import noonchissaum.backend.domain.auth.dto.request.ForgotPasswordReq;
 import noonchissaum.backend.domain.auth.dto.request.RefreshReq;
+import noonchissaum.backend.domain.auth.dto.request.ResetPasswordReq;
 import noonchissaum.backend.domain.auth.dto.request.SignupReq;
 import noonchissaum.backend.domain.auth.dto.response.LoginRes;
 import noonchissaum.backend.domain.auth.dto.response.RefreshRes;
@@ -46,6 +48,24 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Object>> logout(@RequestBody LogoutReq req) {
         authService.logout(req.getRefreshToken());
         return ResponseEntity.ok(ApiResponse.success("로그아웃 완료"));
+    }
+
+    /**
+     * 비밀번호 재설정 요청
+     */
+    @PostMapping("/password/forgot")
+    public ResponseEntity<ApiResponse<Object>> forgotPassword(@Valid @RequestBody ForgotPasswordReq req) {
+        authService.forgotPassword(req.getEmail());
+        return ResponseEntity.ok(ApiResponse.success("비밀번호 재설정 요청이 접수되었습니다."));
+    }
+
+    /**
+     * 비밀번호 재설정
+     */
+    @PostMapping("/password/reset")
+    public ResponseEntity<ApiResponse<Object>> resetPassword(@Valid @RequestBody ResetPasswordReq req) {
+        authService.resetPassword(req.getToken(), req.getNewPassword());
+        return ResponseEntity.ok(ApiResponse.success("비밀번호가 재설정되었습니다."));
     }
 
 

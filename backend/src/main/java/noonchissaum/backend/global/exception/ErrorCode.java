@@ -34,6 +34,10 @@ public enum ErrorCode {
     USER_BLOCKED(HttpStatus.FORBIDDEN, "AUTH-007", "차단된 사용자입니다. 관리자에게 문의하세요."),
 
     OAUTH2_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "AUTH-008", "소셜 로그인에 실패했습니다."),
+    PASSWORD_RESET_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "AUTH-009", "비밀번호 재설정 토큰이 유효하지 않습니다."),
+    PASSWORD_RESET_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "AUTH-010", "비밀번호 재설정 토큰이 만료되었습니다."),
+    PASSWORD_RESET_LOCAL_ONLY(HttpStatus.BAD_REQUEST, "AUTH-011", "로컬 계정만 비밀번호를 재설정할 수 있습니다."),
+    PASSWORD_RESET_MAIL_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH-012", "비밀번호 재설정 메일 발송에 실패했습니다."),
 
     // ========== USER (사용자 에러) ==========
     /** 이메일 중복 */

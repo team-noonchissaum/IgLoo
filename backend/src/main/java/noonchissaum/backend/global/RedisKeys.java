@@ -71,4 +71,11 @@ public final class RedisKeys {
     public static String pendingBidRequestsSet() {
         return "pending_bid_requests";
     }
+
+    /**
+     * auth
+     */
+    public static String passwordResetToken(String token) {
+        return "PRT:" + token;
+    }
 }
