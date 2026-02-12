@@ -1,4 +1,4 @@
-﻿package noonchissaum.backend.domain.item.service;
+package noonchissaum.backend.domain.item.service;
 
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.global.RedisKeys;

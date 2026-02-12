@@ -1,4 +1,4 @@
-﻿package noonchissaum.backend.recommendation.service;
+package noonchissaum.backend.recommendation.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

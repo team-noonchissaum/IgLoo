@@ -1,4 +1,4 @@
-﻿package noonchissaum.backend.global;
+package noonchissaum.backend.global;
 
 public final class RedisKeys {
 
