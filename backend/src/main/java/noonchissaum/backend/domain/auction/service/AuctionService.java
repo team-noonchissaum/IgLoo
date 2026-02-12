@@ -269,4 +269,50 @@ public class AuctionService {
                     .orElse(base);
         });
     }
+
+    /**
+     * 핫딜 경매 등록
+     * 플랫폼 내에서 이벤트 용으로 등록함으로 admin이 등록하도록 함
+     * startAt: 현재 + 7일 고정
+     * endAt: startAt + auctionDuration
+     * */
+    @Transactional
+    public Long registerHotDeal(Long adminUserId, AuctionRegisterReq req){
+        User seller = userService.getUserByUserId(adminUserId);
+        Category category = categoryService.getCategory(req.getCategoryId());
+        Item item = itemService.createHotDealItem(seller, category, req);
+
+        LocalDateTime startAt = LocalDateTime.now().plusDays(7);
+        LocalDateTime endAt = startAt.plusHours(req.getAuctionDuration());
+
+        Auction auction = Auction.builder()
+                .item(item)
+                .startPrice(req.getStartPrice())
+                .startAt(startAt)
+                .endAt(endAt)
+                .isHotDeal(true)
+                .build();
+
+        auctionRepository.save(auction);
+
+        return auction.getId();
+    }
+
+    /**
+     * 핫딜 배너 조회
+     * */
+    @Transactional(readOnly = true)
+    public List<AuctionRes> getHotDeals(Long userId) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime limit = now.plusDays(7);
+
+        List<Auction> hotDeals = auctionRepository.findHotDeals(now, limit, PageRequest.of(0, 5));
+
+        List<Long> itemIds = hotDeals.stream().map(a -> a.getItem().getId()).distinct().toList();
+        Set<Long> wishedItemIds = wishService.getWishedItemIds(userId, itemIds);
+
+        return hotDeals.stream()
+                .map(a -> AuctionRes.from(a, wishedItemIds.contains(a.getItem().getId())))
+                .toList();
+    }
 }

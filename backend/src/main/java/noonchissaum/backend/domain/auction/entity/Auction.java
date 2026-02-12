@@ -50,6 +50,9 @@ public class Auction extends BaseTimeEntity {
     @Column(name = "is_extended")
     private Boolean isExtended;
 
+    @Column(name = "is_hot_deal", nullable = false)
+    private Boolean isHotDeal = false;
+
     @Column(name = "imminent_minutes", nullable = false)
     private Integer imminentMinutes;
 
@@ -67,7 +70,7 @@ public class Auction extends BaseTimeEntity {
     private List<Bid> bids = new ArrayList<>();
 
     @Builder
-    public Auction(Item item, BigDecimal startPrice, LocalDateTime startAt, LocalDateTime endAt) {
+    public Auction(Item item, BigDecimal startPrice, LocalDateTime startAt, LocalDateTime endAt, Boolean isHotDeal) {
         this.item = item;
         this.currentPrice = startPrice;
         this.bidCount = 0;
@@ -77,6 +80,7 @@ public class Auction extends BaseTimeEntity {
         this.imminentMinutes = ThreadLocalRandom.current().nextInt(5,8);
         this.status = AuctionStatus.READY;
         this.depositStatus = DepositStatus.HELD;
+        this.isHotDeal = (isHotDeal != null && isHotDeal);
 
     }
 

@@ -134,5 +134,45 @@ where a.status = :status
   and a.endAt <= :now
 """)
     List<Long> findIdsToEnd(@Param("status") AuctionStatus status, @Param("now") LocalDateTime now);
+
+    // 핫딜 배너 조회
+    @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
+    @Query("""
+        select a
+        from Auction a
+        where a.isHotDeal = true
+          and a.status = noonchissaum.backend.domain.auction.entity.AuctionStatus.READY
+          and a.startAt > :now
+          and a.startAt <= :limit
+        order by a.startAt asc
+    """)
+    List<Auction> findHotDeals(@Param("now") LocalDateTime now,
+                               @Param("limit") LocalDateTime limit,
+                               Pageable pageable);
+    // 핫딜 시작 대상 조회(Ready 이고 startAt 도달)
+    @Query("""
+        select a.id
+        from Auction a
+        where a.status = :status
+          and a.isHotDeal = true
+          and a.startAt <= :now
+    """)
+    List<Long> findHotDealIdsToRun(@Param("status") AuctionStatus status,
+                                   @Param("now") LocalDateTime now);
+
+    /**
+     * 핫딜 READY -> RUNNING (startAt 도달 기준)
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+        update Auction a
+        set a.status = :toStatus
+        where a.status = :fromStatus
+          and a.isHotDeal = true
+          and a.startAt <= :now
+    """)
+    int runHotDeals(@Param("fromStatus") AuctionStatus fromStatus,
+                    @Param("toStatus") AuctionStatus toStatus,
+                    @Param("now") LocalDateTime now);
 }
 

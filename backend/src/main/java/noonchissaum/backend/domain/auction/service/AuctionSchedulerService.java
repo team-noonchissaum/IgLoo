@@ -294,4 +294,21 @@ public class AuctionSchedulerService {
 
         auctionMessageService.sendAuctionResult(auctionId, payload);
     }
+
+    /**
+     * (핫딜) READY -> RUNNING (startAt 기준)
+     */
+    @Transactional
+    public int exposeHotDeals(LocalDateTime now) {
+        List<Long> ids = auctionRepository.findHotDealIdsToRun(AuctionStatus.READY, now);
+        if (ids.isEmpty()) return 0;
+
+        int updated = auctionRepository.runHotDeals(AuctionStatus.READY, AuctionStatus.RUNNING, now);
+        if (updated <= 0) return 0;
+
+        for (Long auctionId : ids) {
+            auctionRedisService.setRedis(auctionId);
+        }
+        return updated;
+    }
 }

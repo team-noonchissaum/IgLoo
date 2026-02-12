@@ -11,6 +11,7 @@ import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -43,6 +44,11 @@ public class ItemService {
 
         addImages(item,request.getImageUrls());
         return item;
+    }
+
+    @Transactional
+    public Item createHotDealItem(User seller, Category category, AuctionRegisterReq request) {
+        return createItem(seller, category, request);
     }
 
     private void addImages(Item item, List<String> imageUrls) {

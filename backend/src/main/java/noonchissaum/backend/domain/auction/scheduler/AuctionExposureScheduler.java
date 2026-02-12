@@ -61,5 +61,13 @@ public class AuctionExposureScheduler {
         auctionSchedulerService.result();
     }
 
+    /**
+     * HotDeal 노출*/
+    @Scheduled(fixedRate = 60_000)
+    public void exposeHotDeals() {
+        auctionSchedulerService.exposeHotDeals(LocalDateTime.now());
+    }
+
+
 }
 
