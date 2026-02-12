@@ -141,6 +141,12 @@ where a.status = :status
      */
     @EntityGraph(attributePaths = {"item", "item.seller", "item.category", "currentBidder"})
     List<Auction> findByCurrentBidder_IdAndStatusIn(Long userId, List<AuctionStatus> statuses);
+
+    // Item ID로 경매를 찾습니다.
+    @Query("SELECT a FROM Auction a WHERE a.item.id = :itemId")
+    Optional<Auction> findByItemId(@Param("itemId") Long itemId);
+
+    // 여러 Item ID로 경매 목록을 찾습니다.
+    @Query("SELECT a FROM Auction a WHERE a.item.id IN :itemIds")
+    List<Auction> findAllByItemIdIn(@Param("itemIds") List<Long> itemIds);
 }
-
-

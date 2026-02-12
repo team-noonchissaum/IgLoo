@@ -15,15 +15,14 @@ import noonchissaum.backend.domain.category.service.CategoryService;
 import noonchissaum.backend.domain.item.entity.Item;
 
 import noonchissaum.backend.domain.item.service.ItemService;
+import noonchissaum.backend.domain.item.service.UserViewRedisLogger;
 import noonchissaum.backend.domain.item.service.WishService;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
-import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.data.domain.*;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,6 +45,8 @@ public class AuctionService {
     private final AuctionQueryService auctionQueryService;
     private final AuctionIndexService auctionIndexService;
     private final WalletService walletService;
+    private final UserViewRedisLogger userViewRedisLogger; // 사용자 조회 Redis 로거 주입
+    private final noonchissaum.backend.recommendation.service.RecommendationService recommendationService; // 추천 서비스 주입
 
 
     /**
@@ -116,7 +117,16 @@ public class AuctionService {
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
         boolean isWished = wishService.isWished(userId, auction.getItem().getId());
-        return AuctionRes.from(auction, isWished);
+
+        // 사용자 조회 기록 로깅 (인증된 사용자인 경우에만 로깅)
+        if (userId != null) {
+            userViewRedisLogger.logView(userId, auction.getItem().getId());
+        }
+
+        // 추천 경매 가져오기
+        List<AuctionRes> recommendedAuctions = recommendationService.getRecommendedAuctions(userId, auction.getItem().getId());
+
+        return AuctionRes.from(auction, isWished, recommendedAuctions);
     }
 
     /**
