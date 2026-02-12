@@ -6,12 +6,14 @@ import noonchissaum.backend.domain.order.dto.delivery.req.ChooseDeliveryTypeReq;
 import noonchissaum.backend.domain.order.dto.delivery.res.ChooseDeliveryTypeRes;
 import noonchissaum.backend.domain.order.entity.*;
 import noonchissaum.backend.domain.auction.entity.Auction;
+import noonchissaum.backend.domain.order.event.OrderConfirmedEvent;
 import noonchissaum.backend.domain.order.repository.OrderRepository;
 import noonchissaum.backend.domain.order.repository.ShipmentRepository;
 import noonchissaum.backend.domain.settlement.service.SettlementService;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +30,8 @@ public class OrderService {
     private final ShipmentRepository shipmentRepository;
 
     private final ChatRoomService chatRoomService;
-    private final SettlementService settlementService;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void createOrder(Auction auction, User buyer, BigDecimal finalPrice) {
@@ -92,8 +95,8 @@ public class OrderService {
 
         // 엔티티 메서드(너가 추가한 confirmAfterDelivered) 사용
         order.confirmAfterDelivered();
-        // 정산
-        settlementService.settleOnOrderConfirmed(orderId);
+        // 정산 처리되도록 이벤트만 발행
+        eventPublisher.publishEvent(new OrderConfirmedEvent(orderId));
 
     }
 
@@ -108,12 +111,10 @@ public class OrderService {
         for (Long orderId : targets) {
             Order order = orderRepository.findById(orderId).orElse(null);
             if (order == null) continue;
-
             if (order.getConfirmedAt() != null) continue;
 
             order.confirmAfterDelivered();
-            settlementService.settleOnOrderConfirmed(orderId);
-
+            eventPublisher.publishEvent(new OrderConfirmedEvent(orderId));
             done++;
         }
 
@@ -143,8 +144,13 @@ public class OrderService {
         if (order.getDeliveryType() != DeliveryType.DIRECT) {
             throw new ApiException(ErrorCode.DELIVERY_TYPE_NOT_DIRECT);
         }
+
         order.confirmDirectTrade();
+
+        // 직거래도 구매확정 개념이면 이벤트 발행
+        eventPublisher.publishEvent(new OrderConfirmedEvent(orderId));
     }
+
 
 
 }
