@@ -45,23 +45,23 @@ public class AuctionService {
     private final AuctionQueryService auctionQueryService;
     private final AuctionIndexService auctionIndexService;
     private final WalletService walletService;
-    private final UserViewRedisLogger userViewRedisLogger; // 사용자 조회 Redis 로거 주입
-    private final noonchissaum.backend.recommendation.service.RecommendationService recommendationService; // 추천 서비스 주입
+    private final UserViewRedisLogger userViewRedisLogger; // ?ъ슜??議고쉶 Redis 濡쒓굅 二쇱엯
+    private final noonchissaum.backend.recommendation.service.RecommendationService recommendationService; // 異붿쿇 ?쒕퉬??二쇱엯
 
 
     /**
-     * 새로운 경매를 등록합니다.
-     * 상품 정보(Item)를 먼저 생성하고, 관련 이미지와 경매 일정(Auction)을 하나의 트랜잭션으로 묶어 저장합니다.
+     * ?덈줈??寃쎈ℓ瑜??깅줉?⑸땲??
+     * ?곹뭹 ?뺣낫(Item)瑜?癒쇱? ?앹꽦?섍퀬, 愿???대?吏? 寃쎈ℓ ?쇱젙(Auction)???섎굹???몃옖??뀡?쇰줈 臾띠뼱 ??ν빀?덈떎.
      */
     @Transactional
     public Long registerAuction(Long userId, AuctionRegisterReq request) {
         User seller = userService.getUserByUserId(userId);
         Category category = categoryService.getCategory(request.getCategoryId());
 
-        // 1. 상품(Item) 정보 생성 + 이미지 등록
+        // 1. ?곹뭹(Item) ?뺣낫 ?앹꽦 + ?대?吏 ?깅줉
         Item item = itemService.createItem(seller,category,request);
 
-        // 3. 경매(Auction) 설정 및 저장
+        // 3. 寃쎈ℓ(Auction) ?ㅼ젙 諛????
         LocalDateTime startAt = request.getStartAt() != null ? request.getStartAt() : LocalDateTime.now();
         LocalDateTime endAt = request.getEndAt() != null ? request.getEndAt() : 
                 (request.getAuctionDuration() != null ? startAt.plusHours(request.getAuctionDuration()) : startAt.plusHours(1));
@@ -80,7 +80,7 @@ public class AuctionService {
 
         auctionRedisService.setRedis(auction.getId());
 
-        // price index 초기값 세팅
+        // price index 珥덇린媛??명똿
         Long categoryId = category.getId();
         auctionIndexService.updatePriceIndex(auction.getId(), categoryId, auction.getCurrentPrice());
 
@@ -88,7 +88,7 @@ public class AuctionService {
     }
 
     /**
-     * 경매 목록을 조회합니다. N+1 문제를 방지하기 위해 Fetch Join이 적용된 Repository 메서드를 사용합니다.
+     * 寃쎈ℓ 紐⑸줉??議고쉶?⑸땲?? N+1 臾몄젣瑜?諛⑹??섍린 ?꾪빐 Fetch Join???곸슜??Repository 硫붿꽌?쒕? ?ъ슜?⑸땲??
      */
     public Page<AuctionRes> getAuctionList(Long userId, Pageable pageable, AuctionStatus status) {
         Page<Auction> auctions;
@@ -111,79 +111,79 @@ public class AuctionService {
 
 
     /**
-     * 경매 상세 정보를 조회합니다.
+     * 寃쎈ℓ ?곸꽭 ?뺣낫瑜?議고쉶?⑸땲??
      */
     public AuctionRes getAuctionDetail(Long userId, Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
         boolean isWished = wishService.isWished(userId, auction.getItem().getId());
 
-        // 사용자 조회 기록 로깅 (인증된 사용자인 경우에만 로깅)
+        // ?ъ슜??議고쉶 湲곕줉 濡쒓퉭 (?몄쬆???ъ슜?먯씤 寃쎌슦?먮쭔 濡쒓퉭)
         if (userId != null) {
             userViewRedisLogger.logView(userId, auction.getItem().getId());
         }
 
-        // 추천 경매 가져오기
-        List<AuctionRes> recommendedAuctions = recommendationService.getRecommendedAuctions(userId, auction.getItem().getId());
+        // 異붿쿇 寃쎈ℓ 媛?몄삤湲?
+        List<AuctionRes> recommendedAuctions = recommendationService.getRecommendedAuctions(userId, auction.getItem().getId(), auction.getId());
 
         return AuctionRes.from(auction, isWished, recommendedAuctions);
     }
 
     /**
-     * 경매를 취소합니다.
-     * 판매자 본인 확인과 입찰자 존재 여부를 검증하여 경매 무결성을 유지합니다。
+     * 寃쎈ℓ瑜?痍⑥냼?⑸땲??
+     * ?먮ℓ??蹂몄씤 ?뺤씤怨??낆같??議댁옱 ?щ?瑜?寃利앺븯??寃쎈ℓ 臾닿껐?깆쓣 ?좎??⑸땲?ㅳ?
      */
     @Transactional
     public void cancelAuction(Long userId, Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
 
-        // 판매자 본인 여부 확인
+        // ?먮ℓ??蹂몄씤 ?щ? ?뺤씤
         if (!auction.getItem().getSeller().getId().equals(userId)) {
             throw new CustomException(ErrorCode.AUCTION_NOT_OWNER);
         }
 
-        // 이미 입찰이 진행된 경우 취소 불가 (비즈니스 규칙)
+        // ?대? ?낆같??吏꾪뻾??寃쎌슦 痍⑥냼 遺덇? (鍮꾩쫰?덉뒪 洹쒖튃)
         if (auction.getBidCount() > 0) {
             throw new CustomException(ErrorCode.AUCTION_HAS_BIDS);
         }
 
         /**
-         * 5분이 지났을 경우 보증금 회수하는 로직과 5분이전이면 보증금 돌려주는 로직 추가
-         * 5분 이후 취소도 처리하려면 RUNNING 상태도 취소 허용
+         * 5遺꾩씠 吏?ъ쓣 寃쎌슦 蹂댁쬆湲??뚯닔?섎뒗 濡쒖쭅怨?5遺꾩씠?꾩씠硫?蹂댁쬆湲??뚮젮二쇰뒗 濡쒖쭅 異붽?
+         * 5遺??댄썑 痍⑥냼??泥섎━?섎젮硫?RUNNING ?곹깭??痍⑥냼 ?덉슜
          */
         if (!(auction.getStatus() == AuctionStatus.READY || auction.getStatus() == AuctionStatus.RUNNING)) {
             throw new CustomException(ErrorCode.AUCTION_INVALID_STATUS);
         }
 
-        // 정책 기준: 등록 + 5분
+        // ?뺤콉 湲곗?: ?깅줉 + 5遺?
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime penaltyAt = auction.getCreatedAt().plusMinutes(5);
 
         int amount = (int) Math.min( auction.getCurrentPrice().longValue() * 0.05 , 1000);
 
         if (now.isBefore(penaltyAt)) {
-            // 5분 이내 취소 → 보증금 환불 처리
+            // 5遺??대궡 痍⑥냼 ??蹂댁쬆湲??섎텋 泥섎━
             auction.refundDeposit();
 
              walletService.setAuctionDeposit(userId, auctionId, amount, "refund");
         } else {
-            // 5분 이후 취소 → 보증금 몰수 확정(패널티)
-            // 5분 이후 취소 -> 보증금 환불 없음
+            // 5遺??댄썑 痍⑥냼 ??蹂댁쬆湲?紐곗닔 ?뺤젙(?⑤꼸??
+            // 5遺??댄썑 痍⑥냼 -> 蹂댁쬆湲??섎텋 ?놁쓬
             auction.forfeitDeposit();
             walletService.setAuctionDeposit(userId, auctionId, amount, "forfeit");
         }
 
 
-        //경매 취소시 상태 변경
+        //寃쎈ℓ 痍⑥냼???곹깭 蹂寃?
         auction.cancel();
 
-        //radis에서 삭제
+        //radis?먯꽌 ??젣
         auctionRedisService.cancelAuction(auctionId);
     }
 
     /**
-     * 내가 등록한 경매 목록 조회
+     * ?닿? ?깅줉??寃쎈ℓ 紐⑸줉 議고쉶
      */
     public Page<AuctionRes> getMyAuctions(Long userId, Pageable pageable) {
         Page<Auction> auctions = auctionRepository.findAllByItem_Seller_Id(userId, pageable);
@@ -200,15 +200,15 @@ public class AuctionService {
             int page,
             int size
     ) {
-        //  PRICE 정렬 → Redis ZSET 기반 QueryService로 분기
+        //  PRICE ?뺣젹 ??Redis ZSET 湲곕컲 QueryService濡?遺꾧린
         if (sort != null && sort.isRedisPriceSort()) {
-            // categoryId 없으면 결과를 비우거나 예외 처리(선택)
+            // categoryId ?놁쑝硫?寃곌낵瑜?鍮꾩슦嫄곕굹 ?덉쇅 泥섎━(?좏깮)
             if (categoryId == null) {
                 return new PageImpl<>(List.of(), PageRequest.of(page, size), 0);
             }
-            //category + price 정확이므로 status/keyword는 null만 허용하거나(엄격),
+            //category + price ?뺥솗?대?濡?status/keyword??null留??덉슜?섍굅???꾧꺽),
             if (status != null || (keyword != null && !keyword.isBlank())) {
-                // category+price만 정확 지원
+                // category+price留??뺥솗 吏??
                 return new PageImpl<>(List.of(), PageRequest.of(page, size), 0);
             }
 
@@ -223,7 +223,7 @@ public class AuctionService {
 
         Page<Auction> auctions = auctionRepository.findAll(spec, pageable);
 
-        // 찜 여부 미리 계산
+        // 李??щ? 誘몃━ 怨꾩궛
         List<Long> itemIds = auctions.getContent().stream()
                 .map(a -> a.getItem().getId())
                 .distinct()
