@@ -26,12 +26,12 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
 
     List<Auction> findAllByStatusIn(List<AuctionStatus> statuses);
 
-    // Redis id 리스트 상세 로딩용
+    // Redis id 由ъ뒪???곸꽭 濡쒕뵫??
     @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
     List<Auction> findByIdIn(List<Long> ids);
 
     /**
-     *스케줄 관련 상태값 변경쿼리
+     *?ㅼ?以?愿???곹깭媛?蹂寃쎌옘由?
      * READY->RUNNING
      */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
@@ -64,7 +64,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
     List<Auction> findByStartAt(LocalDateTime startAt);
 
     /**
-     *스케줄 관련 상태값 변경쿼리
+     *?ㅼ?以?愿???곹깭媛?蹂寃쎌옘由?
      * deadline -> ended
      */
     @Modifying
@@ -81,7 +81,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
     );
 
     /**
-     * 스케줄 관련 상태값 변경 쿼리
+     * ?ㅼ?以?愿???곹깭媛?蹂寃?荑쇰━
      * Running -> DEADLINE
      */
     @Modifying
@@ -96,7 +96,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
     )
     int markDeadlineAuctions(@Param("now") LocalDateTime now);
 
-    //deadline으로 바뀔 경매 찾기
+    //deadline?쇰줈 諛붾?寃쎈ℓ 李얘린
     @Query(
             value = """
         SELECT a.auction_id
@@ -137,16 +137,25 @@ where a.status = :status
 
 
     /**
-     * 차단 유저가 최상위 입찰자인 진행 중 경매 조회 (롤백 대상)
+     * 李⑤떒 ?좎?媛 理쒖긽???낆같?먯씤 吏꾪뻾 以?寃쎈ℓ 議고쉶 (濡ㅻ갚 ???
      */
     @EntityGraph(attributePaths = {"item", "item.seller", "item.category", "currentBidder"})
     List<Auction> findByCurrentBidder_IdAndStatusIn(Long userId, List<AuctionStatus> statuses);
 
-    // Item ID로 경매를 찾습니다.
+    // Item ID濡?寃쎈ℓ瑜?李얠뒿?덈떎.
     @Query("SELECT a FROM Auction a WHERE a.item.id = :itemId")
     Optional<Auction> findByItemId(@Param("itemId") Long itemId);
 
-    // 여러 Item ID로 경매 목록을 찾습니다.
+    // ?щ윭 Item ID濡?寃쎈ℓ 紐⑸줉??李얠뒿?덈떎.
     @Query("SELECT a FROM Auction a WHERE a.item.id IN :itemIds")
     List<Auction> findAllByItemIdIn(@Param("itemIds") List<Long> itemIds);
+    @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
+    @Query("""
+select a from Auction a
+where a.status in :statuses
+  and (a.bidCount = 0 or a.createdAt >= :threshold)
+""")
+    List<Auction> findNewAuctions(@Param("statuses") List<AuctionStatus> statuses,
+                                  @Param("threshold") LocalDateTime threshold,
+                                  Pageable pageable);
 }

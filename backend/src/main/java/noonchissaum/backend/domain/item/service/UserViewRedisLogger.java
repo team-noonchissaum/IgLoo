@@ -30,8 +30,12 @@ public class UserViewRedisLogger {
 
         String key = RedisKeys.userViews(userId);
 
-        // append item view
-        stringRedisTemplate.opsForList().rightPush(key, String.valueOf(itemId));
+        String itemIdStr = String.valueOf(itemId);
+        // avoid consecutive duplicates
+        String last = stringRedisTemplate.opsForList().index(key, -1);
+        if (last == null || !last.equals(itemIdStr)) {
+            stringRedisTemplate.opsForList().rightPush(key, itemIdStr);
+        }
 
         // extend TTL on each view
         stringRedisTemplate.expire(key, USER_VIEWS_TTL_HOURS, TimeUnit.HOURS);

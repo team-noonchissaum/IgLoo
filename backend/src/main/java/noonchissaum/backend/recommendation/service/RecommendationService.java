@@ -4,9 +4,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.auction.dto.res.AuctionRes;
 import noonchissaum.backend.domain.auction.entity.Auction;
+import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.item.service.WishService;
 import noonchissaum.backend.global.RedisKeys;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -42,6 +46,8 @@ public class RecommendationService {
     private static final int MIN_VIEWS_FOR_SIMILARITY = 5;
     private static final int TOP_K_USERS = 50;
     private static final int TRENDING_FETCH_MULTIPLIER = 3;
+    private static final int NEW_ITEMS_TARGET = 1;
+    private static final int NEW_ITEMS_LOOKBACK_MINUTES = 30;
 
     private static final DateTimeFormatter HOUR_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHH");
     private static final Random RANDOM = new Random();
@@ -52,9 +58,8 @@ public class RecommendationService {
     public List<AuctionRes> getRecommendedAuctions(Long userId, Long contextItemId, Long contextAuctionId) {
         List<Long> cachedRecommendedItemIds = recommendationCacheService.getUserRecommendations(userId);
         if (!cachedRecommendedItemIds.isEmpty()) {
-            List<Long> sampled = pickRandom(cachedRecommendedItemIds, RECOMMENDATION_POOL_SIZE);
-            List<Long> filtered = filterOutContext(sampled, contextItemId);
-            List<Long> filled = fillWithTrendingIfNeeded(userId, contextItemId, filtered, DEFAULT_RECOMMENDATION_LIMIT);
+            List<Long> filtered = filterOutContext(cachedRecommendedItemIds, contextItemId);
+            List<Long> filled = fillWithTrendingIfNeeded(userId, contextItemId, filtered, RECOMMENDATION_POOL_SIZE);
             return finalizeRecommendations(userId, contextItemId, contextAuctionId, filled);
         }
 
@@ -69,9 +74,8 @@ public class RecommendationService {
         }
 
         recommendationCacheService.saveUserRecommendations(userId, recommendedItemIds);
-        List<Long> sampled = pickRandom(recommendedItemIds, RECOMMENDATION_POOL_SIZE);
-        List<Long> filtered = filterOutContext(sampled, contextItemId);
-        List<Long> filled = fillWithTrendingIfNeeded(userId, contextItemId, filtered, DEFAULT_RECOMMENDATION_LIMIT);
+        List<Long> filtered = filterOutContext(recommendedItemIds, contextItemId);
+        List<Long> filled = fillWithTrendingIfNeeded(userId, contextItemId, filtered, RECOMMENDATION_POOL_SIZE);
         return finalizeRecommendations(userId, contextItemId, contextAuctionId, filled);
     }
 
@@ -115,6 +119,17 @@ public class RecommendationService {
                     continue;
                 }
                 scores.merge(itemId, sim.similarity(), Double::sum);
+            }
+        }
+
+        if (scores.size() < RECOMMENDATION_POOL_SIZE) {
+            // fallback: allow already-viewed items to expand the pool
+            for (UserSimilarity sim : sims) {
+                List<Long> viewsV = getUserViews(sim.userId());
+                Set<Long> viewsVSet = new HashSet<>(viewsV);
+                for (Long itemId : viewsVSet) {
+                    scores.merge(itemId, sim.similarity(), Double::sum);
+                }
             }
         }
 
@@ -217,7 +232,7 @@ public class RecommendationService {
                 try {
                     userIds.add(Long.parseLong(parts[1]));
                 } catch (NumberFormatException ignored) {
-                    log.error("????곸죷 ??????嶺뚮Ĳ?뉛쭛??癲ル슢??? ?????????덊렡.");
+                    log.error("?????????????嶺??????????????嫄???????????????濚밸Ŧ援??????????椰???????? ???????????????????살몝??");
                 }
             }
         }
@@ -289,11 +304,8 @@ public class RecommendationService {
         return merged;
     }
     private List<AuctionRes> finalizeRecommendations(Long userId, Long contextItemId, Long contextAuctionId, List<Long> itemIds) {
-        List<AuctionRes> base = convertItemIdsToAuctionRes(userId, itemIds, DEFAULT_RECOMMENDATION_LIMIT);
+        List<AuctionRes> base = convertItemIdsToAuctionRes(userId, itemIds, RECOMMENDATION_POOL_SIZE);
         List<AuctionRes> filtered = filterOutContextAuction(base, contextAuctionId);
-        if (filtered.size() >= DEFAULT_RECOMMENDATION_LIMIT) {
-            return filtered.subList(0, DEFAULT_RECOMMENDATION_LIMIT);
-        }
 
         Set<Long> excludeItemIds = filtered.stream()
                 .map(AuctionRes::getItemId)
@@ -303,31 +315,102 @@ public class RecommendationService {
         }
         excludeItemIds.addAll(getUserViews(userId));
 
-        List<Long> extraItemIds = getTrendingItems(RECOMMENDATION_POOL_SIZE, excludeItemIds);
-        if (!extraItemIds.isEmpty()) {
-            List<AuctionRes> extraAuctions = convertItemIdsToAuctionRes(userId, extraItemIds, RECOMMENDATION_POOL_SIZE);
-            Set<Long> existingAuctionIds = filtered.stream()
-                    .map(AuctionRes::getAuctionId)
-                    .collect(Collectors.toSet());
-            for (AuctionRes extra : extraAuctions) {
-                if (contextAuctionId != null && contextAuctionId.equals(extra.getAuctionId())) {
-                    continue;
-                }
-                if (existingAuctionIds.add(extra.getAuctionId())) {
-                    filtered.add(extra);
-                }
-                if (filtered.size() >= DEFAULT_RECOMMENDATION_LIMIT) {
-                    break;
+        if (filtered.size() < DEFAULT_RECOMMENDATION_LIMIT) {
+            List<Long> extraItemIds = getTrendingItems(RECOMMENDATION_POOL_SIZE, excludeItemIds);
+            if (!extraItemIds.isEmpty()) {
+                List<AuctionRes> extraAuctions = convertItemIdsToAuctionRes(userId, extraItemIds, RECOMMENDATION_POOL_SIZE);
+                Set<Long> existingAuctionIds = filtered.stream()
+                        .map(AuctionRes::getAuctionId)
+                        .collect(Collectors.toSet());
+                for (AuctionRes extra : extraAuctions) {
+                    if (contextAuctionId != null && contextAuctionId.equals(extra.getAuctionId())) {
+                        continue;
+                    }
+                    if (existingAuctionIds.add(extra.getAuctionId())) {
+                        filtered.add(extra);
+                    }
                 }
             }
         }
 
-        if (filtered.size() > DEFAULT_RECOMMENDATION_LIMIT) {
-            return filtered.subList(0, DEFAULT_RECOMMENDATION_LIMIT);
+        Set<Long> excludeAuctionIds = filtered.stream()
+                .map(AuctionRes::getAuctionId)
+                .collect(Collectors.toSet());
+        List<AuctionRes> newItems = getNewAuctions(userId, contextItemId, contextAuctionId, excludeAuctionIds);
+        if (!newItems.isEmpty()) {
+            for (AuctionRes fresh : newItems) {
+                if (excludeAuctionIds.add(fresh.getAuctionId())) {
+                    filtered.add(fresh);
+                }
+            }
         }
-        return filtered;
+
+        if (filtered.size() <= DEFAULT_RECOMMENDATION_LIMIT) {
+            return filtered;
+        }
+
+        List<AuctionRes> finalList = new ArrayList<>();
+        if (!newItems.isEmpty()) {
+            List<AuctionRes> newCandidates = new ArrayList<>(newItems);
+            Collections.shuffle(newCandidates, RANDOM);
+            int takeNew = Math.min(NEW_ITEMS_TARGET, newCandidates.size());
+            finalList.addAll(newCandidates.subList(0, takeNew));
+        }
+
+        Set<Long> selectedIds = finalList.stream()
+                .map(AuctionRes::getAuctionId)
+                .collect(Collectors.toSet());
+        List<AuctionRes> candidates = filtered.stream()
+                .filter(a -> !selectedIds.contains(a.getAuctionId()))
+                .collect(Collectors.toList());
+        Collections.shuffle(candidates, RANDOM);
+
+        int remaining = DEFAULT_RECOMMENDATION_LIMIT - finalList.size();
+        if (remaining > 0) {
+            finalList.addAll(candidates.subList(0, Math.min(remaining, candidates.size())));
+        }
+        return finalList;
     }
 
+    private List<AuctionRes> getNewAuctions(Long userId, Long contextItemId, Long contextAuctionId, Set<Long> excludeAuctionIds) {
+        LocalDateTime threshold = LocalDateTime.now().minusMinutes(NEW_ITEMS_LOOKBACK_MINUTES);
+        List<AuctionStatus> statuses = List.of(AuctionStatus.READY, AuctionStatus.RUNNING, AuctionStatus.DEADLINE);
+        Pageable pageable = PageRequest.of(0, RECOMMENDATION_POOL_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"));
+        List<Auction> auctions = auctionRepository.findNewAuctions(statuses, threshold, pageable);
+        if (auctions == null || auctions.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<Auction> filtered = new ArrayList<>();
+        for (Auction auction : auctions) {
+            if (contextAuctionId != null && contextAuctionId.equals(auction.getId())) {
+                continue;
+            }
+            if (contextItemId != null && contextItemId.equals(auction.getItem().getId())) {
+                continue;
+            }
+            if (excludeAuctionIds != null && excludeAuctionIds.contains(auction.getId())) {
+                continue;
+            }
+            filtered.add(auction);
+        }
+        if (filtered.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return toAuctionRes(userId, filtered);
+    }
+
+    private List<AuctionRes> toAuctionRes(Long userId, List<Auction> auctions) {
+        if (auctions == null || auctions.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<Long> itemIds = auctions.stream()
+                .map(a -> a.getItem().getId())
+                .collect(Collectors.toList());
+        Set<Long> wishedItemIds = wishService.getWishedItemIds(userId, itemIds);
+        return auctions.stream()
+                .map(a -> AuctionRes.from(a, wishedItemIds.contains(a.getItem().getId())))
+                .collect(Collectors.toList());
+    }
     private List<AuctionRes> filterOutContextAuction(List<AuctionRes> auctions, Long contextAuctionId) {
         if (auctions == null || auctions.isEmpty() || contextAuctionId == null) {
             return auctions == null ? Collections.emptyList() : auctions;
@@ -340,7 +423,6 @@ public class RecommendationService {
 
     private List<AuctionRes> convertItemIdsToAuctionRes(Long userId, List<Long> itemIds, int limit) {
         if (itemIds.isEmpty()) {
-            log.info("??ш끽維쀩???域밸Ŧ遊얕짆?嶺? ????룹젂???怨?????덊렡.");
             return Collections.emptyList();
         }
 
