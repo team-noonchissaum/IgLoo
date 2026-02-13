@@ -47,7 +47,7 @@ services:
     volumes:
       - ./redis-data:/data
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
-    command: redis-server /usr/local/etc/redis/redis.conf --requirepass ${Igloo_PROJECT_Redis_Password55}
+    command: redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD}
     restart: always
     env_file:
       - .env

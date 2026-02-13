@@ -232,7 +232,7 @@ public class RecommendationService {
                 try {
                     userIds.add(Long.parseLong(parts[1]));
                 } catch (NumberFormatException ignored) {
-                    log.error("?????????????癲??????????????椰???????????????嚥싲갭큔???????????濾???????? ????????????????????대첐??");
+                    log.error("숫자 에러");
                 }
             }
         }
@@ -374,7 +374,7 @@ public class RecommendationService {
 
     private List<AuctionRes> getNewAuctions(Long userId, Long contextItemId, Long contextAuctionId, Set<Long> excludeAuctionIds) {
         LocalDateTime threshold = LocalDateTime.now().minusMinutes(NEW_ITEMS_LOOKBACK_MINUTES);
-        List<AuctionStatus> statuses = List.of(AuctionStatus.READY, AuctionStatus.RUNNING, AuctionStatus.DEADLINE);
+        List<AuctionStatus> statuses = new ArrayList<>(List.of(AuctionStatus.READY, AuctionStatus.RUNNING, AuctionStatus.DEADLINE));
         Pageable pageable = PageRequest.of(0, RECOMMENDATION_POOL_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"));
         List<Auction> auctions = auctionRepository.findNewAuctions(statuses, threshold, pageable);
         if (auctions == null || auctions.isEmpty()) {
