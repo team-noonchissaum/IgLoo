@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Service
 public class NotificationService {
+
     private final NotificationRepository notificationRepository;
     private final UserService userService;
 
@@ -39,7 +40,6 @@ public class NotificationService {
         return notificationRepository.save(notification);
     }
 
-
     /**
      * 알람 전체 리스트
      */
@@ -49,7 +49,6 @@ public class NotificationService {
                 .map(NotificationResponse::from)
                 .collect(Collectors.toList());
     }
-
 
     /**
      * 알림 단건 조회 (본인 확인 포함)
@@ -64,6 +63,7 @@ public class NotificationService {
         }
         return NotificationResponse.from(notification);
     }
+
     /**
      * 단건 읽음 처리
      */
@@ -75,6 +75,7 @@ public class NotificationService {
         notification.markAsRead(LocalDateTime.now());
         return NotificationResponse.from(notification);
     }
+
     /**
      * 전체 읽음 처리
      */
@@ -82,6 +83,7 @@ public class NotificationService {
     public int markAllAsRead(Long userId) {
         return notificationRepository.markAllRead(userId,LocalDateTime.now());
     }
+
     /**
      * 미읽음 개수
      */

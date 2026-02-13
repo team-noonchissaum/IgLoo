@@ -22,6 +22,7 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 public class WishService {
+
     private final WishRepository wishRepository;
     private final ItemService itemService;
     private final ItemRepository itemRepository;
@@ -77,6 +78,4 @@ public class WishService {
                 .map(WishItemRes::from)
                 .toList();
     }
-
-
 }

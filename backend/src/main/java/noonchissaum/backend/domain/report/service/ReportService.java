@@ -19,6 +19,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Transactional
 public class ReportService {
+
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
     private final Map<ReportTargetType, ReportTargetHandler> handlerMap;

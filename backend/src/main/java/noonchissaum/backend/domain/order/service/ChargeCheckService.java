@@ -17,13 +17,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ChargeCheckService {
 
-    private final RedissonClient redissonClient;
     private final TaskService taskService;
     private final ChargeRecordService chargeRecordService;
     private final ChargeCheckRepository chargeCheckRepository;

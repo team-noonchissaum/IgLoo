@@ -143,6 +143,9 @@ where a.status = :status
     List<Auction> findByCurrentBidder_IdAndStatusIn(Long userId, List<AuctionStatus> statuses);
 
 
+    /**
+     * 사용자의 위치 필터링  부분 n+1/lazyloading방지
+     */
     @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
     @Query("""
     SELECT a FROM Auction a
