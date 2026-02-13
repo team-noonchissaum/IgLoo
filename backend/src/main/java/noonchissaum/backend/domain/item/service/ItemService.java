@@ -8,7 +8,7 @@ import noonchissaum.backend.domain.item.entity.ItemImage;
 import noonchissaum.backend.domain.item.repository.ItemImageRepository;
 import noonchissaum.backend.domain.item.repository.ItemRepository;
 import noonchissaum.backend.domain.user.entity.User;
-import noonchissaum.backend.global.exception.CustomException;
+import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,14 +21,14 @@ public class ItemService {
     private final ItemRepository itemRepository;
     private final ItemImageRepository itemImageRepository;
 
-    public Item getActiveById(Long itemId){
+    public Item getActiveById(Long itemId) {
         return itemRepository.findByIdAndStatusTrue(itemId)
-                .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.ITEM_NOT_FOUND));
     }
 
     public Item getById(Long itemId) {
         return itemRepository.findById(itemId)
-                .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.ITEM_NOT_FOUND));
     }
 
     //상품 정보 생성 및 이미지 등록
@@ -40,9 +40,13 @@ public class ItemService {
                 .description(request.getDescription())
                 .startPrice(request.getStartPrice())
                 .build();
-        itemRepository.save(item);
+        //아이템 추가시 판매자 위치 가져오기(위도,경도)
+        if (seller.getDong() != null) {
+            item.setSellerDong(seller.getDong());
+        }
 
-        addImages(item,request.getImageUrls());
+        itemRepository.save(item);
+        addImages(item, request.getImageUrls());
         return item;
     }
 

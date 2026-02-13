@@ -176,5 +176,37 @@ public class WalletService {
         return WalletRes.from(wallet);
     }
 
+    /**
+     * 입찰 롤백 시 지갑 역처리 (차단 유저 제거)
+     * - 차단 유저: locked → balance (환불)
+     * - 이전 입찰자: balance → locked (재동결)
+     */
+    public void rollbackBidWallet(Long blockedUserId, Long previousBidderId,
+                                  BigDecimal blockedUserRefundAmount, BigDecimal previousBidderRelockAmount) {
+        // Redis 캐시 로드 (없으면 DB에서)
+        getBalance(blockedUserId);
+        if (previousBidderId != null && previousBidderId != -1L) {
+            getBalance(previousBidderId);
+        }
+
+        // 1. 차단 유저 환불: lockedBalance 감소, balance 증가
+        String blockedBalanceKey = RedisKeys.userBalance(blockedUserId);
+        String blockedLockedKey = RedisKeys.userLockedBalance(blockedUserId);
+        redisTemplate.opsForValue().increment(blockedBalanceKey, blockedUserRefundAmount.longValue());
+        redisTemplate.opsForValue().decrement(blockedLockedKey, blockedUserRefundAmount.longValue());
+
+        // 2. 이전 입찰자 재동결: balance 감소, lockedBalance 증가
+        if (previousBidderId != null && previousBidderId != -1L) {
+            String prevBalanceKey = RedisKeys.userBalance(previousBidderId);
+            String prevLockedKey = RedisKeys.userLockedBalance(previousBidderId);
+            Long remain = redisTemplate.opsForValue().decrement(prevBalanceKey, previousBidderRelockAmount.longValue());
+            if (remain != null && remain < 0) {
+                redisTemplate.opsForValue().increment(prevBalanceKey, previousBidderRelockAmount.longValue());
+                throw new ApiException(ErrorCode.INSUFFICIENT_BALANCE);
+            }
+            redisTemplate.opsForValue().increment(prevLockedKey, previousBidderRelockAmount.longValue());
+        }
+    }
+
 
 }

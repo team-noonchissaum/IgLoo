@@ -58,6 +58,7 @@ public class ChatMessageService {
                 saved.getMessage(),
                 saved.getCreatedAt()
         );
+
         // 브로드캐스트
         messagingTemplate.convertAndSend("/topic/chat." + room.getId(), payload);
 
@@ -104,6 +105,7 @@ public class ChatMessageService {
                 .toList();
 
         Long nextCursor = messages.isEmpty() ? null : messages.get(messages.size() - 1).getMessageId();
+
         return new ChatMessagePageRes(messages, nextCursor, hasNext);
     }
 

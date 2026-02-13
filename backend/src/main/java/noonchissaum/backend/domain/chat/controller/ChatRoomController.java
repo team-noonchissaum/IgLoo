@@ -64,4 +64,18 @@ public class ChatRoomController {
         return ApiResponse.success("채팅 메시지 조회 성공", res);
     }
 
+    /**
+     * 경매 기준 채팅방 생성 또는 조회
+     * - 구매자: DIRECT 선택 시 채팅방 생성 후 반환
+     * - 판매자: 채팅방이 있으면 반환
+     */
+    @PostMapping("/rooms/from-auction/{auctionId}")
+    public ApiResponse<ChatRoomRes> ensureRoomFromAuction(
+            @PathVariable Long auctionId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        Long userId = userPrincipal.getUserId();
+        ChatRoomRes res = chatRoomService.ensureRoomForAuction(auctionId, userId);
+        return ApiResponse.success("채팅방 조회/생성 성공", res);
+    }
 }

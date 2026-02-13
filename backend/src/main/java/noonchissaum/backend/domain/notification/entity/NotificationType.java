@@ -1,5 +1,5 @@
 package noonchissaum.backend.domain.notification.entity;
 
 public enum NotificationType {
-    START, OUTBID, NO_PURCHASE, PURCHASED, IMMINENT
+    OUTBID, NO_PURCHASE, PURCHASED, IMMINENT, AUCTION_TEMP_BLOCKED, AUCTION_BLOCKED, AUCTION_UNBLOCKED
 }

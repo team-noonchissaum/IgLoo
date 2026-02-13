@@ -30,12 +30,14 @@ public class AuctionRes {
     private LocalDateTime endAt;
     private Long sellerId;
     private String sellerNickname;
+    private String sellerDong;
     private List<String> imageUrls;
     private Long itemId;
     private Long categoryId;
     private String categoryName;
     private Integer wishCount;
     private Boolean isWished;
+    private List<AuctionRes> recommendedAuctions; // 추천 항목을 위한 새 필드
 
     public static AuctionRes from(Auction auction) {
         Item item = auction.getItem();
@@ -52,6 +54,7 @@ public class AuctionRes {
                 .endAt(auction.getEndAt())
                 .sellerId(item.getSeller().getId())
                 .sellerNickname(item.getSeller().getNickname())
+                .sellerDong(item.getSeller().getDong())
                 .imageUrls(item.getImages().stream()
                         .map(ItemImage::getImageUrl)
                         .collect(Collectors.toList()))
@@ -76,6 +79,7 @@ public class AuctionRes {
                 .endAt(auction.getEndAt())
                 .sellerId(item.getSeller().getId())
                 .sellerNickname(item.getSeller().getNickname())
+                .sellerDong(item.getSeller().getDong())
                 .imageUrls(item.getImages().stream()
                         .map(ItemImage::getImageUrl)
                         .collect(Collectors.toList()))
@@ -83,6 +87,31 @@ public class AuctionRes {
                 .categoryName(item.getCategory().getName())
                 .wishCount(item.getWishCount() == null ? 0 : item.getWishCount())
                 .isWished(isWished)
+                .build();
+    }
+    public static AuctionRes from(Auction auction, boolean isWished, List<AuctionRes> recommendedAuctions) {
+        Item item = auction.getItem();
+        return AuctionRes.builder()
+                .auctionId(auction.getId())
+                .itemId(item.getId())
+                .title(item.getTitle())
+                .description(item.getDescription())
+                .currentPrice(auction.getCurrentPrice())
+                .startPrice(item.getStartPrice())
+                .bidCount(auction.getBidCount())
+                .status(auction.getStatus())
+                .startAt(auction.getStartAt())
+                .endAt(auction.getEndAt())
+                .sellerId(item.getSeller().getId())
+                .sellerNickname(item.getSeller().getNickname())
+                .imageUrls(item.getImages().stream()
+                        .map(ItemImage::getImageUrl)
+                        .collect(Collectors.toList()))
+                .categoryId(item.getCategory().getId())
+                .categoryName(item.getCategory().getName())
+                .wishCount(item.getWishCount() == null ? 0 : item.getWishCount())
+                .isWished(isWished)
+                .recommendedAuctions(recommendedAuctions) // 추천 경매 설정
                 .build();
     }
 }

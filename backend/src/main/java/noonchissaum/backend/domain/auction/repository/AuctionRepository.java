@@ -26,12 +26,10 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
 
     List<Auction> findAllByStatusIn(List<AuctionStatus> statuses);
 
-    // Redis id 리스트 상세 로딩용
     @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
     List<Auction> findByIdIn(List<Long> ids);
 
     /**
-     *스케줄 관련 상태값 변경쿼리
      * READY->RUNNING
      */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
@@ -96,7 +94,6 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
     )
     int markDeadlineAuctions(@Param("now") LocalDateTime now);
 
-    //deadline으로 바뀔 경매 찾기
     @Query(
             value = """
         SELECT a.auction_id
@@ -111,8 +108,8 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
 
     @Query(
             "select a from Auction a where a.id = :auctionId " +
-                    "and (a.status = noonchissaum.backend.domain.auction.entity.AuctionStatus.RUNNING " +
-                    "or a.status = noonchissaum.backend.domain.auction.entity.AuctionStatus.DEADLINE)")
+                    "and (a.status = 'RUNNING' " +
+                    "or a.status = 'DEADLINE')")
     Optional<Auction> findByIdWithStatus(@Param("auctionId") Long auctionId);
 
     @Modifying
@@ -134,6 +131,32 @@ where a.status = :status
   and a.endAt <= :now
 """)
     List<Long> findIdsToEnd(@Param("status") AuctionStatus status, @Param("now") LocalDateTime now);
+
+
+    /**
+     */
+    @EntityGraph(attributePaths = {"item", "item.seller", "item.category", "currentBidder"})
+    List<Auction> findByCurrentBidder_IdAndStatusIn(Long userId, List<AuctionStatus> statuses);
+
+    /**
+     * 사용자의 위치 필터링  부분 n+1/lazyloading방지
+     */
+    @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
+    @Query("""
+    SELECT a FROM Auction a
+    JOIN FETCH a.item i
+    WHERE i.seller.latitude IS NOT NULL
+    AND i.seller.longitude IS NOT NULL
+    AND i.seller.latitude BETWEEN :minLat AND :maxLat
+    AND i.seller.longitude BETWEEN :minLon AND :maxLon
+    AND a.status IN ('RUNNING', 'READY','DEADLINE')
+    """)
+    List<Auction> findAuctionsInBoundingBox(
+            @Param("minLat") Double minLat,
+            @Param("maxLat") Double maxLat,
+            @Param("minLon") Double minLon,
+            @Param("maxLon") Double maxLon
+    );
 
     // 핫딜 배너 조회
     @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
@@ -174,5 +197,30 @@ where a.status = :status
     int runHotDeals(@Param("fromStatus") AuctionStatus fromStatus,
                     @Param("toStatus") AuctionStatus toStatus,
                     @Param("now") LocalDateTime now);
-}
 
+
+    @Query("SELECT a FROM Auction a WHERE a.item.id = :itemId")
+    Optional<Auction> findByItemId(@Param("itemId") Long itemId);
+
+    @Query("SELECT a FROM Auction a WHERE a.item.id IN :itemIds")
+    List<Auction> findAllByItemIdIn(@Param("itemIds") List<Long> itemIds);
+    @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
+    @Query("""
+select a from Auction a
+where a.status in :statuses
+  and (
+       a.createdAt >= :threshold
+       or (
+            a.bidCount = 0
+            and not exists (
+                select 1
+                from Wish w
+                where w.item = a.item
+            )
+       )
+  )
+""")
+    List<Auction> findNewAuctions(@Param("statuses") List<AuctionStatus> statuses,
+                                  @Param("threshold") LocalDateTime threshold,
+                                  Pageable pageable);
+}

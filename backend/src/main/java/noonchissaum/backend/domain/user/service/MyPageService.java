@@ -1,6 +1,7 @@
 package noonchissaum.backend.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.auction.dto.res.AuctionRes;
 import noonchissaum.backend.domain.auction.service.AuctionService;
 import noonchissaum.backend.domain.user.dto.response.MyPageRes;
@@ -9,7 +10,7 @@ import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
-import noonchissaum.backend.global.exception.CustomException;
+import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -30,11 +32,11 @@ public class MyPageService {
     /**마이페이지 조회*/
     public MyPageRes getMyPage(Long userId) {
         User user = userRepository.findByIdWithWallet(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
         Wallet wallet = user.getWallet();
         if (wallet == null) {
-            throw new CustomException(ErrorCode.CANNOT_FIND_WALLET);
+            throw new ApiException(ErrorCode.CANNOT_FIND_WALLET);
         }
 
         return new MyPageRes(
@@ -48,7 +50,7 @@ public class MyPageService {
     /**사용자 지갑 정보 조회*/
     public UserWalletRes getWallet(Long userId) {
         Wallet wallet = walletRepository.findByUserId(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.CANNOT_FIND_WALLET));
+                .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
         BigDecimal balance = wallet.getBalance();
         BigDecimal lockedBalance = wallet.getLockedBalance();
         BigDecimal totalBalance = balance.add(lockedBalance);
@@ -62,5 +64,4 @@ public class MyPageService {
     public Page<AuctionRes> getMyAuctions(Long userId, Pageable pageable) {
         return auctionService.getMyAuctions(userId, pageable);
     }
-
 }
