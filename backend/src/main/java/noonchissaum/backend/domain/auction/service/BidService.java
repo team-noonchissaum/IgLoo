@@ -11,7 +11,6 @@ import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.entity.Bid;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.repository.BidRepository;
-
 import noonchissaum.backend.domain.notification.constants.NotificationConstants;
 import noonchissaum.backend.domain.notification.entity.NotificationType;
 import noonchissaum.backend.domain.notification.service.NotificationService;
@@ -29,7 +28,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
@@ -161,19 +159,11 @@ public class BidService {
                     );
                 }
 
-
-
                 Integer bidCountInt = Integer.parseInt(initialBidCount);
                 // Redis 새로운 1등 정보 저장
                 redisTemplate.opsForValue().set(priceKey, String.valueOf(bidAmount));
                 redisTemplate.opsForValue().set(bidderKey, String.valueOf(userId));
                 redisTemplate.opsForValue().set(bidCount, String.valueOf(++bidCountInt));
-
-                // 마감 시간에 대한 정보 확인 후 변경
-
-                // Stomp 메세지 발행 로직
-                // messageService.sendPriceUpdate(auctionId, bidAmount);
-
 
                 //검증용 데이터 (Bid,Wallet 재저장용 데이터)
                 Map<String, String> bidInfo = getStringStringMap(auctionId, userId, bidAmount, requestId, previousBidderId, currentPrice);
@@ -191,7 +181,6 @@ public class BidService {
                     String prevUserPendingKey = RedisKeys.pendingUser(previousBidderId);
                     redisTemplate.opsForSet().add(prevUserPendingKey, requestId);
                 }
-
             });
         }
         catch (InterruptedException e){
@@ -308,9 +297,19 @@ public class BidService {
             throw new ApiException(ErrorCode.AUCTION_STATUS_UNAVAILABLE);
         }
 
-        AuctionStatus status = AuctionStatus.valueOf(rawStatus);
-        LocalDateTime endAt = LocalDateTime.parse(rawEndTime);
-
+        AuctionStatus status;
+        LocalDateTime endAt;
+        try {
+            status = AuctionStatus.valueOf(rawStatus);
+            endAt = LocalDateTime.parse(rawEndTime);
+        } catch (Exception e) {
+            throw new ApiException(ErrorCode.AUCTION_STATUS_UNAVAILABLE);
+        }
+        if (status == AuctionStatus.TEMP_BLOCKED ||
+                status == AuctionStatus.BLOCKED ||
+                status == AuctionStatus.BLOCKED_ENDED) {
+            throw new ApiException(ErrorCode.AUCTION_BLOCKED);
+        }
         if (status != AuctionStatus.RUNNING && status != AuctionStatus.DEADLINE) {
             throw new ApiException(ErrorCode.NOT_FOUND_AUCTIONS);
         }
@@ -356,11 +355,6 @@ public class BidService {
         bidInfo.put("refundAmount", currentPrice.toPlainString());          // wallet 용
         bidInfo.put("createdAt", String.valueOf(System.currentTimeMillis()));
         return bidInfo;
-    }
-
-    public Bid getBid(Long bidId) {
-        return bidRepository.findById(bidId)
-                .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_BID));
     }
 
     public boolean isExistRequestId(String requestId){

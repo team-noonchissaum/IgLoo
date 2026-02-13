@@ -116,10 +116,97 @@ public class WalletService {
             }
         });
     }
+    // 정산용 메서드
+    @Transactional
+    public void releaseBuyerLockedForOrder(Long buyerId, BigDecimal amount, Long orderId) {
+        userLockExecutor.withUserLock(buyerId, () -> {
+            Wallet wallet = walletRepository.findByUserId(buyerId)
+                    .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+
+            // DB 기준으로 안전하게 차감
+            wallet.releaseLocked(amount);
+
+            // Redis 캐시 있으면 동기화
+            String lockedKey = RedisKeys.userLockedBalance(buyerId);
+            if (Boolean.TRUE.equals(redisTemplate.hasKey(lockedKey))) {
+                redisTemplate.opsForValue().decrement(lockedKey, amount.longValue());
+            }
+
+            // 거래내역 기록 (정산용 타입 추천)
+            walletTransactionRecordService.record(wallet, TransactionType.SETTLEMENT_OUT, amount, orderId);
+        });
+    }
+    @Transactional
+    public void settleToSellerForOrder(Long sellerId, BigDecimal amount, Long orderId) {
+        userLockExecutor.withUserLock(sellerId, () -> {
+            Wallet wallet = walletRepository.findByUserId(sellerId)
+                    .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+
+            wallet.addBalance(amount);
+
+            String balanceKey = RedisKeys.userBalance(sellerId);
+            if (Boolean.TRUE.equals(redisTemplate.hasKey(balanceKey))) {
+                redisTemplate.opsForValue().increment(balanceKey, amount.longValue());
+            }
+
+            walletTransactionRecordService.record(wallet, TransactionType.SETTLEMENT_IN, amount, orderId);
+        });
+    }
+    @Transactional
+    public void settleFeeToPlatform(Long systemUserId, BigDecimal feeAmount, Long orderId) {
+        userLockExecutor.withUserLock(systemUserId, () -> {
+            Wallet wallet = walletRepository.findByUserId(systemUserId)
+                    .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+
+            wallet.addBalance(feeAmount);
+
+            String balanceKey = RedisKeys.userBalance(systemUserId);
+            if (Boolean.TRUE.equals(redisTemplate.hasKey(balanceKey))) {
+                redisTemplate.opsForValue().increment(balanceKey, feeAmount.longValue());
+            }
+
+            walletTransactionRecordService.record(wallet, TransactionType.SETTLEMENT_IN, feeAmount, orderId);
+        });
+    }
+
 
     public WalletRes getMyWallet(Long userId) {
         Wallet wallet = walletRepository.findByUserId(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
         return WalletRes.from(wallet);
     }
+
+    /**
+     * 입찰 롤백 시 지갑 역처리 (차단 유저 제거)
+     * - 차단 유저: locked → balance (환불)
+     * - 이전 입찰자: balance → locked (재동결)
+     */
+    public void rollbackBidWallet(Long blockedUserId, Long previousBidderId,
+                                  BigDecimal blockedUserRefundAmount, BigDecimal previousBidderRelockAmount) {
+        // Redis 캐시 로드 (없으면 DB에서)
+        getBalance(blockedUserId);
+        if (previousBidderId != null && previousBidderId != -1L) {
+            getBalance(previousBidderId);
+        }
+
+        // 1. 차단 유저 환불: lockedBalance 감소, balance 증가
+        String blockedBalanceKey = RedisKeys.userBalance(blockedUserId);
+        String blockedLockedKey = RedisKeys.userLockedBalance(blockedUserId);
+        redisTemplate.opsForValue().increment(blockedBalanceKey, blockedUserRefundAmount.longValue());
+        redisTemplate.opsForValue().decrement(blockedLockedKey, blockedUserRefundAmount.longValue());
+
+        // 2. 이전 입찰자 재동결: balance 감소, lockedBalance 증가
+        if (previousBidderId != null && previousBidderId != -1L) {
+            String prevBalanceKey = RedisKeys.userBalance(previousBidderId);
+            String prevLockedKey = RedisKeys.userLockedBalance(previousBidderId);
+            Long remain = redisTemplate.opsForValue().decrement(prevBalanceKey, previousBidderRelockAmount.longValue());
+            if (remain != null && remain < 0) {
+                redisTemplate.opsForValue().increment(prevBalanceKey, previousBidderRelockAmount.longValue());
+                throw new ApiException(ErrorCode.INSUFFICIENT_BALANCE);
+            }
+            redisTemplate.opsForValue().increment(prevLockedKey, previousBidderRelockAmount.longValue());
+        }
+    }
+
+
 }

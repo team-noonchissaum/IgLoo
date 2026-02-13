@@ -3,11 +3,13 @@ package noonchissaum.backend.domain.user.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import noonchissaum.backend.domain.user.dto.request.CreateCategorySubscriptionReq;
 import noonchissaum.backend.domain.user.dto.request.ProfileUpdateUserReq;
 import noonchissaum.backend.domain.user.dto.response.*;
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.global.dto.ApiResponse;
 import noonchissaum.backend.global.security.UserPrincipal;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -73,6 +75,39 @@ public class UserController {
     ) {
         userService.userDelete(principal.getUserId());
         return ResponseEntity.ok(ApiResponse.success("회원 탈퇴 완료"));
+    }
+
+    /**
+     * 내 관심 카테고리 조회
+     */
+    @GetMapping("/me/category-subscriptions")
+    public ResponseEntity<ApiResponse<CategorySubscriptionRes>> getMyCategorySubscriptions(
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        CategorySubscriptionRes result = userService.getMyCategorySubscriptions(principal.getUserId());
+        return ResponseEntity.ok(ApiResponse.success("조회 성공", result));
+    }
+
+    /** 내 관심 카테고리 등록 */
+    @PostMapping("/me/category-subscriptions")
+    public ResponseEntity<ApiResponse<CategorySubscriptionRes>> addMyCategorySubscription(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @Valid @RequestBody CreateCategorySubscriptionReq req
+    ) {
+        CategorySubscriptionRes result =
+                userService.addMyCategorySubscription(principal.getUserId(), req.getCategoryId());
+        return ResponseEntity.ok(ApiResponse.success("관심 카테고리 등록 성공", result));
+    }
+
+    /** 내 관심 카테고리 해제 */
+    @DeleteMapping("/me/category-subscriptions/{categoryId}")
+    public ResponseEntity<ApiResponse<CategorySubscriptionRes>> removeMyCategorySubscription(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long categoryId
+    ) {
+        CategorySubscriptionRes result =
+                userService.removeMyCategorySubscription(principal.getUserId(), categoryId);
+        return ResponseEntity.ok(ApiResponse.success("관심 카테고리 해제 성공", result));
     }
 }
 

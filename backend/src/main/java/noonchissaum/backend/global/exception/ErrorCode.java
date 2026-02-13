@@ -15,6 +15,8 @@ public enum ErrorCode {
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "요청 값이 올바르지 않습니다.", "COMMON-002"),
     /** 잘못된 요청 */
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "COMMON-003", "잘못된 요청입니다."),
+    /** 리소스를 찾을 수 없음 */
+    NOT_FOUND(HttpStatus.NOT_FOUND, "COMMON-004", "요청한 리소스를 찾을 수 없습니다."),
     // ========== AUTH (인증/인가 에러) ==========
     /** 로그인 실패 - 이메일 또는 비밀번호 불일치 */
     INVALID_LOGIN(HttpStatus.UNAUTHORIZED, "AUTH-001", "이메일 또는 비밀번호가 올바르지 않습니다."),
@@ -32,6 +34,10 @@ public enum ErrorCode {
     USER_BLOCKED(HttpStatus.FORBIDDEN, "AUTH-007", "차단된 사용자입니다. 관리자에게 문의하세요."),
 
     OAUTH2_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "AUTH-008", "소셜 로그인에 실패했습니다."),
+    PASSWORD_RESET_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "AUTH-009", "비밀번호 재설정 토큰이 유효하지 않습니다."),
+    PASSWORD_RESET_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "AUTH-010", "비밀번호 재설정 토큰이 만료되었습니다."),
+    PASSWORD_RESET_LOCAL_ONLY(HttpStatus.BAD_REQUEST, "AUTH-011", "로컬 계정만 비밀번호를 재설정할 수 있습니다."),
+    PASSWORD_RESET_MAIL_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH-012", "비밀번호 재설정 메일 발송에 실패했습니다."),
 
     // ========== USER (사용자 에러) ==========
     /** 이메일 중복 */
@@ -98,6 +104,8 @@ public enum ErrorCode {
     AUCTION_NOT_OWNER(HttpStatus.FORBIDDEN, "A002", "해당 경매의 판매자가 아닙니다."),
     AUCTION_HAS_BIDS(HttpStatus.BAD_REQUEST, "A003", "입찰이 존재하는 경매는 취소할 수 없습니다."),
     AUCTION_INVALID_STATUS(HttpStatus.BAD_REQUEST, "A004", "현재 상태에서는 경매를 취소할 수 없습니다."),
+    AUCTION_BLOCKED(HttpStatus.BAD_REQUEST, "A005", "차단된 경매입니다."),
+    AUCTION_RESTORE_EXPIRED(HttpStatus.BAD_REQUEST, "A006", "종료된 경매는 복구할 수 없습니다."),
     AUCTION_STATUS_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "A005", "경매 상태 정보를 불러올 수 없습니다."),
 
     // Notification Error
@@ -138,7 +146,37 @@ public enum ErrorCode {
     CHAT_OPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT-003", "Chat option not found."),
 
     //Lock
-    LOCK_ACQUISITION(HttpStatus.TOO_MANY_REQUESTS, "L001", "락 획득에 실패했습니다. 다시 시도해주세요");
+    LOCK_ACQUISITION(HttpStatus.TOO_MANY_REQUESTS, "L001", "락 획득에 실패했습니다. 다시 시도해주세요"),
+
+    // Coupons Error
+    COUPON_NOT_FOUND(HttpStatus.NOT_FOUND, "CPN-001", "쿠폰을 찾을 수 없습니다."),
+    NO_AUTHORIZED_COUPON_USE(HttpStatus.FORBIDDEN, "CPN-002", "쿠폰을 사용할 권한이 없습니다."),
+
+
+    // Settlement Error
+    INVALID_ORDER_STATUS_FOR_SETTLEMENT(HttpStatus.BAD_REQUEST, "ORDER-002", "정산을 진행할 수 없는 주문 상태입니다."),
+
+    // Order Error
+    DELIVERY_TYPE_NOT_DIRECT(HttpStatus.BAD_REQUEST, "DELIVERY-002", "배송 타입이 직거래가 아닙니다."),
+    INVALID_ORDER_AMOUNT(HttpStatus.BAD_REQUEST, "ORDER-003", "주문 금액이 올바르지 않습니다."),
+    SHIPMENT_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "SHIP-003", "유효한 배송 요청 건을 찾을 수 없습니다."),
+    SHIPMENT_ALREADY_SHIPPED(HttpStatus.BAD_REQUEST, "SHIP-004", "이미 발송 처리가 완료된 배송 건입니다."),
+    SHIPMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "SHIP-001", "배송 정보를 찾을 수 없습니다."),
+    DELIVERY_TYPE_NOT_SHIPMENT(HttpStatus.BAD_REQUEST, "DELIVERY-001", "배송 타입이 택배가 아닙니다.") ,
+    SHIPMENT_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "SHIP-002", "이미 해당 주문에 대한 배송 정보가 존재합니다."),
+    ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER-001", "존재하지 않는 주문입니다."),
+    SHIPMENT_TRACKING_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "SHIP-005", "송장 정보가 없어 배송 조회가 불가능합니다."),
+    SWEETTRACKER_API_ERROR(HttpStatus.BAD_GATEWAY, "SHIP-006", "택배 조회 서비스 응답이 올바르지 않습니다."),       // 외부 API 실패/응답 이상
+  
+    // ========== LOCATION (위치 관련 에러) ==========
+    INVALID_LOCATION_PARAMS(HttpStatus.BAD_REQUEST, "LOCATION-001", "위치 파라미터가 유효하지 않습니다"),
+    INVALID_RADIUS(HttpStatus.BAD_REQUEST, "LOCATION-002", "검색 반경은 1, 3, 7, 10, 20, 50 중 하나여야 합니다\""),
+    INVALID_ADDRESS(HttpStatus.BAD_REQUEST, "LOCATION-003", "주소가 유효하지 않습니다"),
+    ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "LOCATION-004", "입력한 주소를 찾을 수 없습니다"),
+    LOCATION_API_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "LOCATION-005", "위치 조회 API 호출에 실패했습니다"),
+    LOCATION_ENCODING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "LOCATION-006", "주소 인코딩에 실패했습니다"),
+    USER_LOCATION_NOT_SET(HttpStatus.BAD_REQUEST,"LOCATION-007","설정된 위치가 없습니다. 위치를 설정 해 주세요");
+
 
     private final HttpStatus status;
     private final String code;

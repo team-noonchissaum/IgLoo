@@ -113,6 +113,12 @@ public class SecurityConfig {
                         // websocket
                         .requestMatchers("/ws/**").permitAll()
 
+                        // coupon
+                        .requestMatchers("/api/coupons/issues/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/api/coupons/**").hasRole("ADMIN")
+
+                        .requestMatchers("/public/**").permitAll() // 지도 api 테스트용
+
                         //그 외 모두 차단
                         .anyRequest().authenticated()
                 )

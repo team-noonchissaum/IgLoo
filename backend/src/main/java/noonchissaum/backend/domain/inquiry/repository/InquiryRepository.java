@@ -1,4 +1,4 @@
-package noonchissaum.backend.domain.inquiry.repositroy;
+package noonchissaum.backend.domain.inquiry.repository;
 
 import noonchissaum.backend.domain.inquiry.entity.Inquiry;
 import org.springframework.data.jpa.repository.JpaRepository;

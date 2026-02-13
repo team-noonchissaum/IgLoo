@@ -11,6 +11,8 @@ public interface UserAuthRepository extends JpaRepository<UserAuth,Long>{
     /**로그인용 조회(Local/OAuth)*/
     Optional<UserAuth> findByAuthTypeAndIdentifier(AuthType authType,String identifier);
 
+    Optional<UserAuth> findByUser_IdAndAuthType(Long userId, AuthType authType);
+
     /**회원 가입시 중복 체크용*/
     boolean existsByIdentifierAndAuthType(AuthType authType,String identifier);
 }

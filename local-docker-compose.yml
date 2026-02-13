@@ -5,9 +5,20 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf # 로컬 설정파일을 컨테이너로 연결
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
       - ./redis-data:/data # 데이터 저장소 연결
-    command: redis-server /usr/local/etc/redis/redis.conf # 설정파일을 읽으며 실행하도록 지정
+    command: redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD}
+    env_file:
+      - .env.dev
+    restart: always
+
+  ai-service:
+    image: corqu/igloo-ai-service:latest
+    container_name: igloo-ai-service
+    env_file:
+      - .env.dev
+    ports:
+      - "8001:8001"
     restart: always
 
   db:
@@ -35,6 +46,4 @@ services:
       - "80:80" # 로컬 브라우저에서 http://localhost 로 접속 가능하게 함
     volumes:
       - ./nginx/local.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - backend
     restart: always

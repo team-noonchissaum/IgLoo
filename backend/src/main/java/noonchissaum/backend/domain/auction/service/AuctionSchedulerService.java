@@ -14,9 +14,12 @@ import noonchissaum.backend.domain.notification.entity.NotificationType;
 import noonchissaum.backend.domain.notification.service.AuctionNotificationService;
 import noonchissaum.backend.domain.order.service.OrderService;
 import noonchissaum.backend.domain.user.entity.User;
+import noonchissaum.backend.domain.user.repository.CategorySubscriptionRepository;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
+import noonchissaum.backend.global.util.MoneyUtil;
+import noonchissaum.backend.global.service.MailService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -39,7 +42,8 @@ public class AuctionSchedulerService {
     private final AuctionNotificationService auctionNotificationService;
     private final AuctionRedisService auctionRedisService;
     private final WalletService walletService;
-
+    private final CategorySubscriptionRepository categorySubscriptionRepository;
+    private final MailService mailService;
 
     /**
      * 진행 중인 모든 경매의 상태를 실시간으로 중계합니다. (1초 주기)
@@ -73,9 +77,10 @@ public class AuctionSchedulerService {
         int updated=0;
         for(Auction auction :auctions){
             auction.run();
-            int amount = (int) Math.min( auction.getCurrentPrice().longValue() * 0.05 , 1000);
+            int amount = MoneyUtil.calcDeposit(auction.getStartPrice().intValue());
             walletService.setAuctionDeposit(auction.getItem().getSeller().getId(), auction.getId(), amount, "refund");
             auctionRedisService.setRedis(auction.getId());
+            notifyCategorySubscribers(auction);
             updated++;
         }
         long elapsed = System.currentTimeMillis() - startMs;
@@ -87,6 +92,26 @@ public class AuctionSchedulerService {
         }
 
         return updated;
+    }
+
+    /**
+     * READY로 노출된 경매의 카테고리 구독자에게 메일 알림 전송
+     */
+    private void notifyCategorySubscribers(Auction auction) {
+        Long categoryId = auction.getItem().getCategory().getId();
+        List<String> emails = categorySubscriptionRepository.findActiveUserEmailsByCategoryId(categoryId);
+        if (emails.isEmpty()) {
+            return;
+        }
+
+        String categoryName = auction.getItem().getCategory().getName();
+        String itemTitle = auction.getItem().getTitle();
+        var price = auction.getCurrentPrice();
+        Long auctionId = auction.getId();
+
+        for (String email : emails) {
+            mailService.sendAuctionReadyNoticeMail(email, categoryName, itemTitle, price, auctionId);
+        }
     }
 
     /**
@@ -195,7 +220,7 @@ public class AuctionSchedulerService {
             if (changed == 1) {
                 auctionRedisService.setRedis(auctionId);
                 // 주문 생성
-                orderService.createOrder(auction, winnerBid.getBidder());
+                orderService.createOrder(auction, winnerBid.getBidder(), winnerBid.getBidPrice());
 
                 // 알림 발송 (낙찰자, 패찰자, 판매자)
                 sendSuccessNotifications(auction, winnerBid);
