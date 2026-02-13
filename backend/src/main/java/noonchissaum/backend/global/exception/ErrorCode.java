@@ -144,7 +144,17 @@ public enum ErrorCode {
 
     // Coupons Error
     COUPON_NOT_FOUND(HttpStatus.NOT_FOUND, "CPN-001", "쿠폰을 찾을 수 없습니다."),
-    NO_AUTHORIZED_COUPON_USE(HttpStatus.FORBIDDEN, "CPN-002", "쿠폰을 사용할 권한이 없습니다.");
+    NO_AUTHORIZED_COUPON_USE(HttpStatus.FORBIDDEN, "CPN-002", "쿠폰을 사용할 권한이 없습니다."),
+
+    // ========== LOCATION (위치 관련 에러) ==========
+    INVALID_LOCATION_PARAMS(HttpStatus.BAD_REQUEST, "LOCATION-001", "위치 파라미터가 유효하지 않습니다"),
+    INVALID_RADIUS(HttpStatus.BAD_REQUEST, "LOCATION-002", "검색 반경은 1, 3, 7, 10, 20, 50 중 하나여야 합니다\""),
+    INVALID_ADDRESS(HttpStatus.BAD_REQUEST, "LOCATION-003", "주소가 유효하지 않습니다"),
+    ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "LOCATION-004", "입력한 주소를 찾을 수 없습니다"),
+    LOCATION_API_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "LOCATION-005", "위치 조회 API 호출에 실패했습니다"),
+    LOCATION_ENCODING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "LOCATION-006", "주소 인코딩에 실패했습니다"),
+    USER_LOCATION_NOT_SET(HttpStatus.BAD_REQUEST,"LOCATION-007","설정된 위치가 없습니다. 위치를 설정 해 주세요");
+
 
     private final HttpStatus status;
     private final String code;

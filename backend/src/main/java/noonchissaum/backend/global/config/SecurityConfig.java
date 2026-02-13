@@ -117,6 +117,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/coupons/issues/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/api/coupons/**").hasRole("ADMIN")
 
+                        .requestMatchers("/public/**").permitAll() // 지도 api 테스트용
+
                         //그 외 모두 차단
                         .anyRequest().authenticated()
                 )

@@ -16,10 +16,15 @@ import noonchissaum.backend.domain.item.service.ItemService;
 import noonchissaum.backend.domain.item.service.UserViewRedisLogger;
 import noonchissaum.backend.domain.item.service.WishService;
 import noonchissaum.backend.domain.user.entity.User;
+import noonchissaum.backend.domain.user.repository.UserRepository;
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
+import noonchissaum.backend.global.RedisKeys;
+import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
+import noonchissaum.backend.global.service.LocationService;
+import org.springframework.data.domain.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -49,6 +54,10 @@ public class AuctionService {
     private final WalletService walletService;
     private final UserViewRedisLogger userViewRedisLogger; // 상세 조회 시 Redis 조회 로그 기록
     private final noonchissaum.backend.recommendation.service.RecommendationService recommendationService; // 추천 서비스 주입
+    private final LocationService locationService;
+    private final UserRepository userRepository;
+    private final UserViewRedisLogger userViewRedisLogger;
+    private final noonchissaum.backend.recommendation.service.RecommendationService recommendationService;
 
 
     /**
@@ -118,7 +127,7 @@ public class AuctionService {
      */
     public AuctionRes getAuctionDetail(Long userId, Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
         boolean isWished = wishService.isWished(userId, auction.getItem().getId());
 
         // 로그인 사용자라면 조회 로그를 Redis에 기록
@@ -139,16 +148,16 @@ public class AuctionService {
     @Transactional
     public void cancelAuction(Long userId, Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
 
         // 판매자 본인 검증
         if (!auction.getItem().getSeller().getId().equals(userId)) {
-            throw new CustomException(ErrorCode.AUCTION_NOT_OWNER);
+            throw new ApiException(ErrorCode.AUCTION_NOT_OWNER);
         }
 
         // 입찰이 하나라도 있으면 취소 불가
         if (auction.getBidCount() > 0) {
-            throw new CustomException(ErrorCode.AUCTION_HAS_BIDS);
+            throw new ApiException(ErrorCode.AUCTION_HAS_BIDS);
         }
 
         /**
@@ -157,7 +166,7 @@ public class AuctionService {
          * 취소 가능한 상태는 READY, RUNNING.
          */
         if (!(auction.getStatus() == AuctionStatus.READY || auction.getStatus() == AuctionStatus.RUNNING)) {
-            throw new CustomException(ErrorCode.AUCTION_INVALID_STATUS);
+            throw new ApiException(ErrorCode.AUCTION_INVALID_STATUS);
         }
 
         // 5분 기준 시각 계산
@@ -244,4 +253,63 @@ public class AuctionService {
                     .orElse(base);
         });
     }
+
+    /**
+     * 사용자의 현재 위치 기준 반경 내 경매 검색
+     */
+    public Page<AuctionRes> searchAuctionsByUserLocation(
+            Long userId,
+            Double radiusKm,
+            Pageable pageable) {
+
+        User user = userService.getUserByUserId(userId);
+
+        if (user.getLatitude() == null || user.getLongitude() == null) {
+            throw new ApiException(ErrorCode.USER_LOCATION_NOT_SET);
+        }
+
+        // 좌표 변환: 반경을 사각형으로
+        double latOffset = radiusKm / 111.0;
+        double lonOffset = radiusKm / (111.0 * Math.cos(Math.toRadians(user.getLatitude())));
+
+
+        // DB에서 사각형 범위 필터링
+        List<Auction> candidates = auctionRepository.findAuctionsInBoundingBox(
+                user.getLatitude() - latOffset,
+                user.getLatitude() + latOffset,
+                user.getLongitude() - lonOffset,
+                user.getLongitude() + lonOffset
+        );
+
+        // 정확한 거리로 필터링
+        List<Auction> filteredAuctions = candidates.stream()
+                .filter(a -> {
+                    Double distance = locationService.calculateDistance(
+                            user.getLatitude(),
+                            user.getLongitude(),
+                            a.getItem().getSeller().getLatitude(),
+                            a.getItem().getSeller().getLongitude()
+                    );
+                    return distance <= radiusKm;
+                })
+                .toList();
+
+        // 찜 여부
+        List<Long> itemIds = filteredAuctions.stream()
+                .map(a -> a.getItem().getId())
+                .distinct()
+                .toList();
+
+        Set<Long> wishedItemIds = wishService.getWishedItemIds(userId, itemIds);
+
+        return new PageImpl<>(
+                filteredAuctions.stream()
+                        .map(a -> AuctionRes.from(a, wishedItemIds.contains(a.getItem().getId())))
+                        .toList(),
+                pageable,
+                filteredAuctions.size()
+        );
+    }
+
+
 }
