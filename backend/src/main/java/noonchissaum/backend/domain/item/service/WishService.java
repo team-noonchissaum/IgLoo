@@ -76,4 +76,9 @@ public class WishService {
                 .map(WishItemRes::from)
                 .toList();
     }
+
+    @Transactional(readOnly = true)
+    public List<Item> getWishedItemsByUser(Long userId) {
+        return wishRepository.findItemsByUserId(userId);
+    }
 }

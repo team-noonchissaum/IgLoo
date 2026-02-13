@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User,Long> {
@@ -34,4 +35,8 @@ public interface UserRepository extends JpaRepository<User,Long> {
     Optional<User> findById(Long id);
 
     Optional<User> findByNickname(String nickname);
+
+    // 활성 사용자 (삭제 또는 차단되지 않은)의 모든 ID를 찾습니다.
+    @Query("SELECT u.id FROM User u WHERE u.status != 'DELETED' AND u.status != 'BLOCKED'")
+    List<Long> findAllActiveUserIds();
 }
