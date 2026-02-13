@@ -41,7 +41,6 @@ public class AuctionSchedulerService {
     private final AuctionRedisService auctionRedisService;
     private final WalletService walletService;
 
-
     /**
      * 진행 중인 모든 경매의 상태를 실시간으로 중계합니다. (1초 주기)
      */

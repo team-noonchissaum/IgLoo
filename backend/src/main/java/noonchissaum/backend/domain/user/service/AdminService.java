@@ -8,7 +8,6 @@ import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.service.AuctionRedisService;
 import noonchissaum.backend.domain.auction.service.AuctionService;
 import lombok.extern.slf4j.Slf4j;
-import noonchissaum.backend.domain.auction.service.AuctionService;
 import noonchissaum.backend.domain.auction.service.BidRollbackService;
 import noonchissaum.backend.domain.inquiry.service.InquiryService;
 import noonchissaum.backend.domain.item.entity.Item;

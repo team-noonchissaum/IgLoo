@@ -19,6 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Service
 public class AuctionNotificationService {
+
     private final AuctionRepository auctionRepository;
     private final StringRedisTemplate redisTemplate;
     private final BidRepository bidRepository;

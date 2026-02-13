@@ -3,35 +3,24 @@ package noonchissaum.backend.domain.order.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.order.dto.charge.res.ChargeCheckRes;
-import noonchissaum.backend.domain.order.entity.ChargeCheck;
 import noonchissaum.backend.domain.order.entity.CheckStatus;
 import noonchissaum.backend.domain.order.repository.ChargeCheckRepository;
 import noonchissaum.backend.domain.task.service.TaskService;
-import noonchissaum.backend.domain.wallet.entity.Wallet;
-import noonchissaum.backend.domain.wallet.repository.WalletRepository;
-import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import noonchissaum.backend.global.util.UserLockExecutor;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
-import java.math.BigDecimal;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ChargeCheckService {
 
-    private final RedissonClient redissonClient;
     private final TaskService taskService;
     private final ChargeRecordService chargeRecordService;
     private final ChargeCheckRepository chargeCheckRepository;

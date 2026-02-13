@@ -1,5 +1,6 @@
 package noonchissaum.backend;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
@@ -14,7 +15,7 @@ public class BackendApplication {
 		SpringApplication.run(BackendApplication.class, args);
 	}
 
-	@jakarta.annotation.PostConstruct
+	@PostConstruct
 	public void init() {
 		java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("Asia/Seoul"));
 	}

@@ -65,7 +65,10 @@ public class AuthService {
                 user.getNickname()
         );
     }
-    /**로그인 처리*/
+
+    /**
+     * 로그인 처리
+     * */
     public LoginRes login(LoginReq req) {
 
         UserAuth userAuth;
@@ -80,7 +83,6 @@ public class AuthService {
         }
 
         User user = userAuth.getUser();
-
 
         String accessToken = jwtTokenProvider.createAccessToken(user.getId(),user.getRole());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
@@ -102,7 +104,10 @@ public class AuthService {
                 isNewer
         );
     }
-    /**Local로그인*/
+
+    /**
+     * Local로그인
+     * */
     private UserAuth localLogin(LoginReq req) {
         UserAuth userAuth = userAuthRepository
                 .findByAuthTypeAndIdentifier(AuthType.LOCAL,req.getEmail())
@@ -114,7 +119,10 @@ public class AuthService {
 
         return userAuth;
     }
-    /**OAuth로그인*/
+
+    /**
+     * OAuth로그인
+     * */
     private LoginResult oauthLogin(LoginReq req) {
 
         // 🔥 실제로는 provider별로 토큰 검증 필요
@@ -125,7 +133,10 @@ public class AuthService {
                 .map(auth -> new LoginResult(auth, false))
                 .orElseGet(() -> oauthSignup(req, oauthIdentifier));
     }
-    /**OAuth 신규 회원가입*/
+
+    /**
+     * OAuth 신규 회원가입
+     * */
     @Transactional
     protected LoginResult oauthSignup(LoginReq req, String identifier) {
 
@@ -154,7 +165,10 @@ public class AuthService {
 
         return new LoginResult(userAuth, true);
     }
-    /**토큰 재발급(refresh)*/
+
+    /**
+     * 토큰 재발급(refresh)
+     * */
     public RefreshRes refresh(RefreshReq req) {
         String refreshToken= req.getRefreshToken();
 
@@ -187,7 +201,10 @@ public class AuthService {
         );
         return new RefreshRes(newAccessToken,newRefreshToken);
     }
-    /**로그아웃*/
+
+    /**
+     * 로그아웃
+     * */
     public void logout(String refreshToken) {
         if(!jwtTokenProvider.validateToken(refreshToken)) {
             throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
@@ -196,7 +213,10 @@ public class AuthService {
         Long userId=jwtTokenProvider.getUserId(refreshToken);
         refreshTokenService.delete(userId);
     }
-    /**OAuth 로그인 결과용 내부 record*/
+
+    /**
+     * OAuth 로그인 결과용 내부 record
+     * */
     private record LoginResult(UserAuth userAuth, boolean isNewer) {
     }
 }
