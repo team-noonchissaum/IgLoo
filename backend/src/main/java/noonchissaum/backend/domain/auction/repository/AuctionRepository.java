@@ -26,12 +26,10 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
 
     List<Auction> findAllByStatusIn(List<AuctionStatus> statuses);
 
-    // Redis id 由ъ뒪???곸꽭 濡쒕뵫??
     @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
     List<Auction> findByIdIn(List<Long> ids);
 
     /**
-     *?ㅼ?以?愿???곹깭媛?蹂寃쎌옘由?
      * READY->RUNNING
      */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
@@ -64,7 +62,6 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
     List<Auction> findByStartAt(LocalDateTime startAt);
 
     /**
-     *?ㅼ?以?愿???곹깭媛?蹂寃쎌옘由?
      * deadline -> ended
      */
     @Modifying
@@ -81,7 +78,6 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
     );
 
     /**
-     * ?ㅼ?以?愿???곹깭媛?蹂寃?荑쇰━
      * Running -> DEADLINE
      */
     @Modifying
@@ -96,7 +92,6 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
     )
     int markDeadlineAuctions(@Param("now") LocalDateTime now);
 
-    //deadline?쇰줈 諛붾?寃쎈ℓ 李얘린
     @Query(
             value = """
         SELECT a.auction_id
@@ -111,8 +106,8 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
 
     @Query(
             "select a from Auction a where a.id = :auctionId " +
-                    "and (a.status = noonchissaum.backend.domain.auction.entity.AuctionStatus.RUNNING " +
-                    "or a.status = noonchissaum.backend.domain.auction.entity.AuctionStatus.DEADLINE)")
+                    "and (a.status = 'RUNNING' " +
+                    "or a.status = 'DEADLINE')")
     Optional<Auction> findByIdWithStatus(@Param("auctionId") Long auctionId);
 
     @Modifying
@@ -137,23 +132,30 @@ where a.status = :status
 
 
     /**
-     * 李⑤떒 ?좎?媛 理쒖긽???낆같?먯씤 吏꾪뻾 以?寃쎈ℓ 議고쉶 (濡ㅻ갚 ???
      */
     @EntityGraph(attributePaths = {"item", "item.seller", "item.category", "currentBidder"})
     List<Auction> findByCurrentBidder_IdAndStatusIn(Long userId, List<AuctionStatus> statuses);
 
-    // Item ID濡?寃쎈ℓ瑜?李얠뒿?덈떎.
     @Query("SELECT a FROM Auction a WHERE a.item.id = :itemId")
     Optional<Auction> findByItemId(@Param("itemId") Long itemId);
 
-    // ?щ윭 Item ID濡?寃쎈ℓ 紐⑸줉??李얠뒿?덈떎.
     @Query("SELECT a FROM Auction a WHERE a.item.id IN :itemIds")
     List<Auction> findAllByItemIdIn(@Param("itemIds") List<Long> itemIds);
     @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
     @Query("""
 select a from Auction a
 where a.status in :statuses
-  and (a.bidCount = 0 or a.createdAt >= :threshold)
+  and (
+       a.createdAt >= :threshold
+       or (
+            a.bidCount = 0
+            and not exists (
+                select 1
+                from Wish w
+                where w.item = a.item
+            )
+       )
+  )
 """)
     List<Auction> findNewAuctions(@Param("statuses") List<AuctionStatus> statuses,
                                   @Param("threshold") LocalDateTime threshold,
