@@ -6,15 +6,12 @@ public final class MoneyUtil {
     /**
     * startPrice 기준 보증금
     */
-    private static final int MIN_DEPOSIT_THRESHOLD = 10_000;
     private static final int FIXED_MIN_DEPOSIT = 1_000;
     private static final double DEPOSIT_RATE = 0.10;
 
     public static int calcDeposit(int startPrice){
-        if(startPrice <= MIN_DEPOSIT_THRESHOLD){
-            return FIXED_MIN_DEPOSIT;
-        }
-        return (int) Math.ceil(startPrice * DEPOSIT_RATE);
+        int rateAmount = (int) Math.ceil(startPrice * DEPOSIT_RATE);
+        return Math.max(FIXED_MIN_DEPOSIT, rateAmount);
     }
 
 

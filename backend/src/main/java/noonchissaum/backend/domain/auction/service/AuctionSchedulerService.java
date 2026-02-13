@@ -18,6 +18,7 @@ import noonchissaum.backend.domain.user.repository.CategorySubscriptionRepositor
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
+import noonchissaum.backend.global.util.MoneyUtil;
 import noonchissaum.backend.global.service.MailService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -76,7 +77,7 @@ public class AuctionSchedulerService {
         int updated=0;
         for(Auction auction :auctions){
             auction.run();
-            int amount = (int) Math.min( auction.getCurrentPrice().longValue() * 0.05 , 1000);
+            int amount = MoneyUtil.calcDeposit(auction.getStartPrice().intValue());
             walletService.setAuctionDeposit(auction.getItem().getSeller().getId(), auction.getId(), amount, "refund");
             auctionRedisService.setRedis(auction.getId());
             notifyCategorySubscribers(auction);

@@ -23,6 +23,7 @@ import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
+import noonchissaum.backend.global.util.MoneyUtil;
 import noonchissaum.backend.global.service.LocationService;
 import org.springframework.data.domain.*;
 import org.springframework.data.domain.Page;
@@ -83,7 +84,7 @@ public class AuctionService {
                 .build();
         auctionRepository.save(auction);
 
-        int amount = (int) Math.min(auction.getCurrentPrice().longValue() * 0.05, 1000);
+        int amount = MoneyUtil.calcDeposit(auction.getStartPrice().intValue());
 
         walletService.setAuctionDeposit(userId, auction.getId(), amount, "set");
 
@@ -125,7 +126,14 @@ public class AuctionService {
      */
     public AuctionRes getAuctionDetail(Long userId, Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
+      
+        if (auction.getStatus() == AuctionStatus.TEMP_BLOCKED ||
+                auction.getStatus() == AuctionStatus.BLOCKED ||
+                auction.getStatus() == AuctionStatus.BLOCKED_ENDED) {
+            throw new CustomException(ErrorCode.AUCTION_BLOCKED);
+        }
+      
         boolean isWished = wishService.isWished(userId, auction.getItem().getId());
 
         // 로그인 사용자라면 조회 로그를 Redis에 기록
@@ -171,7 +179,7 @@ public class AuctionService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime penaltyAt = auction.getCreatedAt().plusMinutes(5);
 
-        int amount = (int) Math.min(auction.getCurrentPrice().longValue() * 0.05, 1000);
+        int amount = MoneyUtil.calcDeposit(auction.getStartPrice().intValue());
 
         if (now.isBefore(penaltyAt)) {
             // 5분 이내 취소: 보증금 환불

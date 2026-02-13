@@ -3,11 +3,18 @@ package noonchissaum.backend.domain.user.service;
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
+import noonchissaum.backend.domain.auction.repository.BidRepository;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
+import noonchissaum.backend.domain.auction.service.AuctionRedisService;
+import noonchissaum.backend.domain.auction.service.AuctionService;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.auction.service.BidRollbackService;
 import noonchissaum.backend.domain.inquiry.service.InquiryService;
 import noonchissaum.backend.domain.item.entity.Item;
+import noonchissaum.backend.domain.notification.constants.NotificationConstants;
+import noonchissaum.backend.domain.notification.entity.NotificationType;
+import noonchissaum.backend.domain.notification.service.AuctionNotificationService;
+import noonchissaum.backend.domain.order.service.OrderService;
 import noonchissaum.backend.domain.report.entity.Report;
 import noonchissaum.backend.domain.report.entity.ReportStatus;
 import noonchissaum.backend.domain.report.entity.ReportTargetType;
@@ -18,10 +25,14 @@ import noonchissaum.backend.domain.user.dto.response.*;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.entity.UserStatus;
 import noonchissaum.backend.domain.user.repository.*;
+import noonchissaum.backend.domain.wallet.service.WalletRecordService;
+import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
+import noonchissaum.backend.global.util.MoneyUtil;
+import noonchissaum.backend.global.util.UserLockExecutor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -42,6 +53,14 @@ public class AdminService {
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
     private final AuctionRepository auctionRepository;
+    private final BidRepository bidRepository;
+    private final AuctionService auctionService;
+    private final AuctionRedisService auctionRedisService;
+    private final OrderService orderService;
+    private final WalletService walletService;
+    private final WalletRecordService walletRecordService;
+    private final AuctionNotificationService auctionNotificationService;
+    private final UserLockExecutor userLockExecutor;
     private final InquiryService inquiryService;
     private final DailyStatisticsRepository dailyStatisticsRepository;
     private final BidRollbackService bidRollbackService;
@@ -204,20 +223,33 @@ public class AdminService {
             throw new ApiException(ErrorCode.ITEM_NOT_FOUND);
         }
 
-        if (item.isDeleted()) {
-            throw new ApiException(ErrorCode.ITEM_ALREADY_BLOCKED);
+        if (item.isDeleted() && auction.getStatus() != AuctionStatus.TEMP_BLOCKED) {
+            throw new CustomException(ErrorCode.ITEM_ALREADY_BLOCKED);
         }
 
-        // 진행 중인 경매만 차단 가능
+        // 진행 중이거나 임시차단인 경매만 차단 가능
         if (auction.getStatus() != AuctionStatus.READY &&
                 auction.getStatus() != AuctionStatus.RUNNING &&
-                auction.getStatus() != AuctionStatus.DEADLINE)
+                auction.getStatus() != AuctionStatus.DEADLINE &&
+                auction.getStatus() != AuctionStatus.TEMP_BLOCKED)
         {
             throw new ApiException(ErrorCode.AUCTION_CANNOT_BLOCK);
         }
 
-        item.delete();
+        if (!item.isDeleted()) {
+            item.delete();
+        }
         auction.block();
+
+        int basePrice = auction.getStartPrice() == null ? 0 : auction.getStartPrice().intValue();
+        int amount = MoneyUtil.calcDeposit(basePrice);
+        auction.forfeitDeposit();
+        walletService.setAuctionDeposit(auction.getSeller().getId(), auction.getId(), amount, "forfeit");
+
+        refundCurrentBidder(auction);
+
+        auctionRedisService.setRedis(auction.getId());
+        notifyAuctionStatusChange(auction, NotificationType.AUCTION_BLOCKED, String.format(NotificationConstants.MSG_AUCTION_BLOCKED,auction.getItem().getTitle()));
     }
 
     /**
@@ -289,17 +321,19 @@ public class AdminService {
             throw new ApiException(ErrorCode.ITEM_NOT_BLOCKED);
         }
 
-        if (auction.getStatus() != AuctionStatus.BLOCKED) {
-            throw new ApiException(ErrorCode.AUCTION_NOT_BLOCKED);
+        if (auction.getStatus() != AuctionStatus.TEMP_BLOCKED) {
+            throw new CustomException(ErrorCode.AUCTION_NOT_BLOCKED);
         }
 
         item.restore();
         auction.reopen();
+        auctionRedisService.setRedis(auction.getId());
+        notifyAuctionStatusChange(auction, NotificationType.AUCTION_UNBLOCKED, String.format(NotificationConstants.MSG_AUCTION_UNBLOCKED,auction.getItem().getTitle()));
 
         reportRepository.updateStatusByTargetTypeAndTargetIdAndStatus(
                 ReportTargetType.AUCTION,
                 auctionId,
-                ReportStatus.PROCESSED,
+                ReportStatus.PENDING,
                 ReportStatus.REJECTED
         );
 
@@ -313,13 +347,49 @@ public class AdminService {
     }
 
     /**
+     * 경매 차단 확정시 환불 로직
+     */
+    private void refundCurrentBidder(Auction auction) {
+        Long bidderId = auction.getCurrentBidder() != null ? auction.getCurrentBidder().getId() : null;
+        if (bidderId == null || auction.getCurrentPrice() == null ||
+                auction.getCurrentPrice().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            return;
+        }
+        userLockExecutor.withUserLock(bidderId, () -> {
+            walletRecordService.refundBlockedAuctionBid(
+                    bidderId,
+                    auction.getCurrentPrice(),
+                    auction.getId()
+            );
+        });
+    }
+
+    /**
+     * 경매 차단상태 변경시 알림 발송
+     */
+    private void notifyAuctionStatusChange(Auction auction, NotificationType type, String message) {
+        List<Long> participantIds = bidRepository.findDistinctBidderIdsByAuctionId(auction.getId());
+        participantIds.add(auction.getSeller().getId());
+        for (Long userId : participantIds) {
+            auctionNotificationService.sendNotification(
+                    userId,
+                    type,
+                    message,
+                    NotificationConstants.REF_TYPE_AUCTION,
+                    auction.getId()
+            );
+        }
+    }
+
+    /**
      * 차단된 경매 게시글 목록 조회
      */
     public Page<AdminBlockedAuctionRes> getBlockedAuctions(Pageable pageable) {
         List<Auction> allAuctions = auctionRepository.findAll();
 
         List<AdminBlockedAuctionRes> blockedList = allAuctions.stream()
-                .filter(auction -> auction.getStatus() == AuctionStatus.BLOCKED)
+                .filter(auction -> auction.getStatus() == AuctionStatus.BLOCKED ||
+                        auction.getStatus() == AuctionStatus.TEMP_BLOCKED)
                 .map(auction -> {
                     Item item = auction.getItem();
 

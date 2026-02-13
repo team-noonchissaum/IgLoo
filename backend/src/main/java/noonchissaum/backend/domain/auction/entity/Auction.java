@@ -34,6 +34,9 @@ public class Auction extends BaseTimeEntity {
     @Column(name = "current_price", precision = 15, scale = 0)
     private BigDecimal currentPrice;
 
+    @Column(name = "start_price", precision = 15, scale = 0)
+    private BigDecimal startPrice;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "current_bidder_id")
     private User currentBidder;
@@ -57,6 +60,9 @@ public class Auction extends BaseTimeEntity {
     @Column(nullable = false)
     private AuctionStatus status;
 
+    @Column(name = "blocked_at")
+    private LocalDateTime blockedAt;
+
     // 보증금 상태 필드
     @Enumerated(EnumType.STRING)
     @Column(name = "deposit_status", nullable = false, length = 20)
@@ -69,6 +75,7 @@ public class Auction extends BaseTimeEntity {
     @Builder
     public Auction(Item item, BigDecimal startPrice, LocalDateTime startAt, LocalDateTime endAt) {
         this.item = item;
+        this.startPrice = startPrice;
         this.currentPrice = startPrice;
         this.bidCount = 0;
         this.startAt = startAt;
@@ -147,9 +154,20 @@ public class Auction extends BaseTimeEntity {
     }
 
     /**
+     * 경매 임시 차단 (신고)
+     */
+    public void tempBlock() {
+        if (this.status != AuctionStatus.TEMP_BLOCKED) {
+            this.blockedAt = LocalDateTime.now();
+        }
+        this.status = AuctionStatus.TEMP_BLOCKED;
+    }
+
+    /**
      * 경매 차단 (관리자용)
      */
     public void block() {
+        this.blockedAt = null;
         this.status = AuctionStatus.BLOCKED;
     }
 
@@ -157,10 +175,24 @@ public class Auction extends BaseTimeEntity {
      * 경매 복구 (관리자용)
      */
     public void reopen() {
-        if (this.status != AuctionStatus.BLOCKED) {
-            throw new IllegalStateException("차단된 경매만 복구할 수 있습니다.");
+        if (this.status != AuctionStatus.TEMP_BLOCKED) {
+            throw new IllegalStateException("임시 차단된 경매만 복구할 수 있습니다.");
         }
-        this.status = AuctionStatus.READY;
+        if (this.blockedAt != null && this.endAt != null) {
+            long blockedSeconds = Duration.between(this.blockedAt, LocalDateTime.now()).getSeconds();
+            if (blockedSeconds > 0) {
+                this.endAt = this.endAt.plusSeconds(blockedSeconds);
+            }
+        }
+        if (this.endAt != null) {
+            long remainSeconds = Duration.between(LocalDateTime.now(), this.endAt).getSeconds();
+            int windowMinutes = (this.imminentMinutes == null ? 5 : this.imminentMinutes);
+            long windowSeconds = windowMinutes * 60L;
+            this.status = (remainSeconds <= windowSeconds) ? AuctionStatus.DEADLINE : AuctionStatus.RUNNING;
+        } else {
+            this.status = AuctionStatus.RUNNING;
+        }
+        this.blockedAt = null;
     }
 
     public User getSeller() {

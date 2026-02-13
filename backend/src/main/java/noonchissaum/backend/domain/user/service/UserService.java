@@ -157,9 +157,13 @@ public class UserService {
                 .orElseThrow(()->new ApiException(ErrorCode.USER_NOT_FOUND));
 
         //중복 신고 방지
-        if (reportRepository.existsByReporterIdAndTargetTypeAndTargetId(
-                reporterId, request.getTargetType(), request.getTargetId())) {
-            throw new ApiException(ErrorCode.ALREADY_REPORTED);
+        if (reportRepository.existsByReporterIdAndTargetTypeAndTargetIdAndStatusIn(
+                reporterId,
+                request.getTargetType(),
+                request.getTargetId(),
+                java.util.List.of(ReportStatus.PENDING, ReportStatus.PROCESSED)
+        )) {
+            throw new CustomException(ErrorCode.ALREADY_REPORTED);
         }
 
         Report report = Report.builder()
