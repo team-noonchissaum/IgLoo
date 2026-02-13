@@ -72,6 +72,7 @@ public class CategoryService {
             categoryRepository.delete(deleteTargets.get(i));
         }
     }
+
     //카테고리 '기타'로 이동시키기
     private void collectCategories(Category category, List<Category> result){
         result.add(category);

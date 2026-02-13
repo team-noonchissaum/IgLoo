@@ -5,10 +5,9 @@ import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import lombok.extern.slf4j.Slf4j;
-import noonchissaum.backend.domain.auction.service.AuctionService;
+import noonchissaum.backend.domain.auction.service.BidRollbackService;
 import noonchissaum.backend.domain.inquiry.service.InquiryService;
 import noonchissaum.backend.domain.item.entity.Item;
-import noonchissaum.backend.domain.order.service.OrderService;
 import noonchissaum.backend.domain.report.entity.Report;
 import noonchissaum.backend.domain.report.entity.ReportStatus;
 import noonchissaum.backend.domain.report.entity.ReportTargetType;
@@ -19,7 +18,6 @@ import noonchissaum.backend.domain.user.dto.response.*;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.entity.UserStatus;
 import noonchissaum.backend.domain.user.repository.*;
-import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.data.domain.Page;
@@ -42,11 +40,9 @@ public class AdminService {
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
     private final AuctionRepository auctionRepository;
-    private final AuctionService auctionService;
-    private final OrderService orderService;
-    private final WalletService walletService;
     private final InquiryService inquiryService;
     private final DailyStatisticsRepository dailyStatisticsRepository;
+    private final BidRollbackService bidRollbackService;
 
     /* ================= 신고 관리 ================= */
 
@@ -367,6 +363,9 @@ public class AdminService {
         if (user.getStatus() == UserStatus.BLOCKED) {
             throw new CustomException(ErrorCode.USER_ALREADY_BLOCKED);
         }
+
+        // 차단 유저가 최상위 입찰자인 경매를 롤백 (경쟁 입찰이 있는 경우)
+        bidRollbackService.rollbackAuctionsForBlockedUser(userId);
 
         user.block(reason);
 

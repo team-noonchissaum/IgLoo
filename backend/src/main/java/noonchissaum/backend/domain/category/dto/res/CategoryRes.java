@@ -10,7 +10,10 @@ public record CategoryRes(
     return new CategoryRes(
             category.getId(),
             category.getName(),
-            category.getParent().getId()
+            //NEP 방지 코드
+            category.getParent() != null
+            ? category.getParent().getId()
+            : null
     );
 }
 }

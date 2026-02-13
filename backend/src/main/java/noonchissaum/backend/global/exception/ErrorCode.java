@@ -15,6 +15,8 @@ public enum ErrorCode {
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "요청 값이 올바르지 않습니다.", "COMMON-002"),
     /** 잘못된 요청 */
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "COMMON-003", "잘못된 요청입니다."),
+    /** 리소스를 찾을 수 없음 */
+    NOT_FOUND(HttpStatus.NOT_FOUND, "COMMON-004", "요청한 리소스를 찾을 수 없습니다."),
     // ========== AUTH (인증/인가 에러) ==========
     /** 로그인 실패 - 이메일 또는 비밀번호 불일치 */
     INVALID_LOGIN(HttpStatus.UNAUTHORIZED, "AUTH-001", "이메일 또는 비밀번호가 올바르지 않습니다."),
@@ -140,6 +142,11 @@ public enum ErrorCode {
     //Lock
     LOCK_ACQUISITION(HttpStatus.TOO_MANY_REQUESTS, "L001", "락 획득에 실패했습니다. 다시 시도해주세요"),
 
+    // Coupons Error
+    COUPON_NOT_FOUND(HttpStatus.NOT_FOUND, "CPN-001", "쿠폰을 찾을 수 없습니다."),
+    NO_AUTHORIZED_COUPON_USE(HttpStatus.FORBIDDEN, "CPN-002", "쿠폰을 사용할 권한이 없습니다."),
+
+
     // Settlement Error
     INVALID_ORDER_STATUS_FOR_SETTLEMENT(HttpStatus.BAD_REQUEST, "ORDER-002", "정산을 진행할 수 없는 주문 상태입니다."),
 
@@ -160,4 +167,3 @@ public enum ErrorCode {
     private final String code;
     private final String message;
 }
-

@@ -6,7 +6,7 @@ import noonchissaum.backend.domain.inquiry.dto.req.UnblockRequestReq;
 import noonchissaum.backend.domain.inquiry.dto.res.InquiryListRes;
 import noonchissaum.backend.domain.inquiry.dto.res.InquiryRes;
 import noonchissaum.backend.domain.inquiry.entity.Inquiry;
-import noonchissaum.backend.domain.inquiry.repositroy.InquiryRepository;
+import noonchissaum.backend.domain.inquiry.repository.InquiryRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;

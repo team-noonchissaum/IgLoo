@@ -23,6 +23,7 @@ public interface OrderRepository extends JpaRepository<Order,Long> {
     long countByDate(@Param("date") LocalDate date);
 
     Optional<Order> findByIdAndBuyerId(Long orderId, Long buyerId);
+
     Optional<Order> findByIdAndSellerId(Long orderId, Long sellerId);
 
     // 배송완료 + 3일 자동확정 (deliveredAt 기준)
@@ -39,4 +40,8 @@ public interface OrderRepository extends JpaRepository<Order,Long> {
         LIMIT 200
     """, nativeQuery = true)
     List<Long> findAutoConfirmTargets(@Param("threshold") LocalDateTime threshold);
+
+    Optional<Order> findByAuction_IdAndBuyer_Id(Long auctionId, Long buyerId);
+
+    Optional<Order> findByAuction_IdAndSeller_Id(Long auctionId, Long sellerId);
 }

@@ -161,19 +161,11 @@ public class BidService {
                     );
                 }
 
-
-
                 Integer bidCountInt = Integer.parseInt(initialBidCount);
                 // Redis 새로운 1등 정보 저장
                 redisTemplate.opsForValue().set(priceKey, String.valueOf(bidAmount));
                 redisTemplate.opsForValue().set(bidderKey, String.valueOf(userId));
                 redisTemplate.opsForValue().set(bidCount, String.valueOf(++bidCountInt));
-
-                // 마감 시간에 대한 정보 확인 후 변경
-
-                // Stomp 메세지 발행 로직
-                // messageService.sendPriceUpdate(auctionId, bidAmount);
-
 
                 //검증용 데이터 (Bid,Wallet 재저장용 데이터)
                 Map<String, String> bidInfo = getStringStringMap(auctionId, userId, bidAmount, requestId, previousBidderId, currentPrice);
@@ -191,7 +183,6 @@ public class BidService {
                     String prevUserPendingKey = RedisKeys.pendingUser(previousBidderId);
                     redisTemplate.opsForSet().add(prevUserPendingKey, requestId);
                 }
-
             });
         }
         catch (InterruptedException e){
@@ -356,11 +347,6 @@ public class BidService {
         bidInfo.put("refundAmount", currentPrice.toPlainString());          // wallet 용
         bidInfo.put("createdAt", String.valueOf(System.currentTimeMillis()));
         return bidInfo;
-    }
-
-    public Bid getBid(Long bidId) {
-        return bidRepository.findById(bidId)
-                .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_BID));
     }
 
     public boolean isExistRequestId(String requestId){

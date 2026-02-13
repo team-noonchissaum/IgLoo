@@ -1,0 +1,41 @@
+### 로컬 로그인 (토큰 저장)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "1234",
+  "authType": "LOCAL"
+}
+
+> {%
+    client.global.set("accessToken", response.body.accessToken);
+    client.global.set("refreshToken", response.body.refreshToken);
+%}
+
+### 쿠폰 발급 (POST)
+# 이미 정의된 쿠폰(예: couponId=1)과 유저(예: userId=1, 2)가 존재해야 합니다.
+POST http://localhost:8080/api/coupons/issues
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "couponId": 1,
+  "userIds": [1, 2],
+  "reason": "Test coupon issuance"
+}
+
+### 발급된 쿠폰 조회 (GET)
+# userId=1 의 발급된 쿠폰 조회
+GET http://localhost:8080/api/coupons/issues
+Authorization: Bearer {{accessToken}}
+
+### 쿠폰 사용 (POST)
+# userId=1 이 couponIssuedId=1 인 쿠폰을 사용
+POST http://localhost:8080/api/coupons/use
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "couponIssuedId": 1
+}

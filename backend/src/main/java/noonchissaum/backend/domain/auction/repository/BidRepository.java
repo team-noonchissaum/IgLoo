@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import noonchissaum.backend.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -68,6 +69,15 @@ public interface BidRepository extends JpaRepository<Bid,Long> {
             "from Bid b " +
             "where b.auction.id = :auctionId")
     List<User> findDistinctBiddersByAuctionId(@Param("auctionId") Long auctionId);
+
+    /** 경매별 입찰 시간순 조회 (롤백 시점 계산용) */
+    @Query("SELECT b FROM Bid b WHERE b.auction.id = :auctionId ORDER BY b.createdAt ASC")
+    List<Bid> findByAuctionIdOrderByCreatedAtAsc(@Param("auctionId") Long auctionId);
+
+    /** 차단 유저의 입찰 삭제 */
+    @Modifying
+    @Query("DELETE FROM Bid b WHERE b.auction.id = :auctionId AND b.bidder.id = :bidderId")
+    void deleteByAuctionIdAndBidderId(@Param("auctionId") Long auctionId, @Param("bidderId") Long bidderId);
 }
 
 

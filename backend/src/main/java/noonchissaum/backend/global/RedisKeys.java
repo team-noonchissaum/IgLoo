@@ -10,6 +10,7 @@ public final class RedisKeys {
     public static String userLock(Long userId) {
         return "lock:user:" + userId;
     }
+
     public static String userBalance(Long userId) {
         return "user:" + userId + ":balance";
     }
@@ -24,6 +25,21 @@ public final class RedisKeys {
 
     public static String deleteAttemptUser(Long userId) {
         return "delete:attempt:user:" + userId;
+    }
+
+    public static String userViews(Long userId) {
+        return "user:" + userId + ":views";
+    }
+
+    public static String userViewsPattern() {
+        return "user:*:views";
+    }
+
+    /**
+     * item view trending (hour bucket)
+     */
+    public static String itemViewsHour(String hourKey) {
+        return "items:views:hour:" + hourKey;
     }
 
     /**

@@ -45,16 +45,6 @@ public class MyPageService {
                 wallet.getBalance()
         );
     }
-    /**사용자 지갑 정보 조회*/
-    public UserWalletRes getWallet(Long userId) {
-        Wallet wallet = walletRepository.findByUserId(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.CANNOT_FIND_WALLET));
-        BigDecimal balance = wallet.getBalance();
-        BigDecimal lockedBalance = wallet.getLockedBalance();
-        BigDecimal totalBalance = balance.add(lockedBalance);
-
-        return new UserWalletRes(balance, lockedBalance, totalBalance);
-    }
 
     /**
      * 내가 등록한 경매 목록 조회
@@ -62,5 +52,4 @@ public class MyPageService {
     public Page<AuctionRes> getMyAuctions(Long userId, Pageable pageable) {
         return auctionService.getMyAuctions(userId, pageable);
     }
-
 }
