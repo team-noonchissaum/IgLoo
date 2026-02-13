@@ -109,9 +109,18 @@ jwt:
   access-token-validity: 3600000
   refresh-token-validity: 604800000
 
+sweettracker:
+  base-url: https://info.sweettracker.co.kr
+  api-key: ${SWEETTRACKER_API_KEY}
+
+platform:
+  system-user-id: 10000
+  fee-rate: 0.10
+
 kakao:
   map:
     rest-api-key: ${KAKAO_MAP_REST_API_KEY}
+    
 ai:
   service:
     base-url: ${AI_SERVICE_BASE_URL:http://localhost:8001}

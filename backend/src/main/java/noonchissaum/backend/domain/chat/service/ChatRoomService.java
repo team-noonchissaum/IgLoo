@@ -11,6 +11,7 @@ import noonchissaum.backend.domain.order.entity.DeliveryType;
 import noonchissaum.backend.domain.order.repository.OrderRepository;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
+import noonchissaum.backend.global.security.UserPrincipal;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,7 +63,7 @@ public class ChatRoomService {
 
             /**
              * [동시성 처리] 동시에 save() 호출 시 하나는 성공하고 하나는 중복 에러 발생
-             에러 발생 시 로그를 남기고, 먼저 생성된 방을 다시 조회해서 반환
+            에러 발생 시 로그를 남기고, 먼저 생성된 방을 다시 조회해서 반환
              */
             log.info("ChatRoom unique conflict (auctionId={}), re-fetching...", auctionId);
 
@@ -80,33 +81,59 @@ public class ChatRoomService {
                 .toList();
     }
 
+    /**
+     * 채팅방 상세 조회
+     * 관리자(ADMIN)이거나 방 참여자(Member)인 경우에만 허용
+     */
     @Transactional(readOnly = true)
-    public ChatRoomRes getRoom(Long roomId, Long userId) {
+    public ChatRoomRes getRoom(Long roomId, UserPrincipal userPrincipal) {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new ApiException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
-        boolean isMember =
-                room.getBuyer().getId().equals(userId) ||
-                        room.getSeller().getId().equals(userId);
+        // 1. 권한 확인
+        boolean isAdmin = isAdmin(userPrincipal);
+        boolean isMember = isParticipant(room, userPrincipal.getUserId());
 
-        if (!isMember) {
+        // 2. 관리자도 아니고 참여자도 아니면 차단
+        if (!isMember && !isAdmin) {
             throw new ApiException(ErrorCode.ACCESS_DENIED);
         }
 
-        return ChatRoomRes.from(room, userId);
+        Long viewBasisUserId = isMember ? userPrincipal.getUserId() : room.getBuyer().getId();
+
+        return ChatRoomRes.from(room, viewBasisUserId);
+    }
+
+    /**
+     * [관리자 전용] 관리자 페이지 등에서 사용할 채팅방 정보 조회 (참여자 체크 없음)
+     */
+    @Transactional(readOnly = true)
+    public ChatRoomRes getRoomForAdmin(Long roomId) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new ApiException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        // 관리자 뷰에서는 구매자를 기준으로 상대방(판매자) 정보를 렌더링하도록 설정
+        return ChatRoomRes.from(room, room.getBuyer().getId());
+    }
+
+    // 공통 검증 로직
+
+    private boolean isAdmin(UserPrincipal userPrincipal) {
+        return userPrincipal.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+    }
+
+    private boolean isParticipant(ChatRoom room, Long userId) {
+        return room.getBuyer().getId().equals(userId) ||
+                room.getSeller().getId().equals(userId);
     }
 
     /**
      * 직거래 채팅방 생성이 가능한 주문인지 유효성 검증
      */
     private void validateOrderForDirectTrade(Order order) {
-        if (order == null) {
-            throw new ApiException(ErrorCode.INVALID_REQUEST);
-        }
-        if (order.getAuction() == null) {
-            throw new ApiException(ErrorCode.INVALID_REQUEST);
-        }
-        if (order.getBuyer() == null || order.getSeller() == null) {
+        if (order == null || order.getAuction() == null ||
+                order.getBuyer() == null || order.getSeller() == null) {
             throw new ApiException(ErrorCode.INVALID_REQUEST);
         }
     }

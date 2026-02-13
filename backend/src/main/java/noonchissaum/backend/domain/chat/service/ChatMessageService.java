@@ -64,17 +64,32 @@ public class ChatMessageService {
 
         return payload;
     }
-
+    /**
+     * 일반 유저용 채팅 메시지 조회
+     */
     @Transactional(readOnly = true)
     public ChatMessagePageRes getMessages(Long roomId, Long userId, Long cursor, int size) {
-        ChatRoom room = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new IllegalArgumentException("채팅방이 존재하지 않습니다. roomId=" + roomId));
+        ChatRoom room = findChatRoomById(roomId);
 
-        if (!room.getBuyer().getId().equals(userId)
-                && !room.getSeller().getId().equals(userId)) {
-            throw new IllegalArgumentException("채팅 권한이 없습니다.");
+        // 유저가 해당 방의 참여자인지 검증
+        if (!isParticipant(room, userId)) {
+            throw new ApiException(ErrorCode.ACCESS_DENIED);
         }
 
+        return fetchMessagePage(roomId, cursor, size);
+    }
+
+    /**
+     * 관리자 전용 채팅 메시지 조회
+     */
+    @Transactional(readOnly = true)
+    public ChatMessagePageRes getMessagesForAdmin(Long roomId, Long cursor, int size) {
+        findChatRoomById(roomId); // 방 존재 여부만 확인
+        return fetchMessagePage(roomId, cursor, size);
+    }
+
+    // 메시지 페이징 처리 공통 로직
+    private ChatMessagePageRes fetchMessagePage(Long roomId, Long cursor, int size) {
         int pageSize = Math.min(Math.max(size, 1), 100);
         PageRequest pageRequest = PageRequest.of(0, pageSize + 1, Sort.by(Sort.Direction.DESC, "id"));
 
@@ -85,14 +100,23 @@ public class ChatMessageService {
         boolean hasNext = fetched.size() > pageSize;
         List<ChatMessage> pageItems = hasNext ? fetched.subList(0, pageSize) : fetched;
 
-        List<ChatMessageRes> messages = new ArrayList<>();
-        for (ChatMessage message : pageItems) {
-            messages.add(ChatMessageRes.from(message));
-        }
+        List<ChatMessageRes> messages = pageItems.stream()
+                .map(ChatMessageRes::from)
+                .toList();
 
         Long nextCursor = messages.isEmpty() ? null : messages.get(messages.size() - 1).getMessageId();
 
         return new ChatMessagePageRes(messages, nextCursor, hasNext);
+    }
+
+    // 공통 검증 로직
+    private ChatRoom findChatRoomById(Long roomId) {
+        return chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new ApiException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+    }
+
+    private boolean isParticipant(ChatRoom room, Long userId) {
+        return room.getBuyer().getId().equals(userId) || room.getSeller().getId().equals(userId);
     }
 
     /**
@@ -110,4 +134,7 @@ public class ChatMessageService {
         }
         return chatMessageRepository.markAllAsReadInRoom(roomId, userId);
     }
+
+
+
 }

@@ -37,7 +37,7 @@ public class ChatRoomController {
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
         Long userId = userPrincipal.getUserId();
-        ChatRoomRes res = chatRoomService.getRoom(roomId, userId);
+        ChatRoomRes res = chatRoomService.getRoom(roomId, userPrincipal);
         return ApiResponse.success("채팅방 조회 성공", res);
     }
 

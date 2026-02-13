@@ -97,4 +97,16 @@ public class Wallet extends BaseTimeEntity {
     public void withdrawConfirm(BigDecimal total) {
         this.lockedBalance = this.lockedBalance.subtract(total);
     }
+
+    // 정산 메서드
+    public void releaseLocked(BigDecimal amount){
+        if (this.lockedBalance.compareTo(amount) < 0) {
+            throw new ApiException(ErrorCode.INSUFFICIENT_BALANCE);
+        }
+        this.lockedBalance = this.lockedBalance.subtract(amount);
+    }
+
+    public void addBalance(BigDecimal amount) {
+        this.balance = this.balance.add(amount);
+    }
 }
