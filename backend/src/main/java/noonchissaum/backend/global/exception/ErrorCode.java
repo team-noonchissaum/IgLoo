@@ -166,7 +166,7 @@ public enum ErrorCode {
     SHIPMENT_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "SHIP-002", "이미 해당 주문에 대한 배송 정보가 존재합니다."),
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER-001", "존재하지 않는 주문입니다."),
     SHIPMENT_TRACKING_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "SHIP-005", "송장 정보가 없어 배송 조회가 불가능합니다."),
-    SWEETTRACKER_API_ERROR(HttpStatus.BAD_GATEWAY, "SHIP-006", "택배 조회 서비스 응답이 올바르지 않습니다.");       // 외부 API 실패/응답 이상
+    SWEETTRACKER_API_ERROR(HttpStatus.BAD_GATEWAY, "SHIP-006", "택배 조회 서비스 응답이 올바르지 않습니다."),       // 외부 API 실패/응답 이상
   
     // ========== LOCATION (위치 관련 에러) ==========
     INVALID_LOCATION_PARAMS(HttpStatus.BAD_REQUEST, "LOCATION-001", "위치 파라미터가 유효하지 않습니다"),
