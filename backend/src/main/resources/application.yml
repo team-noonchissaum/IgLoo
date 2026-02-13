@@ -100,6 +100,9 @@ jwt:
 kakao:
   map:
     rest-api-key: ${KAKAO_MAP_REST_API_KEY}
+ai:
+  service:
+    base-url: ${AI_SERVICE_BASE_URL:http://localhost:8001}
 
 #logging:
 #  level:

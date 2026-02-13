@@ -26,12 +26,10 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
 
     List<Auction> findAllByStatusIn(List<AuctionStatus> statuses);
 
-    // Redis id 리스트 상세 로딩용
     @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
     List<Auction> findByIdIn(List<Long> ids);
 
     /**
-     *스케줄 관련 상태값 변경쿼리
      * READY->RUNNING
      */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
@@ -64,7 +62,6 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
     List<Auction> findByStartAt(LocalDateTime startAt);
 
     /**
-     *스케줄 관련 상태값 변경쿼리
      * deadline -> ended
      */
     @Modifying
@@ -81,7 +78,6 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
     );
 
     /**
-     * 스케줄 관련 상태값 변경 쿼리
      * Running -> DEADLINE
      */
     @Modifying
@@ -96,7 +92,6 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
     )
     int markDeadlineAuctions(@Param("now") LocalDateTime now);
 
-    //deadline으로 바뀔 경매 찾기
     @Query(
             value = """
         SELECT a.auction_id
@@ -111,8 +106,8 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
 
     @Query(
             "select a from Auction a where a.id = :auctionId " +
-                    "and (a.status = noonchissaum.backend.domain.auction.entity.AuctionStatus.RUNNING " +
-                    "or a.status = noonchissaum.backend.domain.auction.entity.AuctionStatus.DEADLINE)")
+                    "and (a.status = 'RUNNING' " +
+                    "or a.status = 'DEADLINE')")
     Optional<Auction> findByIdWithStatus(@Param("auctionId") Long auctionId);
 
     @Modifying
@@ -137,11 +132,9 @@ where a.status = :status
 
 
     /**
-     * 차단 유저가 최상위 입찰자인 진행 중 경매 조회 (롤백 대상)
      */
     @EntityGraph(attributePaths = {"item", "item.seller", "item.category", "currentBidder"})
     List<Auction> findByCurrentBidder_IdAndStatusIn(Long userId, List<AuctionStatus> statuses);
-
 
     /**
      * 사용자의 위치 필터링  부분 n+1/lazyloading방지
@@ -164,4 +157,28 @@ where a.status = :status
     );
 }
 
+    @Query("SELECT a FROM Auction a WHERE a.item.id = :itemId")
+    Optional<Auction> findByItemId(@Param("itemId") Long itemId);
 
+    @Query("SELECT a FROM Auction a WHERE a.item.id IN :itemIds")
+    List<Auction> findAllByItemIdIn(@Param("itemIds") List<Long> itemIds);
+    @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
+    @Query("""
+select a from Auction a
+where a.status in :statuses
+  and (
+       a.createdAt >= :threshold
+       or (
+            a.bidCount = 0
+            and not exists (
+                select 1
+                from Wish w
+                where w.item = a.item
+            )
+       )
+  )
+""")
+    List<Auction> findNewAuctions(@Param("statuses") List<AuctionStatus> statuses,
+                                  @Param("threshold") LocalDateTime threshold,
+                                  Pageable pageable);
+}
