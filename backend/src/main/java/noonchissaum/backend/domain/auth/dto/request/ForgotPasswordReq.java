@@ -7,17 +7,9 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class SignupReq {
-    @NotBlank
-    @Email
+public class ForgotPasswordReq {
+
+    @NotBlank(message = "이메일은 필수 항목입니다.")
+    @Email(message = "올바르지 않은 이메일 형식입니다.")
     private String email;
-
-    @NotBlank
-    private String password;
-
-    @NotBlank
-    private String nickname;
-
-    @NotBlank
-    private String address;
 }
