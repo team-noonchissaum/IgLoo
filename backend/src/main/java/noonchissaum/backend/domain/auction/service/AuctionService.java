@@ -19,13 +19,12 @@ import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
-import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
+import noonchissaum.backend.global.recommendation.service.RecommendationService;
 import noonchissaum.backend.global.util.MoneyUtil;
 import noonchissaum.backend.global.service.LocationService;
-import org.springframework.data.domain.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -54,7 +53,7 @@ public class AuctionService {
     private final AuctionIndexService auctionIndexService;
     private final WalletService walletService;
     private final UserViewRedisLogger userViewRedisLogger; // 상세 조회 시 Redis 조회 로그 기록
-    private final noonchissaum.backend.recommendation.service.RecommendationService recommendationService; // 추천 서비스 주입
+    private final RecommendationService recommendationService; // 추천 서비스 주입
     private final LocationService locationService;
     private final UserRepository userRepository;
 
