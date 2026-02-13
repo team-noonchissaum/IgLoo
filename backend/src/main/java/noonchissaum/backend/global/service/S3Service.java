@@ -10,9 +10,13 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -22,12 +26,16 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class S3Service {
     private final S3Client s3Client;
+    private final S3Presigner s3Presigner;
 
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucket;
 
     @Value("${spring.cloud.aws.region.static}")
     private String region;
+
+    @Value("${spring.cloud.aws.s3.presign-expiration-minutes:60}")
+    private long presignExpirationMinutes;
 
     /**
      * 단일 파일 업로드
@@ -113,13 +121,22 @@ public class S3Service {
      * S3 파일 URL 생성
      */
     private String getFileUrl(String fileName) {
-        return String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, region, fileName);
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(bucket)
+                .key(fileName)
+                .build();
+        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                .signatureDuration(Duration.ofMinutes(presignExpirationMinutes))
+                .getObjectRequest(getObjectRequest)
+                .build();
+        return s3Presigner.presignGetObject(presignRequest).url().toString();
     }
 
     /**
      * URL에서 파일명(키) 추출
      */
     private String extractFileName(String fileUrl) {
-        return fileUrl.substring(fileUrl.indexOf(".com/") + 5);
+        String withoutQuery = fileUrl.split("\\?")[0];
+        return withoutQuery.substring(withoutQuery.indexOf(".com/") + 5);
     }
 }
