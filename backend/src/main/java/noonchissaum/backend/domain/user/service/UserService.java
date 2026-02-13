@@ -163,7 +163,7 @@ public class UserService {
                 request.getTargetId(),
                 java.util.List.of(ReportStatus.PENDING, ReportStatus.PROCESSED)
         )) {
-            throw new CustomException(ErrorCode.ALREADY_REPORTED);
+            throw new ApiException(ErrorCode.ALREADY_REPORTED);
         }
 
         Report report = Report.builder()
@@ -210,10 +210,10 @@ public class UserService {
     @Transactional
     public CategorySubscriptionRes addMyCategorySubscription(Long userId, Long categoryId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new CustomException(ErrorCode.CATEGORY_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.CATEGORY_NOT_FOUND));
 
         if (!categorySubscriptionRepository.existsByUser_IdAndCategory_Id(userId, categoryId)) {
             categorySubscriptionRepository.save(CategorySubscription.of(user, category));
@@ -226,7 +226,7 @@ public class UserService {
     @Transactional
     public CategorySubscriptionRes removeMyCategorySubscription(Long userId, Long categoryId) {
         if (!categoryRepository.existsById(categoryId)) {
-            throw new CustomException(ErrorCode.CATEGORY_NOT_FOUND);
+            throw new ApiException(ErrorCode.CATEGORY_NOT_FOUND);
         }
 
         categorySubscriptionRepository.deleteByUser_IdAndCategory_Id(userId, categoryId);

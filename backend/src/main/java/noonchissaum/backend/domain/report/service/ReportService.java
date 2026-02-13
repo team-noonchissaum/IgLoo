@@ -80,7 +80,7 @@ public class ReportService {
 
     private void handleAuctionReported(Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
 
         if (auction.getStatus() != AuctionStatus.READY &&
                 auction.getStatus() != AuctionStatus.RUNNING &&
@@ -89,7 +89,7 @@ public class ReportService {
         }
 
         if (auction.getItem() == null) {
-            throw new CustomException(ErrorCode.ITEM_NOT_FOUND);
+            throw new ApiException(ErrorCode.ITEM_NOT_FOUND);
         }
 
         auction.getItem().delete();
