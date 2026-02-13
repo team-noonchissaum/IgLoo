@@ -155,7 +155,6 @@ where a.status = :status
             @Param("minLon") Double minLon,
             @Param("maxLon") Double maxLon
     );
-}
 
     @Query("SELECT a FROM Auction a WHERE a.item.id = :itemId")
     Optional<Auction> findByItemId(@Param("itemId") Long itemId);

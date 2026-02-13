@@ -56,8 +56,6 @@ public class AuctionService {
     private final noonchissaum.backend.recommendation.service.RecommendationService recommendationService; // 추천 서비스 주입
     private final LocationService locationService;
     private final UserRepository userRepository;
-    private final UserViewRedisLogger userViewRedisLogger;
-    private final noonchissaum.backend.recommendation.service.RecommendationService recommendationService;
 
 
     /**
