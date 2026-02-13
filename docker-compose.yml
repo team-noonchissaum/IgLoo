@@ -4,8 +4,12 @@ services:
     container_name: igloo-backend
     env_file:
       - .env
+    environment:
+      AI_SERVICE_BASE_URL: http://igloo-ai-service:8001
     ports:
       - "8080:8080"
+    depends_on:
+      - ai-service
     deploy:
       restart_policy:
         condition: on-failure
@@ -24,6 +28,15 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - backend
+    restart: always
+
+  ai-service:
+    image: corqu/igloo-ai-service:latest
+    container_name: igloo-ai-service
+    env_file:
+      - .env
+    ports:
+      - "8001:8001"
     restart: always
 
   redis:

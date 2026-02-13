@@ -2,9 +2,7 @@ package noonchissaum.backend.domain.coupon.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import noonchissaum.backend.domain.coupon.dto.req.CouponDefReq;
 import noonchissaum.backend.domain.coupon.dto.req.CouponIssueReq;
-import noonchissaum.backend.domain.coupon.dto.res.CouponRes;
 import noonchissaum.backend.domain.coupon.dto.res.IssuedCouponRes;
 import noonchissaum.backend.domain.coupon.entity.Coupon;
 import noonchissaum.backend.domain.coupon.entity.CouponIssued;
@@ -13,7 +11,6 @@ import noonchissaum.backend.domain.coupon.repository.CouponIssuedRepository;
 import noonchissaum.backend.domain.coupon.repository.CouponRepository;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.service.UserService;
-import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;

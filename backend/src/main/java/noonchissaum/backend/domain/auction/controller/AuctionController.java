@@ -97,7 +97,7 @@ public class AuctionController {
         Page<AuctionListRes> result = auctionService.searchAuctionList(
                 userId, status, categoryId, keyword, sort, page, size
         );
-
+        System.out.println();
         return ResponseEntity.ok(ApiResponse.success("Auction search retrieved", result));
     }
 }

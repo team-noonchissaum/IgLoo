@@ -2,7 +2,6 @@ package noonchissaum.backend.domain.task.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import noonchissaum.backend.domain.auction.service.AuctionRecordService;
 import noonchissaum.backend.domain.auction.service.BidRecordService;
 import noonchissaum.backend.domain.auction.service.BidService;
 import noonchissaum.backend.domain.wallet.service.WalletRecordService;
