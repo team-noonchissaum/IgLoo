@@ -46,7 +46,7 @@ services:
       - "6379:6379"
     volumes:
       - ./redis-data:/data
-      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf --requirepass ${Igloo_PROJECT_Redis_Password55}
     command: redis-server /usr/local/etc/redis/redis.conf
     restart: always
     env_file:
