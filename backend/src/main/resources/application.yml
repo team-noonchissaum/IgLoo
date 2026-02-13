@@ -109,18 +109,16 @@ jwt:
   access-token-validity: 3600000
   refresh-token-validity: 604800000
 
-<<<<<<< Updated upstream
-=======
 ai:
   service:
     base-url: ${AI_SERVICE_BASE_URL:http://localhost:8001}
 
 app:
-  auth:
-    password-reset:
-      reset-url: ${PASSWORD_RESET_URL:http://localhost:3000/reset-password}
-
->>>>>>> Stashed changes
+  front:
+    base-url: ${FRONT_BASE_URL:http://localhost:3000}
+    paths:
+      password-reset: ${FRONT_PASSWORD_RESET_PATH:/reset-password}
+      auction-detail: ${FRONT_AUCTION_DETAIL_PATH:/auctions/{auctionId}}
 #logging:
 #  level:
 #    org.hibernate.SQL: debug
