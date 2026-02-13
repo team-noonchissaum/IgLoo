@@ -30,6 +30,7 @@ public class WithdrawalRecordService {
     private final StringRedisTemplate redisTemplate;
     private final WalletTransactionRecordService walletTransactionRecordService;
     private final WalletTransactionRepository walletTransactionRepository;
+    private final WalletService walletService;
 
     /**
      * 출금 요청
@@ -149,16 +150,9 @@ public class WithdrawalRecordService {
     }
 
     private void applyRedisBalanceAndLockedDeltaIfPresent(Long userId, BigDecimal balanceDelta, BigDecimal lockedDelta) {
+        walletService.getBalance(userId);
         String balanceKey = RedisKeys.userBalance(userId);
         String lockedKey = RedisKeys.userLockedBalance(userId);
-
-        Boolean hasBalance = redisTemplate.hasKey(balanceKey);
-        Boolean hasLocked = redisTemplate.hasKey(lockedKey);
-
-        // 키가 없으면 생성 X
-        if (!Boolean.TRUE.equals(hasBalance) && !Boolean.TRUE.equals(hasLocked)) {
-            return;
-        }
 
         long b = balanceDelta.longValue();
         long l = lockedDelta.longValue();

@@ -2,27 +2,33 @@ package noonchissaum.backend.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import noonchissaum.backend.domain.category.entity.Category;
+import noonchissaum.backend.domain.category.repository.CategoryRepository;
+import noonchissaum.backend.domain.item.service.ItemService;
 import noonchissaum.backend.domain.item.dto.SellerItemRes;
 import noonchissaum.backend.domain.report.dto.ReportReq;
 import noonchissaum.backend.domain.report.entity.Report;
 import noonchissaum.backend.domain.report.entity.ReportStatus;
+import noonchissaum.backend.domain.user.dto.response.CategorySubscriptionItemRes;
+import noonchissaum.backend.domain.user.dto.response.CategorySubscriptionRes;
+import noonchissaum.backend.domain.user.entity.CategorySubscription;
 import noonchissaum.backend.domain.user.dto.request.ProfileUpdateUserReq;
 import noonchissaum.backend.domain.user.dto.response.*;
 import noonchissaum.backend.domain.user.entity.User;
-
 import noonchissaum.backend.domain.report.repository.ReportRepository;
 import noonchissaum.backend.domain.user.entity.UserStatus;
+import noonchissaum.backend.domain.user.repository.CategorySubscriptionRepository;
 import noonchissaum.backend.domain.user.repository.UserRepository;
-
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.RedisKeys;
-import noonchissaum.backend.global.exception.CustomException;
+import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
+import noonchissaum.backend.global.service.LocationService;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -32,13 +38,17 @@ import java.util.concurrent.TimeUnit;
 public class UserService {
     private final UserRepository userRepository;
     private final ReportRepository reportRepository;
+    private final CategoryRepository categoryRepository;
+    private final CategorySubscriptionRepository categorySubscriptionRepository;
     private final WalletService walletService;
     private final StringRedisTemplate redisTemplate;
+    private final ItemService itemService;
+    private final LocationService locationService;
 
     /**본인 프로필 조회*/
     public ProfileRes getMyProfile(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
         String blockReason = user.getStatus() == UserStatus.BLOCKED ? user.getBlockReason() : null;
 
@@ -49,7 +59,8 @@ public class UserService {
                 user.getEmail(),
                 user.getRole().name(),
                 user.getStatus().name(),
-                blockReason
+                blockReason,
+                user.getDong()
         );
     }
 
@@ -57,12 +68,13 @@ public class UserService {
     public OtherUserProfileRes getOtherUserProfile(Long userId) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
         return new OtherUserProfileRes(
                 user.getId(),
                 user.getNickname(),
                 user.getProfileUrl(),
+                user.getDong(),
                 user.getItems().stream().map(SellerItemRes::from).toList()
         );
     }
@@ -72,11 +84,11 @@ public class UserService {
     public ProfileUpdateUserRes updateProfile(Long userId, ProfileUpdateUserReq request) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
         if (!user.getNickname().equals(request.getNickname())
                 && userRepository.existsByNickname(request.getNickname())) {
-            throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
+            throw new ApiException(ErrorCode.DUPLICATE_NICKNAME);
         }
 
         user.updateProfile(request.getNickname(), request.getProfileUrl());
@@ -98,7 +110,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserDeleteAttemptRes attemptDelete(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
         BigDecimal balance = walletService.getCurrentBalance(userId);
 
@@ -123,7 +135,7 @@ public class UserService {
     @Transactional
     public void userDelete(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
         BigDecimal balance = walletService.getCurrentBalance(userId);
 
@@ -142,12 +154,16 @@ public class UserService {
     @Transactional
     public void createReport(Long reporterId, ReportReq request) {
         User reporter=userRepository.findById(reporterId)
-                .orElseThrow(()->new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(()->new ApiException(ErrorCode.USER_NOT_FOUND));
 
         //중복 신고 방지
-        if (reportRepository.existsByReporterIdAndTargetTypeAndTargetId(
-                reporterId, request.getTargetType(), request.getTargetId())) {
-            throw new CustomException(ErrorCode.ALREADY_REPORTED);
+        if (reportRepository.existsByReporterIdAndTargetTypeAndTargetIdAndStatusIn(
+                reporterId,
+                request.getTargetType(),
+                request.getTargetId(),
+                java.util.List.of(ReportStatus.PENDING, ReportStatus.PROCESSED)
+        )) {
+            throw new ApiException(ErrorCode.ALREADY_REPORTED);
         }
 
         Report report = Report.builder()
@@ -164,7 +180,7 @@ public class UserService {
 
     public User getUserByUserId(Long userId) {
         return userRepository.findById(userId).
-                orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
     }
 
     /**탈퇴 첫 시도인지 확인*/
@@ -184,4 +200,45 @@ public class UserService {
         String attemptKey = RedisKeys.deleteAttemptUser(userId);
         redisTemplate.delete(attemptKey);
     }
+
+    /** 내 관심 카테고리 목록 조회 */
+    public CategorySubscriptionRes getMyCategorySubscriptions(Long userId) {
+        return new CategorySubscriptionRes(getSubscriptionItems(userId));
+    }
+
+    /** 내 관심 카테고리 등록 */
+    @Transactional
+    public CategorySubscriptionRes addMyCategorySubscription(Long userId, Long categoryId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
+
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ApiException(ErrorCode.CATEGORY_NOT_FOUND));
+
+        if (!categorySubscriptionRepository.existsByUser_IdAndCategory_Id(userId, categoryId)) {
+            categorySubscriptionRepository.save(CategorySubscription.of(user, category));
+        }
+
+        return new CategorySubscriptionRes(getSubscriptionItems(userId));
+    }
+
+    /** 내 관심 카테고리 해제 */
+    @Transactional
+    public CategorySubscriptionRes removeMyCategorySubscription(Long userId, Long categoryId) {
+        if (!categoryRepository.existsById(categoryId)) {
+            throw new ApiException(ErrorCode.CATEGORY_NOT_FOUND);
+        }
+
+        categorySubscriptionRepository.deleteByUser_IdAndCategory_Id(userId, categoryId);
+        return new CategorySubscriptionRes(getSubscriptionItems(userId));
+    }
+
+    private List<CategorySubscriptionItemRes> getSubscriptionItems(Long userId) {
+        return categorySubscriptionRepository.findAllByUserId(userId)
+                .stream()
+                .map(CategorySubscriptionItemRes::from)
+                .toList();
+    }
+
+
 }

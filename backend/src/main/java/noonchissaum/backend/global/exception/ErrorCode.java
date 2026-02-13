@@ -34,6 +34,10 @@ public enum ErrorCode {
     USER_BLOCKED(HttpStatus.FORBIDDEN, "AUTH-007", "차단된 사용자입니다. 관리자에게 문의하세요."),
 
     OAUTH2_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "AUTH-008", "소셜 로그인에 실패했습니다."),
+    PASSWORD_RESET_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "AUTH-009", "비밀번호 재설정 토큰이 유효하지 않습니다."),
+    PASSWORD_RESET_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "AUTH-010", "비밀번호 재설정 토큰이 만료되었습니다."),
+    PASSWORD_RESET_LOCAL_ONLY(HttpStatus.BAD_REQUEST, "AUTH-011", "로컬 계정만 비밀번호를 재설정할 수 있습니다."),
+    PASSWORD_RESET_MAIL_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH-012", "비밀번호 재설정 메일 발송에 실패했습니다."),
 
     // ========== USER (사용자 에러) ==========
     /** 이메일 중복 */
@@ -100,6 +104,8 @@ public enum ErrorCode {
     AUCTION_NOT_OWNER(HttpStatus.FORBIDDEN, "A002", "해당 경매의 판매자가 아닙니다."),
     AUCTION_HAS_BIDS(HttpStatus.BAD_REQUEST, "A003", "입찰이 존재하는 경매는 취소할 수 없습니다."),
     AUCTION_INVALID_STATUS(HttpStatus.BAD_REQUEST, "A004", "현재 상태에서는 경매를 취소할 수 없습니다."),
+    AUCTION_BLOCKED(HttpStatus.BAD_REQUEST, "A005", "차단된 경매입니다."),
+    AUCTION_RESTORE_EXPIRED(HttpStatus.BAD_REQUEST, "A006", "종료된 경매는 복구할 수 없습니다."),
     AUCTION_STATUS_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "A005", "경매 상태 정보를 불러올 수 없습니다."),
 
     // Notification Error
@@ -161,6 +167,15 @@ public enum ErrorCode {
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER-001", "존재하지 않는 주문입니다."),
     SHIPMENT_TRACKING_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "SHIP-005", "송장 정보가 없어 배송 조회가 불가능합니다."),
     SWEETTRACKER_API_ERROR(HttpStatus.BAD_GATEWAY, "SHIP-006", "택배 조회 서비스 응답이 올바르지 않습니다.");       // 외부 API 실패/응답 이상
+  
+    // ========== LOCATION (위치 관련 에러) ==========
+    INVALID_LOCATION_PARAMS(HttpStatus.BAD_REQUEST, "LOCATION-001", "위치 파라미터가 유효하지 않습니다"),
+    INVALID_RADIUS(HttpStatus.BAD_REQUEST, "LOCATION-002", "검색 반경은 1, 3, 7, 10, 20, 50 중 하나여야 합니다\""),
+    INVALID_ADDRESS(HttpStatus.BAD_REQUEST, "LOCATION-003", "주소가 유효하지 않습니다"),
+    ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "LOCATION-004", "입력한 주소를 찾을 수 없습니다"),
+    LOCATION_API_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "LOCATION-005", "위치 조회 API 호출에 실패했습니다"),
+    LOCATION_ENCODING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "LOCATION-006", "주소 인코딩에 실패했습니다"),
+    USER_LOCATION_NOT_SET(HttpStatus.BAD_REQUEST,"LOCATION-007","설정된 위치가 없습니다. 위치를 설정 해 주세요");
 
 
     private final HttpStatus status;

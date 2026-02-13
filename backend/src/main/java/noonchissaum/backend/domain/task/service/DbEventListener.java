@@ -2,13 +2,11 @@ package noonchissaum.backend.domain.task.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import noonchissaum.backend.domain.auction.service.AuctionRecordService;
 import noonchissaum.backend.domain.auction.service.BidRecordService;
 import noonchissaum.backend.domain.auction.service.BidService;
 import noonchissaum.backend.domain.wallet.service.WalletRecordService;
 import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.domain.task.dto.DbUpdateEvent;
-import noonchissaum.backend.global.util.UserLockExecutor;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.retry.annotation.Backoff;
@@ -28,7 +26,6 @@ public class DbEventListener {
     private final WalletRecordService walletRecordService;
     private final BidRecordService bidRecordService;
     private final BidService bidService;
-    private final UserLockExecutor userLockExecutor;
     private final StringRedisTemplate redisTemplate;
     private final AsyncTaskTxService asyncTaskTxService;
 
@@ -51,9 +48,7 @@ public class DbEventListener {
         }
 
         //wallet 저장
-        userLockExecutor.withUserLock(event.userId(),()-> {
-                    walletRecordService.saveWalletRecord(event.userId(), event.bidAmount(), event.previousBidderId(), event.refundAmount(), event.auctionId());
-        });
+        walletRecordService.saveWalletRecord(event.userId(), event.bidAmount(), event.previousBidderId(), event.refundAmount(), event.auctionId());
 
         // 작업이 완료되었는지 db저장
         registerAfterCommit(event);

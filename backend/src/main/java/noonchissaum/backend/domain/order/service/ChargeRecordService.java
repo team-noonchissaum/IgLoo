@@ -8,6 +8,7 @@ import noonchissaum.backend.domain.wallet.entity.TransactionType;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
 import noonchissaum.backend.domain.wallet.service.WalletTransactionRecordService;
+import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
@@ -28,6 +29,7 @@ public class ChargeRecordService {
     private final StringRedisTemplate redisTemplate;
     private final PaymentService paymentService;
     private final WalletTransactionRecordService walletTransactionRecordService;
+    private final WalletService walletService;
 
     // DB 트랜잭션 영역
     @Transactional
@@ -87,6 +89,7 @@ public class ChargeRecordService {
     private void registerAfterCommitRedisCharge(Long userId, BigDecimal amount) {
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
             // 방어적 처리
+            walletService.getBalance(userId);
             redisTemplate.opsForValue().increment(RedisKeys.userBalance(userId), amount.longValue());
             return;
         }
@@ -95,6 +98,7 @@ public class ChargeRecordService {
             @Override
             public void afterCommit() {
                 // Redis 반영
+                walletService.getBalance(userId);
                 redisTemplate.opsForValue().increment(RedisKeys.userBalance(userId), amount.longValue());
             }
         });

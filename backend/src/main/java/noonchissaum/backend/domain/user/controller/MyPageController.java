@@ -8,14 +8,13 @@ import noonchissaum.backend.domain.user.service.MyPageService;
 import noonchissaum.backend.domain.user.dto.response.MyPageRes;
 import noonchissaum.backend.domain.user.dto.response.UserWalletRes;
 import noonchissaum.backend.global.dto.ApiResponse;
+import noonchissaum.backend.global.dto.LocationUpdateReq;
 import noonchissaum.backend.global.security.UserPrincipal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/mypage")
@@ -23,7 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class MyPageController {
 
     private final MyPageService myPageService;
-    private final BidService bidService;
 
     /**마이페이지 조회
      * GET /api/mypage */
@@ -47,5 +45,4 @@ public class MyPageController {
         Page<AuctionRes> response = myPageService.getMyAuctions(principal.getUserId(), pageable);
         return ResponseEntity.ok(ApiResponse.success("내 등록 경매 조회 성공", response));
     }
-
 }
