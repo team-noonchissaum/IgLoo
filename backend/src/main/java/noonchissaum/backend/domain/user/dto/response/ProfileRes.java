@@ -13,12 +13,13 @@ public class ProfileRes {
     private String email;
     private String role;
     private String status;
+    private String dong;
 
     /** 차단 시에만 포함 */
     private String blockReason;
 
     public static ProfileRes of(Long userId, String nickname, String profileUrl, String email,
-                                String role, String status, String blockReason) {
-        return new ProfileRes(userId, nickname, profileUrl, email, role, status, blockReason);
+                                String role, String status, String blockReason, String dong) {
+        return new ProfileRes(userId, nickname, profileUrl, email, role, status, blockReason, dong);
     }
 }

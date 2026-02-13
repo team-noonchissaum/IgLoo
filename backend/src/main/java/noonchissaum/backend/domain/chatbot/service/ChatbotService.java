@@ -13,7 +13,7 @@ import noonchissaum.backend.domain.chatbot.entity.ChatScenario;
 import noonchissaum.backend.domain.chatbot.repository.ChatNodeRepository;
 import noonchissaum.backend.domain.chatbot.repository.ChatOptionRepository;
 import noonchissaum.backend.domain.chatbot.repository.ChatScenarioRepository;
-import noonchissaum.backend.global.exception.CustomException;
+import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,13 +40,13 @@ public class ChatbotService {
     @Transactional(readOnly = true)
     public ChatNodeRes startScenario(Long scenarioId) {
         ChatScenario scenario = chatScenarioRepository.findById(scenarioId)
-                .orElseThrow(() -> new CustomException(ErrorCode.CHAT_SCENARIO_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.CHAT_SCENARIO_NOT_FOUND));
         if (!scenario.isActive()) {
-            throw new CustomException(ErrorCode.CHAT_SCENARIO_NOT_FOUND);
+            throw new ApiException(ErrorCode.CHAT_SCENARIO_NOT_FOUND);
         }
 
         ChatNode rootNode = chatNodeRepository.findByScenarioIdAndRootTrue(scenarioId)
-                .orElseThrow(() -> new CustomException(ErrorCode.CHAT_NODE_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.CHAT_NODE_NOT_FOUND));
 
         return toNodeRes(rootNode);
     }
@@ -54,7 +54,7 @@ public class ChatbotService {
     @Transactional(readOnly = true)
     public ChatNextRes next(Long nodeId, Long optionId) {
         ChatOption option = chatOptionRepository.findByIdAndNodeId(optionId, nodeId)
-                .orElseThrow(() -> new CustomException(ErrorCode.CHAT_OPTION_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.CHAT_OPTION_NOT_FOUND));
 
         ChatNode nextNode = option.getNextNode();
         if (nextNode != null) {

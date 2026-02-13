@@ -2,7 +2,7 @@ package noonchissaum.backend.global.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import noonchissaum.backend.global.exception.CustomException;
+import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -57,7 +57,7 @@ public class S3Service {
 
         } catch (IOException e) {
             log.error("S3 파일 업로드 실패: {}", e.getMessage());
-            throw new CustomException(ErrorCode.FILE_UPLOAD_FAILED);
+            throw new ApiException(ErrorCode.FILE_UPLOAD_FAILED);
         }
 
         // 업로드된 파일의 URL 반환

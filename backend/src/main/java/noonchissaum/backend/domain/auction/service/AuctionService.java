@@ -10,18 +10,20 @@ import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.spec.AuctionSpecs;
 import noonchissaum.backend.domain.category.entity.Category;
-
 import noonchissaum.backend.domain.category.service.CategoryService;
 import noonchissaum.backend.domain.item.entity.Item;
-
 import noonchissaum.backend.domain.item.service.ItemService;
 import noonchissaum.backend.domain.item.service.UserViewRedisLogger;
 import noonchissaum.backend.domain.item.service.WishService;
 import noonchissaum.backend.domain.user.entity.User;
+import noonchissaum.backend.domain.user.repository.UserRepository;
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
+import noonchissaum.backend.global.RedisKeys;
+import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
+import noonchissaum.backend.global.service.LocationService;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,8 +47,10 @@ public class AuctionService {
     private final AuctionQueryService auctionQueryService;
     private final AuctionIndexService auctionIndexService;
     private final WalletService walletService;
-    private final UserViewRedisLogger userViewRedisLogger; // ?ъ슜??議고쉶 Redis 濡쒓굅 二쇱엯
-    private final noonchissaum.backend.recommendation.service.RecommendationService recommendationService; // 異붿쿇 ?쒕퉬??二쇱엯
+    private final LocationService locationService;
+    private final UserRepository userRepository;
+    private final UserViewRedisLogger userViewRedisLogger;
+    private final noonchissaum.backend.recommendation.service.RecommendationService recommendationService;
 
 
     /**
@@ -115,7 +119,7 @@ public class AuctionService {
      */
     public AuctionRes getAuctionDetail(Long userId, Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
         boolean isWished = wishService.isWished(userId, auction.getItem().getId());
 
         // ?ъ슜??議고쉶 湲곕줉 濡쒓퉭 (?몄쬆???ъ슜?먯씤 寃쎌슦?먮쭔 濡쒓퉭)
@@ -136,16 +140,16 @@ public class AuctionService {
     @Transactional
     public void cancelAuction(Long userId, Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
 
         // ?먮ℓ??蹂몄씤 ?щ? ?뺤씤
         if (!auction.getItem().getSeller().getId().equals(userId)) {
-            throw new CustomException(ErrorCode.AUCTION_NOT_OWNER);
+            throw new ApiException(ErrorCode.AUCTION_NOT_OWNER);
         }
 
         // ?대? ?낆같??吏꾪뻾??寃쎌슦 痍⑥냼 遺덇? (鍮꾩쫰?덉뒪 洹쒖튃)
         if (auction.getBidCount() > 0) {
-            throw new CustomException(ErrorCode.AUCTION_HAS_BIDS);
+            throw new ApiException(ErrorCode.AUCTION_HAS_BIDS);
         }
 
         /**
@@ -153,7 +157,7 @@ public class AuctionService {
          * 5遺??댄썑 痍⑥냼??泥섎━?섎젮硫?RUNNING ?곹깭??痍⑥냼 ?덉슜
          */
         if (!(auction.getStatus() == AuctionStatus.READY || auction.getStatus() == AuctionStatus.RUNNING)) {
-            throw new CustomException(ErrorCode.AUCTION_INVALID_STATUS);
+            throw new ApiException(ErrorCode.AUCTION_INVALID_STATUS);
         }
 
         // ?뺤콉 湲곗?: ?깅줉 + 5遺?
@@ -246,4 +250,63 @@ public class AuctionService {
                     .orElse(base);
         });
     }
+
+    /**
+     * 사용자의 현재 위치 기준 반경 내 경매 검색
+     */
+    public Page<AuctionRes> searchAuctionsByUserLocation(
+            Long userId,
+            Double radiusKm,
+            Pageable pageable) {
+
+        User user = userService.getUserByUserId(userId);
+
+        if (user.getLatitude() == null || user.getLongitude() == null) {
+            throw new ApiException(ErrorCode.USER_LOCATION_NOT_SET);
+        }
+
+        // 좌표 변환: 반경을 사각형으로
+        double latOffset = radiusKm / 111.0;
+        double lonOffset = radiusKm / (111.0 * Math.cos(Math.toRadians(user.getLatitude())));
+
+
+        // DB에서 사각형 범위 필터링
+        List<Auction> candidates = auctionRepository.findAuctionsInBoundingBox(
+                user.getLatitude() - latOffset,
+                user.getLatitude() + latOffset,
+                user.getLongitude() - lonOffset,
+                user.getLongitude() + lonOffset
+        );
+
+        // 정확한 거리로 필터링
+        List<Auction> filteredAuctions = candidates.stream()
+                .filter(a -> {
+                    Double distance = locationService.calculateDistance(
+                            user.getLatitude(),
+                            user.getLongitude(),
+                            a.getItem().getSeller().getLatitude(),
+                            a.getItem().getSeller().getLongitude()
+                    );
+                    return distance <= radiusKm;
+                })
+                .toList();
+
+        // 찜 여부
+        List<Long> itemIds = filteredAuctions.stream()
+                .map(a -> a.getItem().getId())
+                .distinct()
+                .toList();
+
+        Set<Long> wishedItemIds = wishService.getWishedItemIds(userId, itemIds);
+
+        return new PageImpl<>(
+                filteredAuctions.stream()
+                        .map(a -> AuctionRes.from(a, wishedItemIds.contains(a.getItem().getId())))
+                        .toList(),
+                pageable,
+                filteredAuctions.size()
+        );
+    }
+
+
 }
