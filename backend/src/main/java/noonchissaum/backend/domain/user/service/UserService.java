@@ -2,16 +2,22 @@ package noonchissaum.backend.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import noonchissaum.backend.domain.category.entity.Category;
+import noonchissaum.backend.domain.category.repository.CategoryRepository;
 import noonchissaum.backend.domain.item.service.ItemService;
 import noonchissaum.backend.domain.item.dto.SellerItemRes;
 import noonchissaum.backend.domain.report.dto.ReportReq;
 import noonchissaum.backend.domain.report.entity.Report;
 import noonchissaum.backend.domain.report.entity.ReportStatus;
+import noonchissaum.backend.domain.user.dto.response.CategorySubscriptionItemRes;
+import noonchissaum.backend.domain.user.dto.response.CategorySubscriptionRes;
+import noonchissaum.backend.domain.user.entity.CategorySubscription;
 import noonchissaum.backend.domain.user.dto.request.ProfileUpdateUserReq;
 import noonchissaum.backend.domain.user.dto.response.*;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.report.repository.ReportRepository;
 import noonchissaum.backend.domain.user.entity.UserStatus;
+import noonchissaum.backend.domain.user.repository.CategorySubscriptionRepository;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.RedisKeys;
@@ -22,6 +28,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -31,6 +38,8 @@ import java.util.concurrent.TimeUnit;
 public class UserService {
     private final UserRepository userRepository;
     private final ReportRepository reportRepository;
+    private final CategoryRepository categoryRepository;
+    private final CategorySubscriptionRepository categorySubscriptionRepository;
     private final WalletService walletService;
     private final StringRedisTemplate redisTemplate;
     private final ItemService itemService;
@@ -188,6 +197,44 @@ public class UserService {
         redisTemplate.delete(attemptKey);
     }
 
+    /** 내 관심 카테고리 목록 조회 */
+    public CategorySubscriptionRes getMyCategorySubscriptions(Long userId) {
+        return new CategorySubscriptionRes(getSubscriptionItems(userId));
+    }
+
+    /** 내 관심 카테고리 등록 */
+    @Transactional
+    public CategorySubscriptionRes addMyCategorySubscription(Long userId, Long categoryId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CATEGORY_NOT_FOUND));
+
+        if (!categorySubscriptionRepository.existsByUser_IdAndCategory_Id(userId, categoryId)) {
+            categorySubscriptionRepository.save(CategorySubscription.of(user, category));
+        }
+
+        return new CategorySubscriptionRes(getSubscriptionItems(userId));
+    }
+
+    /** 내 관심 카테고리 해제 */
+    @Transactional
+    public CategorySubscriptionRes removeMyCategorySubscription(Long userId, Long categoryId) {
+        if (!categoryRepository.existsById(categoryId)) {
+            throw new CustomException(ErrorCode.CATEGORY_NOT_FOUND);
+        }
+
+        categorySubscriptionRepository.deleteByUser_IdAndCategory_Id(userId, categoryId);
+        return new CategorySubscriptionRes(getSubscriptionItems(userId));
+    }
+
+    private List<CategorySubscriptionItemRes> getSubscriptionItems(Long userId) {
+        return categorySubscriptionRepository.findAllByUserId(userId)
+                .stream()
+                .map(CategorySubscriptionItemRes::from)
+                .toList();
+    }
 
 
 }
