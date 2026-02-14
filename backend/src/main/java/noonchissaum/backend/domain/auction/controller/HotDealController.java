@@ -26,6 +26,17 @@ public class HotDealController {
         return ApiResponse.success("핫딜 경매 생성", auctionId);
     }
 
+    @PatchMapping("/{auctionId}/cancel")
+    public ApiResponse<Void> cancel(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @PathVariable Long auctionId
+    ) {
+        auctionService.cancelHotDeal(userPrincipal.getUserId(), auctionId);
+        return ApiResponse.success("핫딜 경매 취소 완료", null);
+    }
+
+
+
 
 
 }

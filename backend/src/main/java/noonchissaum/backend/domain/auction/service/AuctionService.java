@@ -33,6 +33,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -401,5 +402,30 @@ public class AuctionService {
         return hotDeals.stream()
                 .map(a -> AuctionRes.from(a, wishedItemIds.contains(a.getItem().getId())))
                 .toList();
+    }
+
+    @Transactional
+    public void cancelHotDeal(Long adminUserId, Long auctionId) {
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
+
+        if (!Boolean.TRUE.equals(auction.getIsHotDeal())) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST);
+        }
+
+        // 시작 전(READY)만 취소 허용 (원하면 RUNNING도 허용 가능)
+        if (auction.getStatus() != AuctionStatus.READY) {
+            throw new CustomException(ErrorCode.AUCTION_INVALID_STATUS);
+        }
+
+        // 입찰이 이미 있으면 취소 불가 (핫딜도 동일 정책이면 유지)
+        if (auction.getBidCount() != null && auction.getBidCount() > 0) {
+            throw new CustomException(ErrorCode.AUCTION_HAS_BIDS);
+        }
+
+        auction.cancel(); // status = CANCELED
+
+        // Redis에 올라가 있는 값이 있으면 정리(핫딜은 시작 전이라 보통 없음)
+        auctionRedisService.cancelAuction(auctionId);
     }
 }

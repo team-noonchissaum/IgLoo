@@ -72,11 +72,14 @@ public class AuctionSchedulerService {
 
         long startMs = System.currentTimeMillis();
 
-        List<Auction> auctions = auctionRepository.findReadyAuctions(AuctionStatus.READY, threshold)
+        List<Auction> auctions = auctionRepository.findReadyNormalAuctions(AuctionStatus.READY, threshold)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
+
         int updated=0;
+
         for(Auction auction :auctions){
             auction.run();
+
             int amount = MoneyUtil.calcDeposit(auction.getStartPrice().intValue());
             walletService.setAuctionDeposit(auction.getItem().getSeller().getId(), auction.getId(), amount, "refund");
             auctionRedisService.setRedis(auction.getId());

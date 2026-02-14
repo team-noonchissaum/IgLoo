@@ -47,14 +47,19 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
             @Param("now") LocalDateTime now
     );
 
+    /**
+     * 일반 경매 READY -> RUNNING 대상 조회
+     * ⚠️ 핫딜(isHotDeal = true)은 제외
+     */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
-    select  a
-    from Auction a
-    WHERE a.status = :fromStatus
-      AND a.createdAt <= :threshold
-""")
-    Optional<List<Auction>> findReadyAuctions(
+        select a
+        from Auction a
+        where a.status = :fromStatus
+          and a.createdAt <= :threshold
+          and a.isHotDeal = false
+    """)
+    Optional<List<Auction>> findReadyNormalAuctions(
             @Param("fromStatus") AuctionStatus fromStatus,
             @Param("threshold") LocalDateTime threshold
     );
@@ -223,4 +228,18 @@ where a.status in :statuses
     List<Auction> findNewAuctions(@Param("statuses") List<AuctionStatus> statuses,
                                   @Param("threshold") LocalDateTime threshold,
                                   Pageable pageable);
+
+    //핫딜 삭제
+    @Query("""
+        select a
+        from Auction a
+        where 
+a.id
+ = :auctionId
+          and a.isHotDeal = true
+          and a.status = noonchissaum.backend.domain.auction.entity.AuctionStatus.READY
+    """)
+    Optional<Auction> findReadyHotDeal(@Param("auctionId") Long auctionId);
+
+
 }
