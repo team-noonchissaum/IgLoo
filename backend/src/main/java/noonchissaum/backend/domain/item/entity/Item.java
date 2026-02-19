@@ -57,12 +57,6 @@ public class Item extends BaseTimeEntity {
     @Column(name = "thumbnail_url", columnDefinition = "TEXT")
     private String thumbnailUrl;
 
-    @Column(columnDefinition = "POINT SRID 4326", name = "item_location")
-    private String itemLocation;
-
-    @Column(length = 50)
-    private String sellerDong;
-
     @Builder
     public Item(User seller, Category category, String title, String description) {
         this.seller = seller;
@@ -81,16 +75,6 @@ public class Item extends BaseTimeEntity {
         this.thumbnailUrl = thumbnailUrl;
     }
 
-    public void setSellerLocation(String location, String dong) {
-        this.itemLocation = location;
-        this.sellerDong = dong;
-    }
-
-    public void updateSellerLocation(String newLocation, String newDong) {
-        this.itemLocation = newLocation;
-        this.sellerDong = newDong;
-    }
-
     public void delete() {
         if (Boolean.FALSE.equals(this.status)) {
             throw new IllegalStateException("Already deleted item.");
@@ -103,10 +87,6 @@ public class Item extends BaseTimeEntity {
             throw new IllegalStateException("Item is already active.");
         }
         this.status = true;
-    }
-
-    public void setSellerDong(String dong) {
-        this.sellerDong = dong;
     }
 
     public boolean isDeleted() {

@@ -85,7 +85,7 @@ public class BidRollbackService {
         if (firstBlockedBidIndex == 0) {
             // 차단 유저가 첫 입찰자 → 등록가(무입찰) 상태로 롤백
             previousBidder = null;
-            rollbackPrice = auction.getItem().getStartPrice();
+            rollbackPrice = auction.getStartPrice();
             rollbackBidCount = 0;
             previousBidderId = -1L;
         } else {
