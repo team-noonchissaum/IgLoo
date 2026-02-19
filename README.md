@@ -65,7 +65,7 @@ IgLoo는 중고거래 모델에 경매 낙찰 시스템을 결합한 서비스
 
 ## 시스템 아키텍처
 
-![System Architecture](https://github.com/user-attachments/assets/dc4a3320-cfbd-45b0-8c3a-33b9370ca06d))
+![System Architecture](https://github.com/user-attachments/assets/4224aac0-e84a-4389-975d-b65457e0c720)
 
 ---
 
