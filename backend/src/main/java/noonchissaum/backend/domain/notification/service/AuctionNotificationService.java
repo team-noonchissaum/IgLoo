@@ -5,7 +5,7 @@ import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.repository.BidRepository;
 import noonchissaum.backend.domain.auction.service.AuctionMessageService;
 import noonchissaum.backend.domain.notification.constants.NotificationConstants;
-import noonchissaum.backend.domain.notification.dto.res.NotificationResponse;
+import noonchissaum.backend.domain.notification.dto.res.NotificationRes;
 import noonchissaum.backend.domain.notification.entity.Notification;
 import noonchissaum.backend.domain.notification.entity.NotificationType;
 import noonchissaum.backend.global.dto.SocketMessageType;
@@ -35,7 +35,7 @@ public class AuctionNotificationService {
         Notification saved = notificationService.create(userId, type, message, refType, refId);
 
         // 2. WebSocket 전송 (AuctionMessageService 활용)
-        NotificationResponse response = NotificationResponse.from(saved);
+        NotificationRes response = NotificationRes.from(saved);
         auctionMessageService.sendToUserQueue(userId, SocketMessageType.NOTIFICATION, response);
     }
 
