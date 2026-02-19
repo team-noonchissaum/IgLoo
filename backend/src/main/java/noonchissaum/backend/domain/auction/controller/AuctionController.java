@@ -18,6 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
 
 /**
  * 경매 관련 API를 제공하는 컨트롤러입니다.
@@ -99,5 +100,13 @@ public class AuctionController {
         );
         System.out.println();
         return ResponseEntity.ok(ApiResponse.success("Auction search retrieved", result));
+    }
+
+    @GetMapping("/hot-deals")
+    public ApiResponse<List<AuctionRes>> getHotDeals(
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        Long userId = userPrincipal.getUserId();
+        return ApiResponse.success("핫딜 배너 조회", auctionService.getHotDeals(userId));
     }
 }

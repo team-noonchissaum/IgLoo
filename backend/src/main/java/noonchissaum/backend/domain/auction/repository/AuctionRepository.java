@@ -47,14 +47,19 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
             @Param("now") LocalDateTime now
     );
 
+    /**
+     * 일반 경매 READY -> RUNNING 대상 조회
+     * ⚠️ 핫딜(isHotDeal = true)은 제외
+     */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
-    select  a
-    from Auction a
-    WHERE a.status = :fromStatus
-      AND a.createdAt <= :threshold
-""")
-    Optional<List<Auction>> findReadyAuctions(
+        select a
+        from Auction a
+        where a.status = :fromStatus
+          and a.createdAt <= :threshold
+          and a.isHotDeal = false
+    """)
+    Optional<List<Auction>> findReadyNormalAuctions(
             @Param("fromStatus") AuctionStatus fromStatus,
             @Param("threshold") LocalDateTime threshold
     );
@@ -62,6 +67,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
     List<Auction> findByStartAt(LocalDateTime startAt);
 
     /**
+     *스케줄 관련 상태값 변경쿼리
      * deadline -> ended
      */
     @Modifying
@@ -78,6 +84,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
     );
 
     /**
+     * 스케줄 관련 상태값 변경 쿼리
      * Running -> DEADLINE
      */
     @Modifying
@@ -156,6 +163,47 @@ where a.status = :status
             @Param("maxLon") Double maxLon
     );
 
+    // 핫딜 배너 조회
+    @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
+    @Query("""
+        select a
+        from Auction a
+        where a.isHotDeal = true
+          and a.status = noonchissaum.backend.domain.auction.entity.AuctionStatus.READY
+          and a.startAt > :now
+          and a.startAt <= :limit
+        order by a.startAt asc
+    """)
+    List<Auction> findHotDeals(@Param("now") LocalDateTime now,
+                               @Param("limit") LocalDateTime limit,
+                               Pageable pageable);
+    // 핫딜 시작 대상 조회(Ready 이고 startAt 도달)
+    @Query("""
+        select a.id
+        from Auction a
+        where a.status = :status
+          and a.isHotDeal = true
+          and a.startAt <= :now
+    """)
+    List<Long> findHotDealIdsToRun(@Param("status") AuctionStatus status,
+                                   @Param("now") LocalDateTime now);
+
+    /**
+     * 핫딜 READY -> RUNNING (startAt 도달 기준)
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+        update Auction a
+        set a.status = :toStatus
+        where a.status = :fromStatus
+          and a.isHotDeal = true
+          and a.startAt <= :now
+    """)
+    int runHotDeals(@Param("fromStatus") AuctionStatus fromStatus,
+                    @Param("toStatus") AuctionStatus toStatus,
+                    @Param("now") LocalDateTime now);
+
+
     @Query("SELECT a FROM Auction a WHERE a.item.id = :itemId")
     Optional<Auction> findByItemId(@Param("itemId") Long itemId);
 
@@ -180,4 +228,18 @@ where a.status in :statuses
     List<Auction> findNewAuctions(@Param("statuses") List<AuctionStatus> statuses,
                                   @Param("threshold") LocalDateTime threshold,
                                   Pageable pageable);
+
+    //핫딜 삭제
+    @Query("""
+        select a
+        from Auction a
+        where 
+a.id
+ = :auctionId
+          and a.isHotDeal = true
+          and a.status = noonchissaum.backend.domain.auction.entity.AuctionStatus.READY
+    """)
+    Optional<Auction> findReadyHotDeal(@Param("auctionId") Long auctionId);
+
+
 }
