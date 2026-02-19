@@ -1,8 +1,7 @@
 # IgLoo
 
 > 실시간 로컬 경매 기반 중고거래 서비스
->
-> 중고거래의 속도와 재미를 높이기 위해, 기존 거래 모델에 초단기 경매를 결합했습니다.
+> 기존의 당근마켓, 번개장터, 중고나라와 같은 중고거래 서비스 모델에 '경매 낙찰 시스템'을 도입하여 거래의 재미와 효율성을 극대화한 서비스
 
 ![Backend](https://img.shields.io/badge/Backend-Spring%20Boot%203.4.1-6DB33F?logo=springboot&logoColor=white)
 ![AI Service](https://img.shields.io/badge/AI%20Service-FastAPI-009688?logo=fastapi&logoColor=white)
@@ -32,13 +31,13 @@
 
 ## 프로젝트 소개
 
-IgLoo는 중고거래 모델에 경매 낙찰 시스템을 결합한 서비스입니다.
+IgLoo는 중고거래 모델에 경매 낙찰 시스템을 결합한 서비스
 
 기본 거래 흐름:
 
 `경매 등록 -> 입찰 -> 낙찰/유찰 처리 -> 주문/배송 -> 정산`
 
-기존 중고거래의 "기다리는 판매"를 줄이고, 짧은 시간 안에 거래를 성사시키는 것을 목표로 합니다.
+기존 중고거래의 "기다리는 판매"를 줄이고, 짧은 시간 안에 거래 성사를 목표로 함
 
 ## 핵심 차별화 포인트
 
@@ -83,7 +82,7 @@ IgLoo/
 └── README.md
 ```
 
-프론트엔드는 별도 저장소로 운영합니다.
+프론트엔드는 별도 저장소로 운영
 
 - 저장소: [IgLooFE](https://github.com/team-noonchissaum/IgLooFE)
 - 배포: Vercel 파이프라인 기반 별도 관리
@@ -125,13 +124,13 @@ IgLoo/
   - `3306` (MySQL)
   - `6379` (Redis)
 
-포트 충돌 시 실행 중인 프로세스를 종료하거나 포트를 변경한 뒤 실행하세요.
+포트 충돌 시 실행 중인 프로세스 종료 또는 포트 변경 후 실행
 
 ## 실행 방법
 
 ### 1) 서버/배포용 Compose 실행
 
-루트 `.env` 파일 기준으로 실행합니다.
+루트 `.env` 파일 기준 실행
 
 ```bash
 docker compose up -d
@@ -207,9 +206,9 @@ cd backend
 - `backend/src/main/resources/application.yml`
 - `backend/src/test/resources/application-test.yml`
 
-로컬 개발에서는 `.env.dev`(IntelliJ 실행용) 또는 `.env`를 사용합니다.
+로컬 개발에서는 `.env.dev`(IntelliJ 실행용) 또는 `.env` 사용
 
-아래 키를 환경별로 설정하세요.
+아래 키를 환경별로 설정
 
 ```env
 # DB
