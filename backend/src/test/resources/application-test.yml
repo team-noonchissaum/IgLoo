@@ -16,7 +16,7 @@ spring:
   datasource:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
-    url: jdbc:mysql://localhost:3307/iglootestdb?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
+    url: ${TEST_DB_URL}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
