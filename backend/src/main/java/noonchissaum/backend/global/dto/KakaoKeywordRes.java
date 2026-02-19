@@ -38,7 +38,7 @@ public class KakaoKeywordRes {
         @JsonProperty("road_address_name")
         private String roadAddressName;
 
-        private String x;  // 경도
-        private String y;  // 위도
+        private Double x;  // 경도
+        private Double y;  // 위도
     }
 }

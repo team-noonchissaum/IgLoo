@@ -33,4 +33,12 @@ public class Category {
         this.name = name;
         this.parent = parent;
     }
+    //테스트용
+    public Category(String name) {
+        this.name = name;
+        this.parent = null;
+    }
+    public void assignId(Long id) {
+        this.id = id;
+    }
 }

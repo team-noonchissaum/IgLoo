@@ -115,6 +115,9 @@ public class User extends BaseTimeEntity {
     }
     /** 위치 정보 업데이트(주소,위도 ,경도)*/
     public void updateLocation(String address, String dong, Double latitude, Double longitude) {
+        if (latitude == null || longitude == null) {
+            throw new ApiException(ErrorCode.SET_LOCATION_ERROR);
+        }
         this.address = address;
         this.dong = dong;
         this.latitude = latitude;
@@ -168,4 +171,9 @@ public class User extends BaseTimeEntity {
         this.status = UserStatus.DELETED;
         this.deletedAt = LocalDateTime.now();
     }
+
+    //test용
+    public void assignId(Long id){
+        this.id=id;
+;    }
 }
