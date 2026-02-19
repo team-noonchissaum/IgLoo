@@ -67,7 +67,7 @@ public class User extends BaseTimeEntity {
             read = "ST_AsText(location)",
             write = "ST_GeomFromText(?, 4326)"
     )
-    private String location; // WKT 형식: "POINT(longitude latitude)"
+    private String location; // WKT 형식: "POINT(latitude longitude)"
 
 
     private LocalDateTime deletedAt;
@@ -119,8 +119,8 @@ public class User extends BaseTimeEntity {
         this.dong = dong;
         this.latitude = latitude;
         this.longitude = longitude;
-        // WKT 형식으로 저장 (위도 경도 순서 주의)
-        this.location = String.format("POINT(%f %f)", longitude, latitude);
+        // WKT 형식으로 저장 (위도, 경도 순서)
+        this.location = String.format("POINT(%f %f)", latitude, longitude);
     }
 
 
