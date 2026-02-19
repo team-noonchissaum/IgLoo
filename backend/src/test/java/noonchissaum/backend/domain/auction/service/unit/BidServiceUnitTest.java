@@ -19,6 +19,7 @@ import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import noonchissaum.backend.global.util.UserLockExecutor;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -76,6 +77,7 @@ class BidServiceUnitTest {
     private UserLockExecutor userLockExecutor;
 
     @Test
+    @DisplayName("중복 requestId 감지 시 DUPLICATE_BID_REQUEST 예외 던짐")
     void placeBid_duplicateRequest_throwsApiException() {
         BidService bidService = new BidService(
                 redissonClient, redisTemplate, walletService, bidRepository, auctionRepository,
@@ -96,6 +98,7 @@ class BidServiceUnitTest {
     }
 
     @Test
+    @DisplayName("내 입찰 경매 목록 매핑 및 최고가/최고입찰자 계산 위임")
     void getMyBidAuctions_mapsValues_andDelegatesRepositoryCalls() {
         BidService bidService = new BidService(
                 redissonClient, redisTemplate, walletService, bidRepository, auctionRepository,
@@ -167,6 +170,7 @@ class BidServiceUnitTest {
     }
 
     @Test
+    @DisplayName("음수 페이지 요청 시 INVALID_PAGE_REQUEST 예외 던짐")
     void getMyBidAuctions_invalidPageable_throwsIllegalArgument() {
         BidService bidService = new BidService(
                 redissonClient, redisTemplate, walletService, bidRepository, auctionRepository,
@@ -184,6 +188,7 @@ class BidServiceUnitTest {
     }
 
     @Test
+    @DisplayName("요청 ID 존재 여부 조회 위임")
     void isExistRequestId_delegatesRepository() {
         BidService bidService = new BidService(
                 redissonClient, redisTemplate, walletService, bidRepository, auctionRepository,

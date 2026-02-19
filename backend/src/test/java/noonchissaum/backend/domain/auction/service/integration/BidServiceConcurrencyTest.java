@@ -17,6 +17,8 @@ import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.repository.WalletRepository;
 import noonchissaum.backend.global.exception.ApiException;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -38,6 +40,7 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
+@Tag("integration")
 public class BidServiceConcurrencyTest {
 
     @Autowired
@@ -114,6 +117,7 @@ public class BidServiceConcurrencyTest {
     }
 
     @Test
+    @DisplayName("동시 입찰 100건 처리 시 Redis 최종가와 DB 최고가 동기화 검증")
     void 백명이_동시에_입찰하는_상황_테스트() throws InterruptedException {
         // given
         int numberOfThreads = 100;

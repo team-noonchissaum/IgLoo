@@ -9,6 +9,7 @@ import noonchissaum.backend.domain.user.entity.UserRole;
 import noonchissaum.backend.domain.user.entity.UserStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -24,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Tag("integration")
 class BidRepositoryDataJpaTest {
 
     @Autowired EntityManager em;
@@ -102,7 +104,7 @@ class BidRepositoryDataJpaTest {
     }
 
     @Test
-    @DisplayName("findParticipatedAuctions: 유저가 입찰한 경매만 조회되고, endAt desc 정렬 + distinct가 적용된다")
+    @DisplayName("참여 경매 조회 시 endAt 내림차순 정렬 및 중복 제거 적용")
     void findParticipatedAuctions_distinct_and_order() {
         Pageable pageable = PageRequest.of(0, 10);
 
@@ -126,7 +128,7 @@ class BidRepositoryDataJpaTest {
     }
 
     @Test
-    @DisplayName("myMaxBid: 유저-경매별 최고 입찰가가 맞고, 입찰이 없으면 0을 반환한다(coalesce)")
+    @DisplayName("사용자-경매별 최고 입찰가 조회 및 미입찰 시 0 반환")
     void myMaxBid_returns_max_or_zero() {
         BigDecimal maxA1 = bidRepository.myMaxBid(u1.getId(), a1.getId());
         assertEquals(0, maxA1.compareTo(BigDecimal.valueOf(1500)));
@@ -136,7 +138,7 @@ class BidRepositoryDataJpaTest {
     }
 
     @Test
-    @DisplayName("currentMaxBid: 경매 전체 최고 입찰가가 맞고, 입찰이 없으면 0을 반환한다(coalesce)")
+    @DisplayName("경매 전체 최고 입찰가 조회 및 미입찰 시 0 반환")
     void currentMaxBid_returns_max_or_zero() {
         BigDecimal maxA1 = bidRepository.currentMaxBid(a1.getId());
         assertEquals(0, maxA1.compareTo(BigDecimal.valueOf(3000)));
@@ -146,7 +148,7 @@ class BidRepositoryDataJpaTest {
     }
 
     @Test
-    @DisplayName("findByAuctionIdOrderByCreatedAtDesc: createdAt desc 정렬 + 페이징이 적용된다")
+    @DisplayName("입찰 내역 조회 시 createdAt 내림차순 정렬 및 페이징 적용")
     void findByAuctionIdOrderByCreatedAtDesc_paging() {
         // A1에는 총 3개 bid가 들어가 있음 (u1 2개 + u2 1개)
         Pageable firstPage = PageRequest.of(0, 2);
