@@ -262,18 +262,6 @@ public class RecommendationService {
         return (double) intersection / union;
     }
 
-    private List<Long> pickRandom(List<Long> items, int limit) {
-        if (items == null || items.isEmpty()) {
-            return new ArrayList<>();
-        }
-        if (items.size() <= limit) {
-            return new ArrayList<>(items);
-        }
-        List<Long> copy = new ArrayList<>(items);
-        Collections.shuffle(copy, RANDOM);
-        return new ArrayList<>(copy.subList(0, limit));
-    }
-
     private List<Long> filterOutContext(List<Long> items, Long contextItemId) {
         if (items == null || items.isEmpty() || contextItemId == null) {
             return items == null ? new ArrayList<>() : new ArrayList<>(items);

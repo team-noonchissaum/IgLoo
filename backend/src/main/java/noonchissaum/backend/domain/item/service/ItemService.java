@@ -31,19 +31,13 @@ public class ItemService {
                 .orElseThrow(() -> new ApiException(ErrorCode.ITEM_NOT_FOUND));
     }
 
-    //상품 정보 생성 및 이미지 등록
     public Item createItem(User seller, Category category, AuctionRegisterReq request) {
         Item item = Item.builder()
                 .seller(seller)
                 .category(category)
                 .title(request.getTitle())
                 .description(request.getDescription())
-                .startPrice(request.getStartPrice())
                 .build();
-        //아이템 추가시 판매자 위치 가져오기(위도,경도)
-        if (seller.getDong() != null) {
-            item.setSellerDong(seller.getDong());
-        }
 
         itemRepository.save(item);
         addImages(item, request.getImageUrls());
