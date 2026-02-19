@@ -42,16 +42,39 @@ public class LocationService {
         log.info("=== 좌표 변환 시작 === address: {}", address);
 
         // 1. 주소 검색 시도
-        LocationDto result = searchByAddress(address);
+        LocationDto result = null;
+        boolean hadApiError = false;
+        try {
+            result = searchByAddress(address);
+        } catch (ApiException e) {
+            if (e.getErrorCode() == ErrorCode.LOCATION_API_ERROR
+                    || e.getErrorCode() == ErrorCode.LOCATION_ENCODING_ERROR) {
+                hadApiError = true;
+            } else {
+                throw e;
+            }
+        }
 
         // 2. 실패시 키워드 검색으로 fallback
         if (result == null) {
             log.info("주소 검색 실패, 키워드 검색으로 fallback");
-            result = searchByKeyword(address);
+            try {
+                result = searchByKeyword(address);
+            } catch (ApiException e) {
+                if (e.getErrorCode() == ErrorCode.LOCATION_API_ERROR
+                        || e.getErrorCode() == ErrorCode.LOCATION_ENCODING_ERROR) {
+                    hadApiError = true;
+                } else {
+                    throw e;
+                }
+            }
         }
 
         // 3. 둘 다 실패
         if (result == null) {
+            if (hadApiError) {
+                throw new ApiException(ErrorCode.LOCATION_API_ERROR);
+            }
             throw new ApiException(ErrorCode.ADDRESS_NOT_FOUND);
         }
 
@@ -121,7 +144,7 @@ public class LocationService {
 
         } catch (Exception e) {
             log.warn("주소 검색 실패: {}", e.getMessage());
-            return null;
+            throw new ApiException(ErrorCode.LOCATION_API_ERROR);
         }
     }
 
@@ -170,7 +193,7 @@ public class LocationService {
 
         } catch (Exception e) {
             log.error("키워드 검색 실패: {}", e.getMessage());
-            return null;
+            throw new ApiException(ErrorCode.LOCATION_API_ERROR);
         }
     }
 

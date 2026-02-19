@@ -83,14 +83,22 @@ public class OrderService {
     /** (구매자) 배송완료 후 구매확정 */
     @Transactional
     public void confirmAfterDelivered(Long orderId, Long buyerId) {
-        Order order = orderRepository.findByIdAndBuyerId(orderId, buyerId)
-                .orElseThrow(() -> new IllegalArgumentException("권한 없음 또는 주문 없음"));
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ApiException(ErrorCode.ORDER_NOT_FOUND));
+
+        if (order.getBuyer() == null || !order.getBuyer().getId().equals(buyerId)) {
+            throw new ApiException(ErrorCode.ORDER_ACCESS_DENIED);
+        }
 
         Shipment shipment = shipmentRepository.findByOrder_Id(orderId)
-                .orElseThrow(() -> new IllegalStateException("배송 정보 없음"));
+                .orElseThrow(() -> new ApiException(ErrorCode.ORDER_SHIPMENT_NOT_FOUND));
 
         if (shipment.getStatus() != ShipmentStatus.DELIVERED) {
-            throw new IllegalStateException("배송완료 후에만 구매확정이 가능합니다.");
+            throw new ApiException(ErrorCode.ORDER_NOT_DELIVERED_YET);
+        }
+
+        if (order.getStatus() == OrderStatus.COMPLETED) {
+            throw new ApiException(ErrorCode.ORDER_ALREADY_CONFIRMED);
         }
 
         // 엔티티 메서드(너가 추가한 confirmAfterDelivered) 사용
@@ -123,8 +131,20 @@ public class OrderService {
     // 추가
     @Transactional
     public ChooseDeliveryTypeRes chooseDeliveryType(Long orderId, Long userId, ChooseDeliveryTypeReq req) {
-        Order order = orderRepository.findByIdAndBuyerId(orderId, userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.ACCESS_DENIED));
+        if (req == null || req.type() == null) {
+            throw new ApiException(ErrorCode.DELIVERY_TYPE_REQUIRED);
+        }
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ApiException(ErrorCode.ORDER_NOT_FOUND));
+
+        if (order.getBuyer() == null || !order.getBuyer().getId().equals(userId)) {
+            throw new ApiException(ErrorCode.ORDER_ACCESS_DENIED);
+        }
+
+        if (order.getDeliveryType() != null) {
+            throw new ApiException(ErrorCode.DELIVERY_TYPE_ALREADY_SELECTED);
+        }
 
         order.chooseDeliveryType(req.type());
 
@@ -138,11 +158,22 @@ public class OrderService {
 
     @Transactional
     public void confirmDirectTrade(Long orderId, Long buyerId) {
-        Order order = orderRepository.findByIdAndBuyerId(orderId, buyerId)
-                .orElseThrow(() -> new ApiException(ErrorCode.ACCESS_DENIED));
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ApiException(ErrorCode.ORDER_NOT_FOUND));
+
+        if (order.getBuyer() == null || !order.getBuyer().getId().equals(buyerId)) {
+            throw new ApiException(ErrorCode.ORDER_ACCESS_DENIED);
+        }
 
         if (order.getDeliveryType() != DeliveryType.DIRECT) {
             throw new ApiException(ErrorCode.DELIVERY_TYPE_NOT_DIRECT);
+        }
+
+        if (order.getStatus() == OrderStatus.COMPLETED) {
+            throw new ApiException(ErrorCode.ORDER_ALREADY_CONFIRMED);
+        }
+        if (order.getStatus() != OrderStatus.CREATED && order.getStatus() != OrderStatus.SHIPPED) {
+            throw new ApiException(ErrorCode.ORDER_CONFIRM_INVALID_STATUS);
         }
 
         order.confirmDirectTrade();

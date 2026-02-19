@@ -12,6 +12,8 @@ import noonchissaum.backend.domain.user.entity.UserStatus;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.domain.wallet.service.WalletService;
+import noonchissaum.backend.global.exception.ApiException;
+import noonchissaum.backend.global.exception.ErrorCode;
 import noonchissaum.backend.global.security.UserPrincipal;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -43,7 +45,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         String providerId = info.getProviderId();
         if (providerId == null || providerId.isBlank()) {
-            throw new IllegalArgumentException("providerId is null/blank");
+            throw new ApiException(ErrorCode.OAUTH_PROVIDER_ID_INVALID);
         }
 
         // identifier 규칙: {AUTH_TYPE}:{providerId}
