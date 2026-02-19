@@ -6,6 +6,9 @@ import noonchissaum.backend.domain.chat.dto.res.ChatRoomRes;
 import noonchissaum.backend.domain.chat.dto.res.MyChatRoomRes;
 import noonchissaum.backend.domain.chat.entity.ChatRoom;
 import noonchissaum.backend.domain.chat.repository.ChatRoomRepository;
+import noonchissaum.backend.domain.notification.constants.NotificationConstants;
+import noonchissaum.backend.domain.notification.entity.NotificationType;
+import noonchissaum.backend.domain.notification.service.NotificationService;
 import noonchissaum.backend.domain.order.entity.Order;
 import noonchissaum.backend.domain.order.entity.DeliveryType;
 import noonchissaum.backend.domain.order.repository.OrderRepository;
@@ -24,6 +27,7 @@ import java.util.List;
 public class ChatRoomService {
     private final ChatRoomRepository chatRoomRepository;
     private final OrderRepository orderRepository;
+    private final NotificationService notificationService;
 
     /**
      * DIRECT 거래 선택 시 채팅방 생성
@@ -57,6 +61,21 @@ public class ChatRoomService {
                     .build();
 
             ChatRoom saved = chatRoomRepository.save(room);
+
+            String message = String.format(
+                    NotificationConstants.MSG_CHAT_ROOM_CREATED,
+                    order.getBuyer().getNickname()
+            );
+            // 판매자에게 알림(1번만)
+            notificationService.sendNotification(
+                    order.getSeller().getId(),
+                    NotificationType.CHAT_ROOM_CREATED,
+                    message,
+                    NotificationConstants.REF_TYPE_CHATROOM,
+                    saved.getId()
+            );
+
+
             return ChatRoomRes.from(saved, userId);
 
         } catch (DataIntegrityViolationException e) {
