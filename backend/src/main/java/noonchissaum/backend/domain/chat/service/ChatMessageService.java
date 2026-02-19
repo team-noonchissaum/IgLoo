@@ -33,12 +33,15 @@ public class ChatMessageService {
     @Transactional
     public ChatMessagePayload sendMessage(Long roomId, Long senderId, String message){
         ChatRoom room = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new IllegalArgumentException("채팅방이 존재하지 않습니다. roomId=" + roomId));
+                .orElseThrow(() -> new ApiException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
         // 권한 체크: buyer/seller만 가능
         if (!room.getBuyer().getId().equals(senderId)
                 && !room.getSeller().getId().equals(senderId)) {
-            throw new IllegalArgumentException("채팅 권한이 없습니다.");
+            throw new ApiException(ErrorCode.CHAT_ACCESS_DENIED);
+        }
+        if (message == null || message.isBlank()) {
+            throw new ApiException(ErrorCode.CHAT_INVALID_REQUEST);
         }
         User sender = userService.getUserByUserId(senderId);
 
@@ -73,7 +76,7 @@ public class ChatMessageService {
 
         // 유저가 해당 방의 참여자인지 검증
         if (!isParticipant(room, userId)) {
-            throw new ApiException(ErrorCode.ACCESS_DENIED);
+            throw new ApiException(ErrorCode.CHAT_ACCESS_DENIED);
         }
 
         return fetchMessagePage(roomId, cursor, size);
@@ -130,7 +133,7 @@ public class ChatMessageService {
         boolean isMember = room.getBuyer().getId().equals(userId) || room.getSeller().getId().equals(userId);
 
         if (!isMember){
-            throw new ApiException(ErrorCode.ACCESS_DENIED);
+            throw new ApiException(ErrorCode.CHAT_ACCESS_DENIED);
         }
         return chatMessageRepository.markAllAsReadInRoom(roomId, userId);
     }

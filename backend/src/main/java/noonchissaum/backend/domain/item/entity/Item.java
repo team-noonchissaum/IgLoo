@@ -64,7 +64,7 @@ public class Item extends BaseTimeEntity {
     @OneToOne(mappedBy = "item", fetch = FetchType.LAZY)
     private Auction auction;
 
-    @Column(name = "thumbnail_url")
+    @Column(name = "thumbnail_url", columnDefinition = "TEXT")
     private String thumbnailUrl;
 
     /**아이템 위치 정보*/

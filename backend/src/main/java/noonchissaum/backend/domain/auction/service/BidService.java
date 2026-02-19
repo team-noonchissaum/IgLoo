@@ -54,6 +54,8 @@ public class BidService {
     private final AuctionRecordService auctionRecordService;
     private final NotificationService notificationService;
     private final UserLockExecutor userLockExecutor;
+    private static final BigDecimal BID_INCREMENT_RATE = new BigDecimal("0.10");
+    private static final BigDecimal MIN_BID_INCREMENT = new BigDecimal("100");
 
 
     public void placeBid(Long auctionId, Long userId, BigDecimal bidAmount, String requestId) {
@@ -219,7 +221,7 @@ public class BidService {
             Pageable pageable
     ) {
         if (pageable.getPageNumber() < 0 || pageable.getPageSize() <= 0) {
-            throw new IllegalArgumentException("INVALID_PAGE_REQUEST");
+            throw new ApiException(ErrorCode.BID_INVALID_PAGE);
         }
 
         Page<Auction> auctions =
@@ -261,21 +263,23 @@ public class BidService {
     ) {
         String priceKey = RedisKeys.auctionCurrentPrice(auctionId);
         String bidderKey = RedisKeys.auctionCurrentBidder(auctionId);
-        String bidCountKey = RedisKeys.auctionCurrentBidCount(auctionId);
         String statusKey = RedisKeys.auctionStatus(auctionId);
         String endTimeKey = RedisKeys.auctionEndTime(auctionId);
         String userBalance = RedisKeys.userBalance(userId);
 
         String rawPrice = redisTemplate.opsForValue().get(priceKey);
-        String rawBidCount = redisTemplate.opsForValue().get(bidCountKey);
         BigDecimal currentPrice = (rawPrice == null || rawPrice.isBlank()) ? BigDecimal.ZERO : new BigDecimal(rawPrice);
         log.info("currentPrice:" + currentPrice);
 
-        // 첫 입찰은 현재가(등록가) 이상 허용, 이후는 10% 이상 체크 (10원 단위 올림)
-        int bidCount = parseIntOrDefault(rawBidCount, 0);
-        BigDecimal minBid = (bidCount == 0)
-                ? currentPrice
-                : currentPrice.multiply(new BigDecimal("1.1")).setScale(-1, RoundingMode.CEILING);
+        // 최소 입찰가 = 현재가 + max(최초가의 10%, 100원)
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
+        BigDecimal baseStartPrice = auction.getStartPrice() == null ? BigDecimal.ZERO : auction.getStartPrice();
+        BigDecimal incrementByStartPrice = baseStartPrice
+                .multiply(BID_INCREMENT_RATE)
+                .setScale(0, RoundingMode.CEILING);
+        BigDecimal minIncrement = incrementByStartPrice.max(MIN_BID_INCREMENT);
+        BigDecimal minBid = currentPrice.add(minIncrement);
 
         if (bidAmount.compareTo(minBid) < 0) {
             throw new ApiException(ErrorCode.LOW_BID_AMOUNT);
@@ -294,7 +298,7 @@ public class BidService {
         String rawStatus = redisTemplate.opsForValue().get(statusKey);
         String rawEndTime = redisTemplate.opsForValue().get(endTimeKey);
         if (isBlank(rawStatus) || isBlank(rawEndTime)) {
-            throw new ApiException(ErrorCode.AUCTION_STATUS_UNAVAILABLE);
+            throw new ApiException(ErrorCode.AUCTION_REDIS_STATE_MISSING);
         }
 
         AuctionStatus status;
@@ -303,7 +307,7 @@ public class BidService {
             status = AuctionStatus.valueOf(rawStatus);
             endAt = LocalDateTime.parse(rawEndTime);
         } catch (Exception e) {
-            throw new ApiException(ErrorCode.AUCTION_STATUS_UNAVAILABLE);
+            throw new ApiException(ErrorCode.AUCTION_REDIS_STATE_INVALID);
         }
         if (status == AuctionStatus.TEMP_BLOCKED ||
                 status == AuctionStatus.BLOCKED ||
@@ -311,10 +315,10 @@ public class BidService {
             throw new ApiException(ErrorCode.AUCTION_BLOCKED);
         }
         if (status != AuctionStatus.RUNNING && status != AuctionStatus.DEADLINE) {
-            throw new ApiException(ErrorCode.NOT_FOUND_AUCTIONS);
+            throw new ApiException(ErrorCode.AUCTION_NOT_RUNNING);
         }
         if (LocalDateTime.now().isAfter(endAt)) {
-            throw new ApiException(ErrorCode.NOT_FOUND_AUCTIONS);
+            throw new ApiException(ErrorCode.AUCTION_ENDED);
         }
 
         //잔액 사전 검증 (가용 잔액)
@@ -327,17 +331,6 @@ public class BidService {
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
-    }
-
-    private int parseIntOrDefault(String value, int fallback) {
-        if (isBlank(value)) {
-            return fallback;
-        }
-        try {
-            return Integer.parseInt(value.trim());
-        } catch (NumberFormatException e) {
-            return fallback;
-        }
     }
 
     /**

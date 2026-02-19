@@ -96,4 +96,20 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	systemProperty 'spring.profiles.active', 'test'
+}
+
+tasks.register('unitTest', Test) {
+    useJUnitPlatform {
+        includeTags 'unit'
+    }
+    systemProperty 'spring.profiles.active', 'test'
+}
+
+tasks.register('integrationTest', Test) {
+    useJUnitPlatform {
+        includeTags 'integration'
+    }
+    systemProperty 'spring.profiles.active', 'test'
+    shouldRunAfter tasks.named('unitTest')
 }

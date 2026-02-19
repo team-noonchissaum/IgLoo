@@ -22,7 +22,7 @@ public class ItemImage extends BaseTimeEntity {
     @JoinColumn(name = "item_id", nullable = false)
     private Item item;
 
-    @Column(name = "image_url")
+    @Column(name = "image_url",columnDefinition = "TEXT")
     private String imageUrl;
 
     @Column(name = "sort_order")

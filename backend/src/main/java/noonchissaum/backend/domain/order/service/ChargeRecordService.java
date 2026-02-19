@@ -40,7 +40,7 @@ public class ChargeRecordService {
 
         // 권한 체크
         if (!chargeCheck.getUser().getId().equals(userId)) {
-            throw new ApiException(ErrorCode.NOT_FOUND_CHARGE);
+            throw new ApiException(ErrorCode.CHARGE_ACCESS_DENIED);
         }
 
         // 멱등 처리
@@ -73,7 +73,7 @@ public class ChargeRecordService {
                 .orElseThrow(() -> new ApiException(ErrorCode.CHARGE_CHECK_NOT_FOUND));
 
         if(!chargeCheck.getUser().getId().equals(userId)){
-            throw new ApiException(ErrorCode.NOT_FOUND_CHARGE);
+            throw new ApiException(ErrorCode.CHARGE_ACCESS_DENIED);
         }
         if(chargeCheck.getStatus().equals(CheckStatus.CANCELED)){
             return ;

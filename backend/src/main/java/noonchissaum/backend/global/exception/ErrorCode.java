@@ -13,7 +13,7 @@ public enum ErrorCode {
     /** 서버 내부 오류 */
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON-001", "서버 내부 오류가 발생했습니다."),
     /** 요청 값 검증 실패 */
-    INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "요청 값이 올바르지 않습니다.", "COMMON-002"),
+    INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "COMMON-002", "요청 값이 올바르지 않습니다."),
     /** 잘못된 요청 */
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "COMMON-003", "잘못된 요청입니다."),
     /** 리소스를 찾을 수 없음 */
@@ -49,6 +49,8 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER-003", "존재하지 않는 사용자입니다."),
 
     BALANCE_EXISTS(HttpStatus.CONFLICT,"USER-004","잔액이 남아있습니다."),
+    USER_DELETED(HttpStatus.FORBIDDEN, "USER-005", "탈퇴한 사용자입니다."),
+    USER_ALREADY_DELETED(HttpStatus.CONFLICT, "USER-006", "이미 탈퇴한 사용자입니다."),
 
     // ========== BLOCK (차단 에러) ==========
     /** 이미 차단된 아이템 */
@@ -68,6 +70,8 @@ public enum ErrorCode {
 
     // ===== FILE 관련 =====
     FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "F001", "파일 업로드에 실패했습니다."),
+    FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "F002", "파일 삭제에 실패했습니다."),
+    FILE_URL_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "F003", "파일 URL 생성에 실패했습니다."),
 
     // ========== REPORT (신고 에러) ==========
     /** 신고 조회 실패 */
@@ -87,6 +91,8 @@ public enum ErrorCode {
 
     // ========== CATEGORY (카테고리 에러) ==========
     CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "CATEGORY-001", "카테고리를 찾을 수 없습니다."),
+    CATEGORY_DELETE_FORBIDDEN(HttpStatus.BAD_REQUEST, "CATEGORY-002", "해당 카테고리는 삭제할 수 없습니다."),
+    CATEGORY_ETC_NOT_FOUND(HttpStatus.NOT_FOUND, "CATEGORY-003", "기타 카테고리를 찾을 수 없습니다."),
 
     // Bid Error
     LOW_BID_AMOUNT(HttpStatus.BAD_REQUEST, "B001", "현재가보다 같거나 낮은 가격에 입찰할 수 없습니다."),
@@ -94,11 +100,14 @@ public enum ErrorCode {
     CANNOT_FIND_BID(HttpStatus.NOT_FOUND, "B003", "입찰을 찾을 수 없습니다."),
     DUPLICATE_BID_REQUEST(HttpStatus.CONFLICT, "B004", "이미 처리중인 입찰입니다."),
     BID_LOCK_ACQUISITION(HttpStatus.TOO_MANY_REQUESTS, "B005", "입찰자가 많아 처리에 실패했습니다. 다시 시도해주세요"),
+    BID_INVALID_PAGE(HttpStatus.BAD_REQUEST, "B006", "페이지 요청 값이 올바르지 않습니다."),
 
     // Wallet Error
     INSUFFICIENT_BALANCE(HttpStatus.PAYMENT_REQUIRED, "W001", "잔액이 부족합니다."),
     CANNOT_FIND_WALLET(HttpStatus.NOT_FOUND, "W002", "지갑을 찾을 수 없습니다."),
     INSUFFICIENT_LOCKED_BALANCE(HttpStatus.BAD_REQUEST,"W003","잠긴 잔액이 부족합니다."),
+    WALLET_ACCESS_DENIED(HttpStatus.FORBIDDEN, "W004", "지갑에 접근할 수 없습니다."),
+    WALLET_INVALID_CASE(HttpStatus.BAD_REQUEST, "W005", "지갑 처리 유형이 올바르지 않습니다."),
 
     // Auction Error
     NOT_FOUND_AUCTIONS(HttpStatus.NOT_FOUND, "A001", "경매를 찾을 수 없습니다."),
@@ -107,17 +116,24 @@ public enum ErrorCode {
     AUCTION_INVALID_STATUS(HttpStatus.BAD_REQUEST, "A004", "현재 상태에서는 경매를 취소할 수 없습니다."),
     AUCTION_BLOCKED(HttpStatus.BAD_REQUEST, "A005", "차단된 경매입니다."),
     AUCTION_RESTORE_EXPIRED(HttpStatus.BAD_REQUEST, "A006", "종료된 경매는 복구할 수 없습니다."),
-    AUCTION_STATUS_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "A005", "경매 상태 정보를 불러올 수 없습니다."),
+    AUCTION_STATUS_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "A007", "경매 상태 정보를 불러올 수 없습니다."),
+    AUCTION_NOT_RUNNING(HttpStatus.BAD_REQUEST, "A008", "현재 진행 중인 경매가 아닙니다."),
+    AUCTION_ENDED(HttpStatus.BAD_REQUEST, "A009", "종료된 경매입니다."),
+    AUCTION_NOT_HOTDEAL(HttpStatus.BAD_REQUEST, "A010", "핫딜 경매가 아닙니다."),
+    AUCTION_REDIS_STATE_MISSING(HttpStatus.SERVICE_UNAVAILABLE, "A011", "경매 상태 정보가 없습니다."),
+    AUCTION_REDIS_STATE_INVALID(HttpStatus.SERVICE_UNAVAILABLE, "A012", "경매 상태 정보가 올바르지 않습니다."),
 
     // Notification Error
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "알림을 찾을 수 없습니다."),
+    NOTIFICATION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "N002", "알림에 접근할 수 없습니다."),
     //Charge Error
     CHARGE_LOCK_ACQUISITION(HttpStatus.TOO_MANY_REQUESTS, "C001", "처리에 실패했습니다. 다시 시도해주세요"),
     CHARGE_CHECK_NOT_FOUND(HttpStatus.NOT_FOUND,"C002","충전금을 찾을 수 없습니다."),
     CHARGE_CANCELED(HttpStatus.CONFLICT,"C003","이미 취소 처리된 충전금입니다."),
     CHARGE_CONFIRMED(HttpStatus.CONFLICT,"C004","이미 충전 처리된 충전금입니다"),
-    NOT_FOUND_CHARGE(HttpStatus.NOT_FOUND,"C005","이미 충전 처리된 충전금입니다"),
+    NOT_FOUND_CHARGE(HttpStatus.NOT_FOUND,"C005","충전 내역을 찾을 수 없습니다."),
     REFUND_DATE_EXPIRED(HttpStatus.BAD_REQUEST,"C006","환불 가능 기간이 만료되었습니다."),
+    CHARGE_ACCESS_DENIED(HttpStatus.FORBIDDEN, "C007", "충전 내역에 접근할 수 없습니다."),
 
     //Task Error
     PENDING_TASK_EXISTS(HttpStatus.CONFLICT,"T001","처리에 실패했습니다. 다시 시도해주세요"),
@@ -131,20 +147,40 @@ public enum ErrorCode {
     PAYMENTS_FAILED(HttpStatus.BAD_GATEWAY, "P006", "결제 승인에 실패했습니다."),
     ALREADY_CANCELED_PAYMENT(HttpStatus.CONFLICT, "P007", "이미 취소된 결제입니다."),
     REFUND_FAILED(HttpStatus.BAD_GATEWAY, "P008", "환불 처리에 실패했습니다."),
+    PAYMENT_STATUS_INVALID_FOR_APPROVE(HttpStatus.BAD_REQUEST, "P009", "현재 상태에서는 결제 승인할 수 없습니다."),
+    PAYMENT_STATUS_INVALID_FOR_CANCEL(HttpStatus.BAD_REQUEST, "P010", "현재 상태에서는 결제를 취소할 수 없습니다."),
+    REFUND_ACCESS_DENIED(HttpStatus.FORBIDDEN, "P011", "환불 권한이 없습니다."),
+    WEBHOOK_INVALID_STATE(HttpStatus.BAD_REQUEST, "P012", "웹훅 상태가 올바르지 않습니다."),
+    WEBHOOK_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "P013", "웹훅 금액이 일치하지 않습니다."),
 
     // Withdrawal Error
     WITHDRAW_MIN_AMOUNT(HttpStatus.BAD_REQUEST, "WD001", "출금 금액은 최소 10,000원 이상이어야 합니다."),
     WITHDRAW_NOT_FOUND(HttpStatus.NOT_FOUND, "WD002", "출금 신청 내역을 찾을 수 없습니다."),
     WITHDRAW_NOT_REQUESTED(HttpStatus.BAD_REQUEST, "WD003", "출금 승인 대기 상태가 아닙니다."),
     WITHDRAW_NOT_CANCELABLE(HttpStatus.BAD_REQUEST, "WD004", "취소할 수 없는 출금 상태입니다."),
+    WITHDRAW_ALREADY_PROCESSED(HttpStatus.CONFLICT, "WD005", "이미 처리된 출금 요청입니다."),
 
     // Chat Error
     CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT-001", "존재하지 않는 채팅방입니다."),
+    CHAT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "CHAT-005", "채팅방에 접근할 수 없습니다."),
+    CHAT_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "CHAT-006", "채팅 요청 값이 올바르지 않습니다."),
 
     // Chatbot Error
-    CHAT_SCENARIO_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT-001", "Chat scenario not found."),
+    CHAT_SCENARIO_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT-004", "Chat scenario not found."),
     CHAT_NODE_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT-002", "Chat node not found."),
     CHAT_OPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT-003", "Chat option not found."),
+    CHAT_SCENARIO_INACTIVE(HttpStatus.BAD_REQUEST, "CHAT-007", "Chat scenario is inactive."),
+
+    // OAuth Error
+    OAUTH_UNSUPPORTED_PROVIDER(HttpStatus.BAD_REQUEST, "OAUTH-001", "지원하지 않는 OAuth2 Provider 입니다."),
+    OAUTH_PROVIDER_ID_INVALID(HttpStatus.BAD_REQUEST, "OAUTH-002", "OAuth2 providerId가 올바르지 않습니다."),
+
+    // WebSocket Error
+    WS_AUTH_REQUIRED(HttpStatus.UNAUTHORIZED, "WS-001", "WebSocket 인증이 필요합니다."),
+    WS_INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "WS-002", "WebSocket 토큰이 유효하지 않습니다."),
+    WS_UNAUTHENTICATED(HttpStatus.UNAUTHORIZED, "WS-003", "WebSocket 세션이 인증되지 않았습니다."),
+    WS_SUBSCRIBE_DENIED(HttpStatus.FORBIDDEN, "WS-004", "채팅 구독 권한이 없습니다."),
+    WS_ADMIN_SEND_FORBIDDEN(HttpStatus.FORBIDDEN, "WS-005", "관리자는 채팅 전송이 불가합니다."),
 
     //Lock
     LOCK_ACQUISITION(HttpStatus.TOO_MANY_REQUESTS, "L001", "락 획득에 실패했습니다. 다시 시도해주세요"),
@@ -156,6 +192,9 @@ public enum ErrorCode {
 
     // Settlement Error
     INVALID_ORDER_STATUS_FOR_SETTLEMENT(HttpStatus.BAD_REQUEST, "ORDER-002", "정산을 진행할 수 없는 주문 상태입니다."),
+    SETTLEMENT_ALREADY_EXISTS(HttpStatus.CONFLICT, "SETTLEMENT-001", "이미 정산이 완료된 주문입니다."),
+    SETTLEMENT_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "SETTLEMENT-002", "정산 대상 사용자를 찾을 수 없습니다."),
+    SETTLEMENT_WALLET_NOT_FOUND(HttpStatus.NOT_FOUND, "SETTLEMENT-003", "정산 대상 지갑을 찾을 수 없습니다."),
 
     // Order Error
     DELIVERY_TYPE_NOT_DIRECT(HttpStatus.BAD_REQUEST, "DELIVERY-002", "배송 타입이 직거래가 아닙니다."),
@@ -168,10 +207,20 @@ public enum ErrorCode {
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER-001", "존재하지 않는 주문입니다."),
     SHIPMENT_TRACKING_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "SHIP-005", "송장 정보가 없어 배송 조회가 불가능합니다."),
     SWEETTRACKER_API_ERROR(HttpStatus.BAD_GATEWAY, "SHIP-006", "택배 조회 서비스 응답이 올바르지 않습니다."),       // 외부 API 실패/응답 이상
+    SHIPMENT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "SHIP-007", "배송 정보에 접근할 수 없습니다."),
+    SHIPMENT_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "SHIP-008", "배송 요청 값이 올바르지 않습니다."),
+    SWEETTRACKER_RESPONSE_INVALID(HttpStatus.BAD_GATEWAY, "SHIP-009", "택배 조회 서비스 응답이 비정상입니다."),
+    ORDER_ACCESS_DENIED(HttpStatus.FORBIDDEN, "ORDER-004", "주문에 대한 접근 권한이 없습니다."),
+    ORDER_SHIPMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER-005", "주문에 대한 배송 정보를 찾을 수 없습니다."),
+    ORDER_NOT_DELIVERED_YET(HttpStatus.BAD_REQUEST, "ORDER-006", "배송 완료 후에만 구매확정이 가능합니다."),
+    ORDER_ALREADY_CONFIRMED(HttpStatus.CONFLICT, "ORDER-007", "이미 구매확정된 주문입니다."),
+    ORDER_CONFIRM_INVALID_STATUS(HttpStatus.BAD_REQUEST, "ORDER-008", "현재 상태에서는 구매확정이 불가능합니다."),
+    DELIVERY_TYPE_REQUIRED(HttpStatus.BAD_REQUEST, "DELIVERY-003", "배송 타입을 선택해 주세요."),
+    DELIVERY_TYPE_ALREADY_SELECTED(HttpStatus.CONFLICT, "DELIVERY-004", "이미 배송 타입이 선택되었습니다."),
   
     // ========== LOCATION (위치 관련 에러) ==========
     INVALID_LOCATION_PARAMS(HttpStatus.BAD_REQUEST, "LOCATION-001", "위치 파라미터가 유효하지 않습니다"),
-    INVALID_RADIUS(HttpStatus.BAD_REQUEST, "LOCATION-002", "검색 반경은 1, 3, 7, 10, 20, 50 중 하나여야 합니다\""),
+    INVALID_RADIUS(HttpStatus.BAD_REQUEST, "LOCATION-002", "검색 반경은 1, 3, 7, 10, 20, 50 중 하나여야 합니다"),
     INVALID_ADDRESS(HttpStatus.BAD_REQUEST, "LOCATION-003", "주소가 유효하지 않습니다"),
     ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "LOCATION-004", "입력한 주소를 찾을 수 없습니다"),
     LOCATION_API_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "LOCATION-005", "위치 조회 API 호출에 실패했습니다"),

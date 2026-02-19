@@ -63,16 +63,20 @@ public class UserLocationService {
         // 주소에서 동 정보 추출
         String dong = extractDong(locationDto.getAddress(), locationDto.getJibunAddress());
 
+        double[] normalized = normalizeCoordinates(locationDto.getLatitude(), locationDto.getLongitude(), req.getAddress());
+        double latitude = normalized[0];
+        double longitude = normalized[1];
+
         user.updateLocation(
                 locationDto.getAddress(),
                 dong,
-                locationDto.getLatitude(),
-                locationDto.getLongitude()
+                latitude,
+                longitude
         );
 
         return UserLocationUpdateRes.builder()
-                .latitude(locationDto.getLatitude())
-                .longitude(locationDto.getLongitude())
+                .latitude(latitude)
+                .longitude(longitude)
                 .address(locationDto.getAddress())
                 .jibunAddress(locationDto.getJibunAddress())
                 .dong(dong)
@@ -134,20 +138,25 @@ public class UserLocationService {
         return null;
     }
 
-    /**
-     * 입력한 주소와 검색 결과가 유사한지 확인*/
-    private boolean isValidAddress(String userInput, String searchResult) {
-        String[] inputKeywords = userInput.split(" ");
-
-        for (String keyword : inputKeywords) {
-            if (keyword.length() >= 2) {
-                if (!searchResult.contains(keyword)) {
-                    log.warn("주소 검증 실패 - 입력: {}, 결과: {}", userInput, searchResult);
-                    return false;
-                }
-            }
+    private double[] normalizeCoordinates(Double latitude, Double longitude, String address) {
+        if (latitude == null || longitude == null) {
+            throw new ApiException(ErrorCode.INVALID_LOCATION_PARAMS);
         }
-        return true;
-    }
 
+        boolean latOk = latitude >= -90 && latitude <= 90;
+        boolean lonOk = longitude >= -180 && longitude <= 180;
+        if (latOk && lonOk) {
+            return new double[]{latitude, longitude};
+        }
+
+        boolean swappedLatOk = longitude >= -90 && longitude <= 90;
+        boolean swappedLonOk = latitude >= -180 && latitude <= 180;
+        if (swappedLatOk && swappedLonOk) {
+            log.warn("위경도 값이 뒤바뀌어 있어 자동 교정합니다. address={}, lat={}, lon={}", address, latitude, longitude);
+            return new double[]{longitude, latitude};
+        }
+
+        log.warn("유효하지 않은 위경도 값입니다. address={}, lat={}, lon={}", address, latitude, longitude);
+        throw new ApiException(ErrorCode.INVALID_LOCATION_PARAMS);
+    }
 }
