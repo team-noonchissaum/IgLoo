@@ -63,13 +63,13 @@ public class ChatRoomService {
             ChatRoom saved = chatRoomRepository.save(room);
 
             String message = String.format(
-                    NotificationConstants.MSG_CHAT_ROOM_CREATED,
+                    NotificationConstants.MSG_CHAT_CREATED,
                     order.getBuyer().getNickname()
             );
             // 판매자에게 알림(1번만)
             notificationService.sendNotification(
                     order.getSeller().getId(),
-                    NotificationType.CHAT_ROOM_CREATED,
+                    NotificationType.CHAT_CREATED,
                     message,
                     NotificationConstants.REF_TYPE_CHATROOM,
                     saved.getId()

@@ -15,7 +15,7 @@ public class NotificationConstants {
     public static final String MSG_AUCTION_TEMP_BLOCKED = "'%s' 경매가 임시 차단되었습니다.";
     public static final String MSG_AUCTION_BLOCKED = "'%s' 경매가 차단되었습니다.";
     public static final String MSG_AUCTION_UNBLOCKED = "'%s' 경매가 차단 해제되었습니다.";
-    public static final String MSG_CHAT_ROOM_CREATED = "'%s' 님이 직거래 채팅을 시작했습니다.";
+    public static final String MSG_CHAT_CREATED = "'%s' 님이 직거래 채팅을 시작했습니다.";
 
     // WebSocket Messages (Payloads)
     public static final String MSG_WS_AUCTION_ENDED_FAILED = "유찰되었습니다.";
