@@ -1,6 +1,5 @@
 # IgLoo
 
-> 실시간 로컬 경매 기반 중고거래 서비스
 > 기존의 당근마켓, 번개장터, 중고나라와 같은 중고거래 서비스 모델에 '경매 낙찰 시스템'을 도입하여 거래의 재미와 효율성을 극대화한 서비스
 
 ![Backend](https://img.shields.io/badge/Backend-Spring%20Boot%203.4.1-6DB33F?logo=springboot&logoColor=white)
@@ -39,6 +38,8 @@ IgLoo는 중고거래 모델에 경매 낙찰 시스템을 결합한 서비스
 
 기존 중고거래의 "기다리는 판매"를 줄이고, 짧은 시간 안에 거래 성사를 목표로 함
 
+---
+
 ## 핵심 차별화 포인트
 
 | 비교 항목 | IgLoo (로컬 기반 실시간 경매)                         | 일반 장기 경매 서비스 |
@@ -47,6 +48,8 @@ IgLoo는 중고거래 모델에 경매 낙찰 시스템을 결합한 서비스
 | 거래 방식 | 직거래 + 택배 하이브리드                              | 택배 중심             |
 | 가격 보조 | 카테고리 기반 가격 추천 + AI 보조 등록                | 일반 검색/리스팅 중심 |
 | 안전 장치 | 결제/충전/지갑 기반 자금 보호 흐름                    | 플랫폼 정책 중심      |
+
+---
 
 ## 핵심 기능
 
@@ -58,15 +61,21 @@ IgLoo는 중고거래 모델에 경매 낙찰 시스템을 결합한 서비스
 - 사용자 신고/차단 및 운영자 처리 플로우
 - AI 서비스 연동(이미지 분석, 카테고리 분류, 설명 생성)
 
+---
+
 ## 시스템 아키텍처
 
 ![System Architecture](https://github.com/user-attachments/assets/408ccb52-7059-4056-8684-504b144cff7b)
+
+---
 
 ## DB/ERD
 
 ![ERD](https://github.com/user-attachments/assets/2d0bd266-3307-40ad-82cd-63b36e77df44)
 
 - DB 명세: [Notion DB 명세서](https://www.notion.so/DB-2ef4a9f8e43980c8a656fb2eb2f82daa)
+
+---
 
 ## 리포지토리 구조
 
@@ -87,6 +96,8 @@ IgLoo/
 - 저장소: [IgLooFE](https://github.com/team-noonchissaum/IgLooFE)
 - 배포: Vercel 파이프라인 기반 별도 관리
 
+---
+
 ## 기술 스택
 
 - Backend
@@ -104,6 +115,8 @@ IgLoo/
   - Docker / Docker Compose
   - Nginx
 
+---
+
 ## 도메인 맵
 
 - `auction`: 경매 등록/조회, 입찰, 실시간 상태 동기화, 스케줄링
@@ -111,6 +124,8 @@ IgLoo/
 - `wallet`: 잔액/락 잔액, 거래별 지갑 기록, 출금 처리
 - `task`: 비동기 작업 상태 저장/복구, 대기 작업 검증
 - `report`: 신고 접수/처리 및 운영자 처리 흐름
+
+---
 
 ## 사전 요구사항
 
@@ -125,6 +140,8 @@ IgLoo/
   - `6379` (Redis)
 
 포트 충돌 시 실행 중인 프로세스 종료 또는 포트 변경 후 실행
+
+---
 
 ## 실행 방법
 
@@ -167,6 +184,8 @@ cd backend
 .\gradlew.bat bootRun
 ```
 
+---
+
 ## 테스트
 
 `test`는 전체 테스트, `unitTest`와 `integrationTest`는 유형별 분리 실행용
@@ -189,6 +208,8 @@ cd backend
 .\gradlew.bat integrationTest
 ```
 
+---
+
 ## 서비스 접속 및 API 문서
 
 - 프론트엔드 (로컬): `http://localhost:3000`
@@ -198,6 +219,8 @@ cd backend
 - 실시간 통신: STOMP(WebSocket) 기반 경매/알림 메시징
 - API 명세: [Notion API 명세서](https://www.notion.so/API-2f04a9f8e4398062bd14c52c4864f5ea)
 - 보조 문서: `docs/used-market-flow.md`, `docs/used-market-implementation-log.md`
+
+---
 
 ## 환경 변수
 
