@@ -209,6 +209,16 @@ where a.status = :status
 
     @Query("SELECT a FROM Auction a WHERE a.item.id IN :itemIds")
     List<Auction> findAllByItemIdIn(@Param("itemIds") List<Long> itemIds);
+
+    @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
+    @Query("""
+SELECT a FROM Auction a
+WHERE a.item.id IN :itemIds
+  AND a.status IN :statuses
+""")
+    List<Auction> findAllByItemIdInAndStatusIn(@Param("itemIds") List<Long> itemIds,
+                                               @Param("statuses") List<AuctionStatus> statuses);
+
     @EntityGraph(attributePaths = {"item", "item.seller", "item.category"})
     @Query("""
 select a from Auction a
