@@ -82,6 +82,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/auctions").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auctions/{auctionId}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auctions/search").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auctions/hot-deals").permitAll()
 
                         .requestMatchers("/api/auctions").hasAnyRole("USER", "ADMIN")
 
@@ -141,7 +142,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(java.util.List.of("http://localhost:3000/", "https://ig-loo-fe-89f2.vercel.app/"));
+        config.setAllowedOrigins(java.util.List.of("http://localhost:3000/",
+                "https://ig-loo-fe-89f2.vercel.app/"));
         config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(java.util.List.of("*"));
         config.setAllowCredentials(true);

@@ -10,8 +10,10 @@ import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.spec.AuctionSpecs;
 import noonchissaum.backend.domain.category.entity.Category;
+
 import noonchissaum.backend.domain.category.service.CategoryService;
 import noonchissaum.backend.domain.item.entity.Item;
+
 import noonchissaum.backend.domain.item.service.ItemService;
 import noonchissaum.backend.domain.item.service.UserViewRedisLogger;
 import noonchissaum.backend.domain.item.service.WishService;
@@ -23,14 +25,15 @@ import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
+import noonchissaum.backend.global.recommendation.service.RecommendationService;
 import noonchissaum.backend.global.util.MoneyUtil;
 import noonchissaum.backend.global.service.LocationService;
-import org.springframework.data.domain.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,13 +51,14 @@ public class AuctionService {
     private final UserService userService;
     private final CategoryService categoryService;
     private final WishService wishService;
+    private final StringRedisTemplate redisTemplate;
     private final AuctionRedisService auctionRedisService;
     private final AuctionRealtimeSnapshotService snapshotService;
     private final AuctionQueryService auctionQueryService;
     private final AuctionIndexService auctionIndexService;
     private final WalletService walletService;
     private final UserViewRedisLogger userViewRedisLogger; // 상세 조회 시 Redis 조회 로그 기록
-    private final noonchissaum.backend.recommendation.service.RecommendationService recommendationService; // 추천 서비스 주입
+    private final RecommendationService recommendationService; // 추천 서비스 주입
     private final LocationService locationService;
     private final UserRepository userRepository;
 
@@ -127,13 +131,13 @@ public class AuctionService {
     public AuctionRes getAuctionDetail(Long userId, Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
-      
+
         if (auction.getStatus() == AuctionStatus.TEMP_BLOCKED ||
                 auction.getStatus() == AuctionStatus.BLOCKED ||
                 auction.getStatus() == AuctionStatus.BLOCKED_ENDED) {
             throw new CustomException(ErrorCode.AUCTION_BLOCKED);
         }
-      
+
         boolean isWished = wishService.isWished(userId, auction.getItem().getId());
 
         // 로그인 사용자라면 조회 로그를 Redis에 기록
@@ -198,6 +202,38 @@ public class AuctionService {
         auctionRedisService.cancelAuction(auctionId);
     }
 
+    public void checkDeadline(Long auctionId) {
+        String rawEndTime = redisTemplate.opsForValue().get(RedisKeys.auctionEndTime(auctionId));
+        String rawImminentMinutes = redisTemplate.opsForValue().get(RedisKeys.auctionImminentMinutes(auctionId));
+        String isExtended = redisTemplate.opsForValue().get(RedisKeys.auctionIsExtended(auctionId));
+
+        if (rawEndTime == null || rawImminentMinutes == null || isExtended == null) {
+            auctionRedisService.setRedis(auctionId);
+
+            rawEndTime = redisTemplate.opsForValue().get(RedisKeys.auctionEndTime(auctionId));
+            rawImminentMinutes = redisTemplate.opsForValue().get(RedisKeys.auctionImminentMinutes(auctionId));
+            isExtended = redisTemplate.opsForValue().get(RedisKeys.auctionIsExtended(auctionId));
+        }
+
+        LocalDateTime endTime = LocalDateTime.parse(rawEndTime);
+        Integer imminentMinutes = Integer.parseInt(rawImminentMinutes);
+
+        LocalDateTime now = LocalDateTime.now();
+
+        if (now.isAfter(endTime) || now.isBefore(endTime.minusMinutes(imminentMinutes))) {
+            return;
+        }
+
+        if (isExtended.equals("true")) {
+            return;
+        }
+
+        endTime = endTime.plusMinutes(3);
+
+        redisTemplate.opsForValue().set(RedisKeys.auctionEndTime(auctionId), endTime.toString());
+        redisTemplate.opsForValue().set(RedisKeys.auctionIsExtended(auctionId), "true");
+    }
+
     /**
      * 내 경매 목록 조회.
      */
@@ -231,6 +267,7 @@ public class AuctionService {
             return auctionQueryService.searchByCategoryPriceSorted(userId, categoryId, sort, page, size);
         }
 
+
         Pageable pageable = PageRequest.of(page, size, sort == null ? Sort.by(Sort.Direction.DESC,
                 "startAt") : sort.toSort());
 
@@ -252,9 +289,11 @@ public class AuctionService {
 
             return snapshotService.getSnapshotIfPresent(a.getId())
                     .map(snap -> base.withRealtime(
+
                             snap.getCurrentPrice(),
                             snap.getBidCount(),
                             snap.getEndAt()
+
                     ))
                     .orElse(base);
         });
@@ -318,4 +357,75 @@ public class AuctionService {
     }
 
 
+
+    /**
+     * 핫딜 경매 등록
+     * 플랫폼 내에서 이벤트 용으로 등록함으로 admin이 등록하도록 함
+     * startAt: 현재 + 7일 고정
+     * endAt: startAt + auctionDuration
+     * */
+    @Transactional
+    public Long registerHotDeal(Long adminUserId, AuctionRegisterReq req){
+        User seller = userService.getUserByUserId(adminUserId);
+        Category category = categoryService.getCategory(req.getCategoryId());
+        Item item = itemService.createHotDealItem(seller, category, req);
+
+        LocalDateTime startAt = LocalDateTime.now().plusDays(7);
+        LocalDateTime endAt = startAt.plusHours(req.getAuctionDuration());
+
+        Auction auction = Auction.builder()
+                .item(item)
+                .startPrice(req.getStartPrice())
+                .startAt(startAt)
+                .endAt(endAt)
+                .isHotDeal(true)
+                .build();
+
+        auctionRepository.save(auction);
+
+        return auction.getId();
+    }
+
+    /**
+     * 핫딜 배너 조회
+     * */
+    @Transactional(readOnly = true)
+    public List<AuctionRes> getHotDeals(Long userId) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime limit = now.plusDays(7);
+
+        List<Auction> hotDeals = auctionRepository.findHotDeals(now, limit, PageRequest.of(0, 5));
+
+        List<Long> itemIds = hotDeals.stream().map(a -> a.getItem().getId()).distinct().toList();
+        Set<Long> wishedItemIds = wishService.getWishedItemIds(userId, itemIds);
+
+        return hotDeals.stream()
+                .map(a -> AuctionRes.from(a, wishedItemIds.contains(a.getItem().getId())))
+                .toList();
+    }
+
+    @Transactional
+    public void cancelHotDeal(Long adminUserId, Long auctionId) {
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
+
+        if (!Boolean.TRUE.equals(auction.getIsHotDeal())) {
+            throw new CustomException(ErrorCode.AUCTION_NOT_HOTDEAL);
+        }
+
+        // 시작 전(READY)만 취소 허용 (원하면 RUNNING도 허용 가능)
+        if (auction.getStatus() != AuctionStatus.READY) {
+            throw new CustomException(ErrorCode.AUCTION_INVALID_STATUS);
+        }
+
+        // 입찰이 이미 있으면 취소 불가 (핫딜도 동일 정책이면 유지)
+        if (auction.getBidCount() != null && auction.getBidCount() > 0) {
+            throw new CustomException(ErrorCode.AUCTION_HAS_BIDS);
+        }
+
+        auction.cancel(); // status = CANCELED
+
+        // Redis에 올라가 있는 값이 있으면 정리(핫딜은 시작 전이라 보통 없음)
+        auctionRedisService.cancelAuction(auctionId);
+    }
 }

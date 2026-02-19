@@ -112,7 +112,7 @@ public class WalletService {
                     wallet.auctionDeposit(depositAmount);
                     walletTransactionRecordService.record(wallet, TransactionType.DEPOSIT_FORFEIT, depositAmount, auctionId);
                 }
-                default -> {}
+                default -> throw new ApiException(ErrorCode.WALLET_INVALID_CASE);
             }
         });
     }
@@ -121,7 +121,7 @@ public class WalletService {
     public void releaseBuyerLockedForOrder(Long buyerId, BigDecimal amount, Long orderId) {
         userLockExecutor.withUserLock(buyerId, () -> {
             Wallet wallet = walletRepository.findByUserId(buyerId)
-                    .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+                    .orElseThrow(() -> new ApiException(ErrorCode.SETTLEMENT_WALLET_NOT_FOUND));
 
             // DB 기준으로 안전하게 차감
             wallet.releaseLocked(amount);
@@ -140,7 +140,7 @@ public class WalletService {
     public void settleToSellerForOrder(Long sellerId, BigDecimal amount, Long orderId) {
         userLockExecutor.withUserLock(sellerId, () -> {
             Wallet wallet = walletRepository.findByUserId(sellerId)
-                    .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+                    .orElseThrow(() -> new ApiException(ErrorCode.SETTLEMENT_WALLET_NOT_FOUND));
 
             wallet.addBalance(amount);
 
@@ -156,7 +156,7 @@ public class WalletService {
     public void settleFeeToPlatform(Long systemUserId, BigDecimal feeAmount, Long orderId) {
         userLockExecutor.withUserLock(systemUserId, () -> {
             Wallet wallet = walletRepository.findByUserId(systemUserId)
-                    .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
+                    .orElseThrow(() -> new ApiException(ErrorCode.SETTLEMENT_WALLET_NOT_FOUND));
 
             wallet.addBalance(feeAmount);
 

@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Builder
-public class NotificationResponse {
+public class NotificationRes {
     private Long id;
     private NotificationType type;
     private String message;
@@ -18,8 +18,8 @@ public class NotificationResponse {
     private LocalDateTime readAt;
     private LocalDateTime createdAt;
 
-    public static NotificationResponse from(Notification notification) {
-        return NotificationResponse.builder()
+    public static NotificationRes from(Notification notification) {
+        return NotificationRes.builder()
                 .id(notification.getId())
                 .type(notification.getType())
                 .message(notification.getMessage())

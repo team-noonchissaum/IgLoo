@@ -1,7 +1,7 @@
 package noonchissaum.backend.domain.notification.controller;
 
 import lombok.RequiredArgsConstructor;
-import noonchissaum.backend.domain.notification.dto.res.NotificationResponse;
+import noonchissaum.backend.domain.notification.dto.res.NotificationRes;
 import noonchissaum.backend.domain.notification.service.NotificationService;
 import noonchissaum.backend.global.dto.ApiResponse;
 import noonchissaum.backend.global.security.UserPrincipal;
@@ -23,10 +23,10 @@ public class NotificationController {
      * 알림 목록 조회
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<NotificationResponse>>> getNotifications(
+    public ResponseEntity<ApiResponse<List<NotificationRes>>> getNotifications(
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
         Long userId = userPrincipal.getUserId();
-        List<NotificationResponse> notifications = notificationService.findAllByUserId(userId);
+        List<NotificationRes> notifications = notificationService.findAllByUserId(userId);
         return ResponseEntity.ok(new ApiResponse<>("Notification list retrieved", notifications));
     }
 
@@ -34,23 +34,23 @@ public class NotificationController {
      * 알림 단건 조회
      */
     @GetMapping("/{notificationId}")
-    public ResponseEntity<ApiResponse<NotificationResponse>> getNotification(
+    public ResponseEntity<ApiResponse<NotificationRes>> getNotification(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable Long notificationId) {
         Long userId = userPrincipal.getUserId();
-        NotificationResponse response = notificationService.findById(userId, notificationId);
+        NotificationRes response = notificationService.findById(userId, notificationId);
         return ResponseEntity.ok(new ApiResponse<>("Notification detail retrieved", response));
     }
     /**
      *  알림 단건 읽음 처리
      */
     @PatchMapping("/{notificationId}/read")
-    public ResponseEntity<ApiResponse<NotificationResponse>> readNotification(
+    public ResponseEntity<ApiResponse<NotificationRes>> readNotification(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable Long notificationId) {
 
         Long userId = userPrincipal.getUserId();
-        NotificationResponse response =
+        NotificationRes response =
                 notificationService.markAsRead(userId, notificationId);
 
         return ResponseEntity.ok(
