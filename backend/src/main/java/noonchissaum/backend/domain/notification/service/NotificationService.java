@@ -78,7 +78,7 @@ public class NotificationService {
                  .orElseThrow(() -> new ApiException(ErrorCode.NOTIFICATION_NOT_FOUND));
         // 본인의 알림인지 확인
         if (!notification.getUser().getId().equals(userId)) {
-                 throw new ApiException(ErrorCode.ACCESS_DENIED);
+                 throw new ApiException(ErrorCode.NOTIFICATION_ACCESS_DENIED);
         }
         return NotificationRes.from(notification);
     }

@@ -42,7 +42,7 @@ public class ChatbotService {
         ChatScenario scenario = chatScenarioRepository.findById(scenarioId)
                 .orElseThrow(() -> new ApiException(ErrorCode.CHAT_SCENARIO_NOT_FOUND));
         if (!scenario.isActive()) {
-            throw new ApiException(ErrorCode.CHAT_SCENARIO_NOT_FOUND);
+            throw new ApiException(ErrorCode.CHAT_SCENARIO_INACTIVE);
         }
 
         ChatNode rootNode = chatNodeRepository.findByScenarioIdAndRootTrue(scenarioId)

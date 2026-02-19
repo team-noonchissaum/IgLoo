@@ -44,6 +44,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String roleStr = jwtTokenProvider.getRole(token);
 
                 User user = userRepository.findById(userId).orElseThrow(()->new CustomException(ErrorCode.USER_NOT_FOUND));
+                if (user.getStatus() == UserStatus.BLOCKED) {
+                    throw new CustomException(ErrorCode.USER_BLOCKED);
+                }
+                if (user.getStatus() == UserStatus.DELETED) {
+                    throw new CustomException(ErrorCode.USER_DELETED);
+                }
 
                 UserRole role = UserRole.valueOf(roleStr);
                 UserPrincipal principal = UserPrincipal.of(userId, role);

@@ -51,13 +51,15 @@ public class CategoryService {
     /**카테고리 삭제*/
     @Transactional
     public void deleteCategory(Long categoryId) {
-        Category target = categoryRepository.findById(categoryId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 카테고리"));
+        Category target = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ApiException(ErrorCode.CATEGORY_NOT_FOUND));
 
         if("기타".equals(target.getName())){
-            throw new IllegalArgumentException("'기타' 카테고리는 삭제할 수 없습니다.");
+            throw new ApiException(ErrorCode.CATEGORY_DELETE_FORBIDDEN);
         }
 
-        Category etcCategory = categoryRepository.findByName("기타").orElseThrow(() -> new IllegalArgumentException("'기타' 카테고리가 존재하지 않습니다."));
+        Category etcCategory = categoryRepository.findByName("기타")
+                .orElseThrow(() -> new ApiException(ErrorCode.CATEGORY_ETC_NOT_FOUND));
 
         List<Category> deleteTargets = new ArrayList<>();//삭제 대상+하위 카테고리 모음
         collectCategories(target, deleteTargets);

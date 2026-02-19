@@ -163,7 +163,7 @@ public class User extends BaseTimeEntity {
 
     public void delete(){
         if(this.status==UserStatus.DELETED){
-            throw new IllegalStateException("이미 탈퇴한 사용자입니다");
+            throw new ApiException(ErrorCode.USER_ALREADY_DELETED);
         }
         this.status = UserStatus.DELETED;
         this.deletedAt = LocalDateTime.now();

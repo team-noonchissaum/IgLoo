@@ -47,7 +47,7 @@ public class OrderController {
 
         Order order = orderRepository.findByAuction_IdAndBuyer_Id(auctionId, userId)
                 .or(() -> orderRepository.findByAuction_IdAndSeller_Id(auctionId, userId))
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
 
         Long roomId = null;
         if (order.getDeliveryType() == DeliveryType.DIRECT) {

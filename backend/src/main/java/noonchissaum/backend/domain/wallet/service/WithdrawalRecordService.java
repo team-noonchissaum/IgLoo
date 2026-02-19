@@ -72,7 +72,7 @@ public class WithdrawalRecordService {
                 .orElseThrow(() -> new ApiException(ErrorCode.WITHDRAW_NOT_FOUND));
 
         if (withdrawal.getStatus() != WithdrawalStatus.REQUESTED) {
-            throw new ApiException(ErrorCode.WITHDRAW_NOT_REQUESTED);
+            throw new ApiException(ErrorCode.WITHDRAW_ALREADY_PROCESSED);
         }
 
         Long userId = withdrawal.getWallet().getUser().getId();
@@ -106,7 +106,7 @@ public class WithdrawalRecordService {
                 .orElseThrow(() -> new ApiException(ErrorCode.WITHDRAW_NOT_FOUND));
 
         if (withdrawal.getStatus() != WithdrawalStatus.REQUESTED) {
-            throw new ApiException(ErrorCode.WITHDRAW_NOT_REQUESTED);
+            throw new ApiException(ErrorCode.WITHDRAW_ALREADY_PROCESSED);
         }
 
         Long userId = withdrawal.getWallet().getUser().getId();
