@@ -263,23 +263,40 @@ public class BidService {
     ) {
         String priceKey = RedisKeys.auctionCurrentPrice(auctionId);
         String bidderKey = RedisKeys.auctionCurrentBidder(auctionId);
+        String bidCountKey = RedisKeys.auctionCurrentBidCount(auctionId);
+        String startPriceKey = RedisKeys.auctionStartPrice(auctionId);
         String statusKey = RedisKeys.auctionStatus(auctionId);
         String endTimeKey = RedisKeys.auctionEndTime(auctionId);
         String userBalance = RedisKeys.userBalance(userId);
 
         String rawPrice = redisTemplate.opsForValue().get(priceKey);
+        String rawBidCount = redisTemplate.opsForValue().get(bidCountKey);
+        String rawStartPrice = redisTemplate.opsForValue().get(startPriceKey);
+        if (isBlank(rawStartPrice)) {
+            auctionRedisService.setRedis(auctionId);
+            rawStartPrice = redisTemplate.opsForValue().get(startPriceKey);
+        }
         BigDecimal currentPrice = (rawPrice == null || rawPrice.isBlank()) ? BigDecimal.ZERO : new BigDecimal(rawPrice);
         log.info("currentPrice:" + currentPrice);
 
+        int bidCount = 0;
+        if (rawBidCount != null && !rawBidCount.isBlank()) {
+            try {
+                bidCount = Integer.parseInt(rawBidCount);
+            } catch (NumberFormatException ignored) {
+                bidCount = 0;
+            }
+        }
+
         // 최소 입찰가 = 현재가 + max(최초가의 10%, 100원)
-        Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
-        BigDecimal baseStartPrice = auction.getStartPrice() == null ? BigDecimal.ZERO : auction.getStartPrice();
+        BigDecimal baseStartPrice = (rawStartPrice == null || rawStartPrice.isBlank())
+                ? BigDecimal.ZERO
+                : new BigDecimal(rawStartPrice);
         BigDecimal incrementByStartPrice = baseStartPrice
                 .multiply(BID_INCREMENT_RATE)
                 .setScale(0, RoundingMode.CEILING);
         BigDecimal minIncrement = incrementByStartPrice.max(MIN_BID_INCREMENT);
-        BigDecimal minBid = currentPrice.add(minIncrement);
+        BigDecimal minBid = (bidCount == 0) ? currentPrice : currentPrice.add(minIncrement);
 
         if (bidAmount.compareTo(minBid) < 0) {
             throw new ApiException(ErrorCode.LOW_BID_AMOUNT);
