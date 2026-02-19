@@ -34,7 +34,7 @@ public class ShipmentService {
 
         // 2) 판매자 권한
         if (order.getSeller() == null || !order.getSeller().getId().equals(userId)) {
-            throw new ApiException(ErrorCode.ACCESS_DENIED);
+            throw new ApiException(ErrorCode.SHIPMENT_ACCESS_DENIED);
         }
 
         // 3) 택배 거래만
@@ -53,14 +53,14 @@ public class ShipmentService {
 
         // 6) 요청값 검증 + 정규화
         if (req == null) {
-            throw new ApiException(ErrorCode.INVALID_REQUEST);
+            throw new ApiException(ErrorCode.SHIPMENT_INVALID_REQUEST);
         }
 
         String carrierCode = req.getCarrierCode() == null ? null : req.getCarrierCode().trim();
         String trackingNumber = req.getTrackingNumber() == null ? null : req.getTrackingNumber().replaceAll("[^0-9]", "");
 
         if (isBlank(carrierCode) || isBlank(trackingNumber)) {
-            throw new ApiException(ErrorCode.INVALID_REQUEST);
+            throw new ApiException(ErrorCode.SHIPMENT_INVALID_REQUEST);
         }
 
 
@@ -87,7 +87,7 @@ public class ShipmentService {
                 (order.getBuyer() != null && order.getBuyer().getId().equals(userId)) ||
                 (order.getSeller() != null && order.getSeller().getId().equals(userId));
 
-        if (!isMember) throw new ApiException(ErrorCode.ACCESS_DENIED);
+        if (!isMember) throw new ApiException(ErrorCode.SHIPMENT_ACCESS_DENIED);
 
         return ShipmentRes.from(shipment);
     }
@@ -112,7 +112,7 @@ public class ShipmentService {
 
         // 구매자만
         if (order.getBuyer() == null || !order.getBuyer().getId().equals(userId)) {
-            throw new ApiException(ErrorCode.ACCESS_DENIED);
+            throw new ApiException(ErrorCode.SHIPMENT_ACCESS_DENIED);
         }
         // SHIPMENT만
         if (order.getDeliveryType() != DeliveryType.SHIPMENT) {
@@ -143,18 +143,22 @@ public class ShipmentService {
                 (order.getBuyer() != null && order.getBuyer().getId().equals(userId)) ||
                         (order.getSeller() != null && order.getSeller().getId().equals(userId));
 
-        if (!isMember) throw new ApiException(ErrorCode.ACCESS_DENIED);
+        if (!isMember) throw new ApiException(ErrorCode.SHIPMENT_ACCESS_DENIED);
 
         // 송장 입력 안됐으면 조회 불가
         if (!shipment.canSyncTracking()) {
             throw new ApiException(ErrorCode.SHIPMENT_TRACKING_NOT_AVAILABLE);
         }
 
-        SweetTrackerTrackingInfoRes r =
-                sweetTrackerClient.trackingInfo(shipment.getCarrierCode(), shipment.getTrackingNumber());
+        SweetTrackerTrackingInfoRes r;
+        try {
+            r = sweetTrackerClient.trackingInfo(shipment.getCarrierCode(), shipment.getTrackingNumber());
+        } catch (Exception e) {
+            throw new ApiException(ErrorCode.SWEETTRACKER_API_ERROR);
+        }
 
         if (r == null || Boolean.FALSE.equals(r.status())) {
-            throw new ApiException(ErrorCode.SWEETTRACKER_API_ERROR);
+            throw new ApiException(ErrorCode.SWEETTRACKER_RESPONSE_INVALID);
         }
 
         var events = (r.trackingDetails() == null) ? List.<ShipmentTrackingRes.Event>of()

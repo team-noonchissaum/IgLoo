@@ -95,6 +95,7 @@ public class S3Service {
 
         } catch (Exception e) {
             log.error("S3 파일 삭제 실패: {}", e.getMessage());
+            throw new ApiException(ErrorCode.FILE_DELETE_FAILED);
         }
     }
 
@@ -121,15 +122,20 @@ public class S3Service {
      * S3 파일 URL 생성
      */
     private String getFileUrl(String fileName) {
-        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket(bucket)
-                .key(fileName)
-                .build();
-        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofMinutes(presignExpirationMinutes))
-                .getObjectRequest(getObjectRequest)
-                .build();
-        return s3Presigner.presignGetObject(presignRequest).url().toString();
+        try {
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(fileName)
+                    .build();
+            GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                    .signatureDuration(Duration.ofMinutes(presignExpirationMinutes))
+                    .getObjectRequest(getObjectRequest)
+                    .build();
+            return s3Presigner.presignGetObject(presignRequest).url().toString();
+        } catch (Exception e) {
+            log.error("S3 URL 생성 실패: {}", e.getMessage());
+            throw new ApiException(ErrorCode.FILE_URL_GENERATION_FAILED);
+        }
     }
 
     /**

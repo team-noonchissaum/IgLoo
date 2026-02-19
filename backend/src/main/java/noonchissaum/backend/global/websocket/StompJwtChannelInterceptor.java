@@ -15,6 +15,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import noonchissaum.backend.domain.chat.repository.ChatRoomRepository;
+import noonchissaum.backend.global.exception.ApiException;
+import noonchissaum.backend.global.exception.ErrorCode;
 import java.util.List;
 
 @Slf4j
@@ -39,11 +41,11 @@ public class StompJwtChannelInterceptor implements ChannelInterceptor {
             String token = resolveBearer(raw);
 
             if (token == null || token.isBlank()) {
-                throw new IllegalArgumentException("Missing Authorization header (STOMP CONNECT)");
+                throw new ApiException(ErrorCode.WS_AUTH_REQUIRED);
             }
 
             if (!jwtTokenProvider.validateToken(token)) {
-                throw new IllegalArgumentException("Invalid JWT token (STOMP CONNECT)");
+                throw new ApiException(ErrorCode.WS_INVALID_TOKEN);
             }
             Long userId = jwtTokenProvider.getUserId(token);
             String role = jwtTokenProvider.getRole(token); // "USER" / "ADMIN"
@@ -67,7 +69,7 @@ public class StompJwtChannelInterceptor implements ChannelInterceptor {
         // CONNET 이후 프레임은 인증 주체 필요
         Authentication auth = (Authentication) accessor.getUser();
         if (auth == null || auth.getName() == null) {
-            throw new IllegalArgumentException("Unauthenticated STOMP session");
+            throw new ApiException(ErrorCode.WS_UNAUTHENTICATED);
         }
 
         Long userId = Long.valueOf(auth.getName());
@@ -84,7 +86,7 @@ public class StompJwtChannelInterceptor implements ChannelInterceptor {
                 if (!isAdmin) {
                     boolean member = chatRoomRepository.isMember(roomId, userId);
                     if (!member) {
-                        throw new IllegalArgumentException("채팅 구독 권한이 없습니다.");
+                        throw new ApiException(ErrorCode.WS_SUBSCRIBE_DENIED);
                     }
                 }
                 // ADMIN은 통과
@@ -97,7 +99,7 @@ public class StompJwtChannelInterceptor implements ChannelInterceptor {
         if (StompCommand.SEND.equals(accessor.getCommand())) {
             String dest = accessor.getDestination();
             if (isChatSendDestination(dest) && isAdmin) {
-                throw new IllegalArgumentException("관리자는 채팅 전송이 불가합니다.");
+                throw new ApiException(ErrorCode.WS_ADMIN_SEND_FORBIDDEN);
             }
         }
 

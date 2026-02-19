@@ -410,7 +410,7 @@ public class AuctionService {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
 
         if (!Boolean.TRUE.equals(auction.getIsHotDeal())) {
-            throw new CustomException(ErrorCode.INVALID_REQUEST);
+            throw new CustomException(ErrorCode.AUCTION_NOT_HOTDEAL);
         }
 
         // 시작 전(READY)만 취소 허용 (원하면 RUNNING도 허용 가능)

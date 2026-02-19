@@ -81,7 +81,7 @@ public class Payment extends BaseTimeEntity {
 
     public void approve(String paymentKey){
         if (this.status != PaymentStatus.REQUEST && this.status != PaymentStatus.WAITING_FOR_DEPOSIT){
-            throw new IllegalStateException("CREATED 상태에서만 결제 승인 가능");
+            throw new ApiException(ErrorCode.PAYMENT_STATUS_INVALID_FOR_APPROVE);
         }
         this.paymentKey = paymentKey;
         this.status = PaymentStatus.APPROVED;
@@ -98,7 +98,7 @@ public class Payment extends BaseTimeEntity {
 
     public void cancel(){
         if (this.status != PaymentStatus.APPROVED){
-            throw new IllegalStateException("DONE 상태에서만 결제 승인 가능");
+            throw new ApiException(ErrorCode.PAYMENT_STATUS_INVALID_FOR_CANCEL);
         }
         this.status = PaymentStatus.CANCELED;
         this.canceledAt = LocalDateTime.now();

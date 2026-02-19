@@ -15,6 +15,7 @@ import noonchissaum.backend.global.entity.BaseTimeEntity;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
+import org.hibernate.annotations.ColumnTransformer;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -62,6 +63,10 @@ public class User extends BaseTimeEntity {
     private Double longitude;
 
     @Column(columnDefinition = "POINT SRID 4326", name = "location")
+    @ColumnTransformer(
+            read = "ST_AsText(location)",
+            write = "ST_GeomFromText(?, 4326)"
+    )
     private String location; // WKT 형식: "POINT(longitude latitude)"
 
 
@@ -158,7 +163,7 @@ public class User extends BaseTimeEntity {
 
     public void delete(){
         if(this.status==UserStatus.DELETED){
-            throw new IllegalStateException("이미 탈퇴한 사용자입니다");
+            throw new ApiException(ErrorCode.USER_ALREADY_DELETED);
         }
         this.status = UserStatus.DELETED;
         this.deletedAt = LocalDateTime.now();
