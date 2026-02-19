@@ -98,17 +98,7 @@ public class Item extends BaseTimeEntity {
     public void setThumbnailUrl(String thumbnailUrl) {
         this.thumbnailUrl = thumbnailUrl;
     }
-    /**아이템 등록시 판매자 위치 저장*/
-    public void setSellerLocation(String location, String dong) {
-        this.itemLocation = location;
-        this.sellerDong = dong;
-    }
 
-    /**사용자 위치 변경시 기존 매물 위치 업데이트*/
-    public void updateSellerLocation(String newLocation, String newDong) {
-        this.itemLocation = newLocation;
-        this.sellerDong = newDong;
-    }
 
     /**관리자 계정용*/
     public void delete() {

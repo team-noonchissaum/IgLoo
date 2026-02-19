@@ -87,6 +87,10 @@ public class UserLocationService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
+        if(user.getLatitude()==null||user.getLongitude()==null) {
+            throw new  ApiException(ErrorCode.USER_LOCATION_NOT_SET);
+        }
+
         return UserLocationUpdateRes.builder()
                 .latitude(user.getLatitude())
                 .longitude(user.getLongitude())
@@ -145,6 +149,5 @@ public class UserLocationService {
         }
         return true;
     }
-
 
 }

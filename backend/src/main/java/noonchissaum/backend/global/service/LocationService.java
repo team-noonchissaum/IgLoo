@@ -63,7 +63,7 @@ public class LocationService {
     }
 
     /**
-     * 주소 검색 API (도로명/지번 주소)
+     * 주소 검색 API (도로명/지번 주소)->입력한 주소를 좌표로 변환
      */
     private LocationDto searchByAddress(String address) {
         try {
@@ -266,7 +266,11 @@ public class LocationService {
         }
     }
 
+    /**키워드  기반 자동완성 주소검색 제공->정확한 위치 가져오기*/
     public List<LocationDto> searchAddress(String keyword) {
+        if(keyword==null || keyword.isEmpty()){
+            throw new ApiException(ErrorCode.INVALID_ADDRESS);
+        }
         try {
             List<KakaoKeywordRes.Document> documents =
                     this.searchAddressByKeyword(keyword);
