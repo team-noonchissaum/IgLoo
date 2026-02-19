@@ -37,7 +37,6 @@ public class AuctionListRes {
     private Integer wishCount;
     private Boolean isWished;
 
-
     public static AuctionListRes from(Auction auction) {
         Item item = auction.getItem();
 
@@ -52,7 +51,7 @@ public class AuctionListRes {
                 .itemId(item.getId())
                 .title(item.getTitle())
                 .currentPrice(auction.getCurrentPrice())
-                .startPrice(item.getStartPrice())
+                .startPrice(auction.getStartPrice())
                 .bidCount(auction.getBidCount())
                 .status(auction.getStatus())
                 .endAt(auction.getEndAt())
@@ -64,7 +63,6 @@ public class AuctionListRes {
                 .isWished(null)
                 .build();
     }
-
 
     public static AuctionListRes from(Auction auction, boolean isWished) {
         AuctionListRes res = from(auction);
