@@ -37,7 +37,7 @@ public class AuctionRes {
     private String categoryName;
     private Integer wishCount;
     private Boolean isWished;
-    private List<AuctionRes> recommendedAuctions; // 추천 항목을 위한 새 필드
+    private List<AuctionRes> recommendedAuctions;
 
     public static AuctionRes from(Auction auction) {
         Item item = auction.getItem();
@@ -47,7 +47,7 @@ public class AuctionRes {
                 .title(item.getTitle())
                 .description(item.getDescription())
                 .currentPrice(auction.getCurrentPrice())
-                .startPrice(item.getStartPrice())
+                .startPrice(auction.getStartPrice())
                 .bidCount(auction.getBidCount())
                 .status(auction.getStatus())
                 .startAt(auction.getStartAt())
@@ -64,6 +64,7 @@ public class AuctionRes {
                 .isWished(null)
                 .build();
     }
+
     public static AuctionRes from(Auction auction, boolean isWished) {
         Item item = auction.getItem();
         return AuctionRes.builder()
@@ -72,7 +73,7 @@ public class AuctionRes {
                 .title(item.getTitle())
                 .description(item.getDescription())
                 .currentPrice(auction.getCurrentPrice())
-                .startPrice(item.getStartPrice())
+                .startPrice(auction.getStartPrice())
                 .bidCount(auction.getBidCount())
                 .status(auction.getStatus())
                 .startAt(auction.getStartAt())
@@ -89,6 +90,7 @@ public class AuctionRes {
                 .isWished(isWished)
                 .build();
     }
+
     public static AuctionRes from(Auction auction, boolean isWished, List<AuctionRes> recommendedAuctions) {
         Item item = auction.getItem();
         return AuctionRes.builder()
@@ -97,7 +99,7 @@ public class AuctionRes {
                 .title(item.getTitle())
                 .description(item.getDescription())
                 .currentPrice(auction.getCurrentPrice())
-                .startPrice(item.getStartPrice())
+                .startPrice(auction.getStartPrice())
                 .bidCount(auction.getBidCount())
                 .status(auction.getStatus())
                 .startAt(auction.getStartAt())
@@ -111,7 +113,7 @@ public class AuctionRes {
                 .categoryName(item.getCategory().getName())
                 .wishCount(item.getWishCount() == null ? 0 : item.getWishCount())
                 .isWished(isWished)
-                .recommendedAuctions(recommendedAuctions) // 추천 경매 설정
+                .recommendedAuctions(recommendedAuctions)
                 .build();
     }
 }

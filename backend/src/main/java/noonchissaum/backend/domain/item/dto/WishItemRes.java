@@ -28,7 +28,7 @@ public class WishItemRes {
                 item.getId(),
                 auctionId,
                 item.getTitle(),
-                item.getStartPrice(),
+                item.getAuction().getStartPrice(),
                 item.getSeller().getNickname(),
                 extractThumbnail(item),
                 item.getWishCount(),
