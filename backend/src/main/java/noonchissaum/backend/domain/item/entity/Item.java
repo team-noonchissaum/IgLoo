@@ -10,7 +10,6 @@ import noonchissaum.backend.domain.category.entity.Category;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,82 +39,54 @@ public class Item extends BaseTimeEntity {
     @Column(columnDefinition = "LONGTEXT")
     private String description;
 
-    @Column(name = "start_price", precision = 15, scale = 0)
-    private BigDecimal startPrice;
-
     @Column(name = "wish_count")
     private Integer wishCount;
 
-    /**
-     * true: ACTIVE
-     * false: DELETED
-     */
     @Column(name = "status")
     private Boolean status;
 
     @OneToMany(mappedBy = "item", cascade = CascadeType.ALL)
     private List<ItemImage> images = new ArrayList<>();
 
-    // 양방향 매핑: 이 상품에 대한 찜 내역
     @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Wish> wishes = new ArrayList<>();
 
-    // 양방향 매핑: 이 상품에 연결된 경매 (1:1)
     @OneToOne(mappedBy = "item", fetch = FetchType.LAZY)
     private Auction auction;
 
     @Column(name = "thumbnail_url", columnDefinition = "TEXT")
     private String thumbnailUrl;
 
-    /**아이템 위치 정보*/
-    @Column(columnDefinition = "POINT SRID 4326", name = "item_location")
-    private String itemLocation; // WKT 형식
-
-    @Column(length = 50)
-    private String sellerDong; // 판매자 동 단위 (노출용)
-
-
     @Builder
-    public Item(User seller, Category category, String title, String description, BigDecimal startPrice) {
+    public Item(User seller, Category category, String title, String description) {
         this.seller = seller;
         this.category = category;
         this.title = title;
         this.description = description;
-        this.startPrice = startPrice;
         this.status = true;
         this.wishCount = 0;
     }
 
     public void addImage(ItemImage image) {
         this.images.add(image);
-        if (image.getItem() != this) {
-            // ItemImage 엔티티에 setItem 메서드가 필요할 수 있음. 혹은 생성자 시점에 처리.
-            // 여기서는 ItemImage 생성자에서 처리한다고 가정하고 add만 수행하거나,
-            // ItemImage setter가 있다면 호출. 현재 ItemImage에는 setter가 없으므로 add만 수행.
-        }
     }
 
     public void setThumbnailUrl(String thumbnailUrl) {
         this.thumbnailUrl = thumbnailUrl;
     }
 
-
-    /**관리자 계정용*/
     public void delete() {
         if (Boolean.FALSE.equals(this.status)) {
-            throw new IllegalStateException("이미 삭제된 상품입니다.");
+            throw new IllegalStateException("Already deleted item.");
         }
         this.status = false;
     }
 
     public void restore() {
         if (Boolean.TRUE.equals(this.status)) {
-            throw new IllegalStateException("이미 활성 상태인 상품입니다.");
+            throw new IllegalStateException("Item is already active.");
         }
         this.status = true;
-    }
-    public void setSellerDong(String dong) {
-        this.sellerDong = dong;
     }
 
     public boolean isDeleted() {
@@ -126,7 +97,6 @@ public class Item extends BaseTimeEntity {
         return Boolean.TRUE.equals(this.status);
     }
 
-    //카테고리 변경('기타'로 옮김)
     public void changeCategory(Category category) {
         this.category = category;
     }
