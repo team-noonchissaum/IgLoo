@@ -219,7 +219,7 @@ public class BidService {
             Pageable pageable
     ) {
         if (pageable.getPageNumber() < 0 || pageable.getPageSize() <= 0) {
-            throw new IllegalArgumentException("INVALID_PAGE_REQUEST");
+            throw new ApiException(ErrorCode.BID_INVALID_PAGE);
         }
 
         Page<Auction> auctions =
@@ -294,7 +294,7 @@ public class BidService {
         String rawStatus = redisTemplate.opsForValue().get(statusKey);
         String rawEndTime = redisTemplate.opsForValue().get(endTimeKey);
         if (isBlank(rawStatus) || isBlank(rawEndTime)) {
-            throw new ApiException(ErrorCode.AUCTION_STATUS_UNAVAILABLE);
+            throw new ApiException(ErrorCode.AUCTION_REDIS_STATE_MISSING);
         }
 
         AuctionStatus status;
@@ -303,7 +303,7 @@ public class BidService {
             status = AuctionStatus.valueOf(rawStatus);
             endAt = LocalDateTime.parse(rawEndTime);
         } catch (Exception e) {
-            throw new ApiException(ErrorCode.AUCTION_STATUS_UNAVAILABLE);
+            throw new ApiException(ErrorCode.AUCTION_REDIS_STATE_INVALID);
         }
         if (status == AuctionStatus.TEMP_BLOCKED ||
                 status == AuctionStatus.BLOCKED ||
@@ -311,10 +311,10 @@ public class BidService {
             throw new ApiException(ErrorCode.AUCTION_BLOCKED);
         }
         if (status != AuctionStatus.RUNNING && status != AuctionStatus.DEADLINE) {
-            throw new ApiException(ErrorCode.NOT_FOUND_AUCTIONS);
+            throw new ApiException(ErrorCode.AUCTION_NOT_RUNNING);
         }
         if (LocalDateTime.now().isAfter(endAt)) {
-            throw new ApiException(ErrorCode.NOT_FOUND_AUCTIONS);
+            throw new ApiException(ErrorCode.AUCTION_ENDED);
         }
 
         //잔액 사전 검증 (가용 잔액)

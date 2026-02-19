@@ -106,7 +106,7 @@ public class AuctionController {
     public ApiResponse<List<AuctionRes>> getHotDeals(
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        Long userId = userPrincipal.getUserId();
+        Long userId = userPrincipal != null ? userPrincipal.getUserId() : null;
         return ApiResponse.success("핫딜 배너 조회", auctionService.getHotDeals(userId));
     }
 }

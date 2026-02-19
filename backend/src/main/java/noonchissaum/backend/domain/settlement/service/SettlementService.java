@@ -58,7 +58,7 @@ public class SettlementService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ApiException(ErrorCode.ORDER_NOT_FOUND));
 
-        if (order.getBuyer() == null) throw new ApiException(ErrorCode.USER_NOT_FOUND);
+        if (order.getBuyer() == null) throw new ApiException(ErrorCode.SETTLEMENT_USER_NOT_FOUND);
         if (order.getStatus() != OrderStatus.COMPLETED) {
 
             log.error("정산 실패: 주문 상태가 COMPLETED가 아닙니다. 현재 상태: {}, 주문ID: {}", order.getStatus(), orderId);
@@ -66,7 +66,9 @@ public class SettlementService {
 
         }
 
-        if (settlementRepository.existsByOrder_Id(orderId)) return;
+        if (settlementRepository.existsByOrder_Id(orderId)) {
+            throw new ApiException(ErrorCode.SETTLEMENT_ALREADY_EXISTS);
+        }
 
         BigDecimal gross = order.getFinalPrice();
         if (gross == null || gross.compareTo(BigDecimal.ZERO) <= 0)

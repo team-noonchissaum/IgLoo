@@ -175,7 +175,7 @@ public class PaymentService {
 
         // 유저 같은지 체크
         if (userId != check.getUser().getId()) {
-            throw new ApiException(ErrorCode.REFUND_FAILED);
+            throw new ApiException(ErrorCode.REFUND_ACCESS_DENIED);
         }
 
         // 수령 완료 상태인지 체크
@@ -230,13 +230,13 @@ public class PaymentService {
         if (payment.getStatus() != PaymentStatus.WAITING_FOR_DEPOSIT) {
             log.warn("이미 처리되었거나 유효하지 않은 상태의 웹훅 요청: status={}, pgOrderId={}",
                     payment.getStatus(), orderId);
-            return;
+            throw new ApiException(ErrorCode.WEBHOOK_INVALID_STATE);
         }
 
         // 결제 금액 확인
         if (amount != payment.getAmount().longValue()) {
             log.error("결제 금액 불일치: DB={}, Webhook={}", payment.getAmount(), amount);
-            return;
+            throw new ApiException(ErrorCode.WEBHOOK_AMOUNT_MISMATCH);
         }
 
         payment.approve(paymentKey);

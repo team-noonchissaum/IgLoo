@@ -1,0 +1,103 @@
+# 에러코드 변경 내역
+
+일자: 2026-02-19
+
+## 추가된 에러코드
+- `C007` CHARGE_ACCESS_DENIED
+- `P009` PAYMENT_STATUS_INVALID_FOR_APPROVE
+- `P010` PAYMENT_STATUS_INVALID_FOR_CANCEL
+- `P011` REFUND_ACCESS_DENIED
+- `P012` WEBHOOK_INVALID_STATE
+- `P013` WEBHOOK_AMOUNT_MISMATCH
+- `ORDER-004` ORDER_ACCESS_DENIED
+- `ORDER-005` ORDER_SHIPMENT_NOT_FOUND
+- `ORDER-006` ORDER_NOT_DELIVERED_YET
+- `ORDER-007` ORDER_ALREADY_CONFIRMED
+- `ORDER-008` ORDER_CONFIRM_INVALID_STATUS
+- `DELIVERY-003` DELIVERY_TYPE_REQUIRED
+- `DELIVERY-004` DELIVERY_TYPE_ALREADY_SELECTED
+- `B006` BID_INVALID_PAGE
+- `A008` AUCTION_NOT_RUNNING
+- `A009` AUCTION_ENDED
+- `A010` AUCTION_NOT_HOTDEAL
+- `A011` AUCTION_REDIS_STATE_MISSING
+- `A012` AUCTION_REDIS_STATE_INVALID
+- `W004` WALLET_ACCESS_DENIED
+- `W005` WALLET_INVALID_CASE
+- `WD005` WITHDRAW_ALREADY_PROCESSED
+- `SETTLEMENT-001` SETTLEMENT_ALREADY_EXISTS
+- `SETTLEMENT-002` SETTLEMENT_USER_NOT_FOUND
+- `SETTLEMENT-003` SETTLEMENT_WALLET_NOT_FOUND
+- `USER-005` USER_DELETED
+- `USER-006` USER_ALREADY_DELETED
+- `F002` FILE_DELETE_FAILED
+- `F003` FILE_URL_GENERATION_FAILED
+- `SHIP-007` SHIPMENT_ACCESS_DENIED
+- `SHIP-008` SHIPMENT_INVALID_REQUEST
+- `SHIP-009` SWEETTRACKER_RESPONSE_INVALID
+- `N002` NOTIFICATION_ACCESS_DENIED
+- `CHAT-005` CHAT_ACCESS_DENIED
+- `CHAT-006` CHAT_INVALID_REQUEST
+- `CHAT-007` CHAT_SCENARIO_INACTIVE
+- `CATEGORY-002` CATEGORY_DELETE_FORBIDDEN
+- `CATEGORY-003` CATEGORY_ETC_NOT_FOUND
+- `OAUTH-001` OAUTH_UNSUPPORTED_PROVIDER
+- `OAUTH-002` OAUTH_PROVIDER_ID_INVALID
+- `WS-001` WS_AUTH_REQUIRED
+- `WS-002` WS_INVALID_TOKEN
+- `WS-003` WS_UNAUTHENTICATED
+- `WS-004` WS_SUBSCRIBE_DENIED
+- `WS-005` WS_ADMIN_SEND_FORBIDDEN
+
+## 동작 변경 사항
+- 주문 구매확정은 미존재/권한/배송정보없음/미배송/이미확정 상태를 구분합니다.
+- 배송 타입 선택 시 요청 검증 및 중복 선택을 차단합니다.
+- 결제 승인/취소는 명확한 에러코드를 사용합니다.
+- 충전 내역 접근은 전용 권한 에러로 분리됩니다.
+- 웹훅 처리는 전용 에러코드로 분기하며 컨트롤러는 200 OK를 유지합니다.
+- 입찰 페이지 검증은 전용 에러코드를 사용합니다.
+- 입찰 검증에서 경매 상태/종료 이슈를 명확히 구분합니다.
+- 핫딜 취소 시 핫딜 여부 에러를 분리합니다.
+- 출금 승인/거부는 이미 처리된 요청을 구분합니다.
+- 정산 중복 시 전용 에러를 반환합니다.
+- 지갑 보증금 처리 caseName 오류를 에러로 처리합니다.
+- 사용자 삭제는 이미 탈퇴 상태를 전용 코드로 반환합니다.
+- JWT 인증에서 차단/탈퇴 사용자를 명확히 차단합니다.
+- S3 삭제 및 URL 생성 실패에 전용 에러코드를 사용합니다.
+- 배송 관련 권한/요청 오류를 전용 코드로 분리합니다.
+- 택배 조회 응답 오류를 전용 코드로 분리합니다.
+- 위치 API 실패를 주소 미존재와 분리합니다.
+- 채팅 권한/요청 오류를 전용 코드로 분리합니다.
+- 챗봇 비활성 시나리오에 전용 코드를 사용합니다.
+- 알림 접근 권한 오류를 전용 코드로 분리합니다.
+- OAuth2 Provider/ID 오류를 전용 코드로 분리합니다.
+- WebSocket 인증/권한 오류를 전용 코드로 분리합니다.
+- 카테고리 삭제 검증을 전용 코드로 분리합니다.
+
+## 변경된 파일
+- `backend/src/main/java/noonchissaum/backend/global/exception/ErrorCode.java`
+- `backend/src/main/java/noonchissaum/backend/domain/order/service/OrderService.java`
+- `backend/src/main/java/noonchissaum/backend/domain/order/entity/Payment.java`
+- `backend/src/main/java/noonchissaum/backend/domain/order/service/ChargeRecordService.java`
+- `backend/src/main/java/noonchissaum/backend/domain/order/service/PaymentService.java`
+- `backend/src/main/java/noonchissaum/backend/domain/order/controller/PaymentWebhookController.java`
+- `backend/src/main/java/noonchissaum/backend/domain/auction/service/BidService.java`
+- `backend/src/main/java/noonchissaum/backend/domain/auction/service/AuctionService.java`
+- `backend/src/main/java/noonchissaum/backend/domain/wallet/service/WalletService.java`
+- `backend/src/main/java/noonchissaum/backend/domain/wallet/service/WithdrawalRecordService.java`
+- `backend/src/main/java/noonchissaum/backend/domain/settlement/service/SettlementService.java`
+- `backend/src/main/java/noonchissaum/backend/domain/user/entity/User.java`
+- `backend/src/main/java/noonchissaum/backend/global/security/JwtAuthenticationFilter.java`
+- `backend/src/main/java/noonchissaum/backend/global/service/LocationService.java`
+- `backend/src/main/java/noonchissaum/backend/domain/order/service/ShipmentService.java`
+- `backend/src/main/java/noonchissaum/backend/global/service/S3Service.java`
+- `backend/src/main/java/noonchissaum/backend/domain/chat/service/ChatRoomService.java`
+- `backend/src/main/java/noonchissaum/backend/domain/chat/service/ChatMessageService.java`
+- `backend/src/main/java/noonchissaum/backend/domain/chatbot/service/ChatbotService.java`
+- `backend/src/main/java/noonchissaum/backend/domain/notification/service/NotificationService.java`
+- `backend/src/main/java/noonchissaum/backend/global/websocket/StompJwtChannelInterceptor.java`
+- `backend/src/main/java/noonchissaum/backend/domain/auth/oauth2/userinfo/OAuth2UserInfoFactory.java`
+- `backend/src/main/java/noonchissaum/backend/domain/auth/oauth2/service/CustomOAuth2UserService.java`
+- `backend/src/main/java/noonchissaum/backend/domain/auth/controller/OAuth2LoginController.java`
+- `backend/src/main/java/noonchissaum/backend/domain/category/service/CategoryService.java`
+- `backend/src/main/java/noonchissaum/backend/domain/order/controller/OrderController.java`
