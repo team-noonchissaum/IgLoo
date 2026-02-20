@@ -6,7 +6,6 @@ import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.repository.BidRepository;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.service.AuctionRedisService;
-import noonchissaum.backend.domain.auction.service.AuctionService;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.auction.service.BidRollbackService;
 import noonchissaum.backend.domain.inquiry.service.InquiryService;
@@ -14,7 +13,6 @@ import noonchissaum.backend.domain.item.entity.Item;
 import noonchissaum.backend.domain.notification.constants.NotificationConstants;
 import noonchissaum.backend.domain.notification.entity.NotificationType;
 import noonchissaum.backend.domain.notification.service.AuctionNotificationService;
-import noonchissaum.backend.domain.order.service.OrderService;
 import noonchissaum.backend.domain.report.entity.Report;
 import noonchissaum.backend.domain.report.entity.ReportStatus;
 import noonchissaum.backend.domain.report.entity.ReportTargetType;
@@ -27,7 +25,6 @@ import noonchissaum.backend.domain.user.entity.UserStatus;
 import noonchissaum.backend.domain.user.repository.*;
 import noonchissaum.backend.domain.wallet.service.WalletRecordService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
-import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import noonchissaum.backend.global.util.MoneyUtil;
@@ -52,9 +49,7 @@ public class AdminService {
     private final UserRepository userRepository;
     private final AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
-    private final AuctionService auctionService;
     private final AuctionRedisService auctionRedisService;
-    private final OrderService orderService;
     private final WalletService walletService;
     private final WalletRecordService walletRecordService;
     private final AuctionNotificationService auctionNotificationService;
@@ -221,7 +216,7 @@ public class AdminService {
         }
 
         if (item.isDeleted() && auction.getStatus() != AuctionStatus.TEMP_BLOCKED) {
-            throw new CustomException(ErrorCode.ITEM_ALREADY_BLOCKED);
+            throw new ApiException(ErrorCode.ITEM_ALREADY_BLOCKED);
         }
 
         // 진행 중이거나 임시차단인 경매만 차단 가능
@@ -319,7 +314,7 @@ public class AdminService {
         }
 
         if (auction.getStatus() != AuctionStatus.TEMP_BLOCKED) {
-            throw new CustomException(ErrorCode.AUCTION_NOT_BLOCKED);
+            throw new ApiException(ErrorCode.AUCTION_NOT_BLOCKED);
         }
 
         item.restore();

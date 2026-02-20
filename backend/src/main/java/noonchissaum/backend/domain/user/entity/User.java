@@ -13,7 +13,6 @@ import noonchissaum.backend.domain.order.entity.Payment;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
 import noonchissaum.backend.global.exception.ApiException;
-import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.hibernate.annotations.ColumnTransformer;
 import java.time.LocalDateTime;
@@ -140,7 +139,7 @@ public class User extends BaseTimeEntity {
      */
     public void block(String reason) {
         if (this.status == UserStatus.BLOCKED) {
-            throw new CustomException(ErrorCode.USER_ALREADY_BLOCKED);
+            throw new ApiException(ErrorCode.USER_ALREADY_BLOCKED);
         }
         this.status = UserStatus.BLOCKED;
         this.blockedAt = LocalDateTime.now();

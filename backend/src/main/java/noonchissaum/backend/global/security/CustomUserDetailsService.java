@@ -6,7 +6,7 @@ import noonchissaum.backend.domain.auth.entity.UserAuth;
 import noonchissaum.backend.domain.auth.repository.UserAuthRepository;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.entity.UserStatus;
-import noonchissaum.backend.global.exception.CustomException;
+import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -32,7 +32,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userAuth.getUser();
 
         if(user.getStatus()== UserStatus.BLOCKED){
-            throw new CustomException(ErrorCode.USER_BLOCKED);
+            throw new ApiException(ErrorCode.USER_BLOCKED);
         }
         return UserPrincipal.from(user, userAuth.getPasswordHash());
     }

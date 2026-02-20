@@ -20,7 +20,6 @@ import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.exception.ApiException;
-import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import noonchissaum.backend.global.recommendation.service.RecommendationService;
 import noonchissaum.backend.global.util.MoneyUtil;
@@ -123,12 +122,12 @@ public class AuctionService {
      */
     public AuctionRes getAuctionDetail(Long userId, Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
 
         if (auction.getStatus() == AuctionStatus.TEMP_BLOCKED ||
                 auction.getStatus() == AuctionStatus.BLOCKED ||
                 auction.getStatus() == AuctionStatus.BLOCKED_ENDED) {
-            throw new CustomException(ErrorCode.AUCTION_BLOCKED);
+            throw new ApiException(ErrorCode.AUCTION_BLOCKED);
         }
 
         boolean isWished = wishService.isWished(userId, auction.getItem().getId());
@@ -398,20 +397,20 @@ public class AuctionService {
     @Transactional
     public void cancelHotDeal(Long adminUserId, Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
 
         if (!Boolean.TRUE.equals(auction.getIsHotDeal())) {
-            throw new CustomException(ErrorCode.AUCTION_NOT_HOTDEAL);
+            throw new ApiException(ErrorCode.AUCTION_NOT_HOTDEAL);
         }
 
         // 시작 전(READY)만 취소 허용 (원하면 RUNNING도 허용 가능)
         if (auction.getStatus() != AuctionStatus.READY) {
-            throw new CustomException(ErrorCode.AUCTION_INVALID_STATUS);
+            throw new ApiException(ErrorCode.AUCTION_INVALID_STATUS);
         }
 
         // 입찰이 이미 있으면 취소 불가 (핫딜도 동일 정책이면 유지)
         if (auction.getBidCount() != null && auction.getBidCount() > 0) {
-            throw new CustomException(ErrorCode.AUCTION_HAS_BIDS);
+            throw new ApiException(ErrorCode.AUCTION_HAS_BIDS);
         }
 
         auction.cancel(); // status = CANCELED

@@ -9,7 +9,6 @@ import java.util.List;
 
 public interface ShipmentRepository extends JpaRepository<Shipment, Long> {
     Optional<Shipment> findByOrder_Id(Long orderId);
-    boolean existsByOrder_Id(Long orderId);
 
     // 배송상태 동기화 대상: SHIPPED + 송장 존재 + deliveredAt null
     @Query("""

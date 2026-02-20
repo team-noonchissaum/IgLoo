@@ -7,6 +7,4 @@ import java.util.List;
 
 public interface SettlementRepository extends JpaRepository<Settlement, Long> {
     boolean existsByOrder_Id(Long orderId);
-    List<Settlement> findAllBySellerIdOrderByCreatedAtDesc(Long sellerId);
-    List<Settlement> findAllByStatus(SettlementStatus status);
 }

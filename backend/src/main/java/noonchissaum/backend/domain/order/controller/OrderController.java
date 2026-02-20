@@ -1,6 +1,7 @@
 package noonchissaum.backend.domain.order.controller;
 import lombok.RequiredArgsConstructor;
 
+import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.security.UserPrincipal;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,7 +19,6 @@ import noonchissaum.backend.domain.order.entity.DeliveryType;
 import noonchissaum.backend.domain.order.repository.OrderRepository;
 import noonchissaum.backend.domain.chat.service.ChatRoomService;
 import noonchissaum.backend.domain.chat.repository.ChatRoomRepository;
-import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import noonchissaum.backend.domain.order.service.OrderService;
 import noonchissaum.backend.global.dto.ApiResponse;
@@ -45,7 +45,7 @@ public class OrderController {
 
         Order order = orderRepository.findByAuction_IdAndBuyer_Id(auctionId, userId)
                 .or(() -> orderRepository.findByAuction_IdAndSeller_Id(auctionId, userId))
-                .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.ORDER_NOT_FOUND));
 
         Long roomId = null;
         if (order.getDeliveryType() == DeliveryType.DIRECT) {
