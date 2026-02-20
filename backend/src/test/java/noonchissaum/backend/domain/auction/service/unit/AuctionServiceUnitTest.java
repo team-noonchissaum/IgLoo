@@ -21,7 +21,6 @@ import noonchissaum.backend.domain.user.repository.UserRepository;
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.ApiException;
-import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import noonchissaum.backend.global.service.LocationService;
 import org.junit.jupiter.api.DisplayName;
@@ -107,7 +106,7 @@ class AuctionServiceUnitTest {
         ReflectionTestUtils.setField(auction, "status", AuctionStatus.BLOCKED);
         when(auctionRepository.findById(300L)).thenReturn(Optional.of(auction));
 
-        CustomException ex = assertThrows(CustomException.class, () -> service.getAuctionDetail(8L, 300L));
+        ApiException ex = assertThrows(ApiException.class, () -> service.getAuctionDetail(8L, 300L));
 
         assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.AUCTION_BLOCKED);
     }
