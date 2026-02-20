@@ -346,13 +346,18 @@ public class LocationService {
     /**
      * 입력한 주소와 검색 결과가 유사한지 확인
      */
-    private boolean isValidAddress(String userInput, String searchResult) {
-        String[] inputKeywords = userInput.split(" ");
+    private boolean isValidAddress(String searchKeyword, String address) {
+        if (searchKeyword == null || searchKeyword.isBlank() ||
+                address == null || address.isBlank()) {
+            return false;
+        }
+
+        String[] inputKeywords = searchKeyword.split(" ");
 
         for (String keyword : inputKeywords) {
             if (keyword.length() >= 2) {
-                if (!searchResult.contains(keyword)) {
-                    log.warn("주소 검증 실패 - 입력: {}, 결과: {}", userInput, searchResult);
+                if (!address.contains(keyword)) {
+                    log.warn("주소 검증 실패 - 입력: {}, 결과: {}", searchKeyword, address);
                     return false;
                 }
             }

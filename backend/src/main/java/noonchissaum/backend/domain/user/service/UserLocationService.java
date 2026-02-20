@@ -163,6 +163,11 @@ public class UserLocationService {
     /**
      * 입력한 주소와 검색 결과가 유사한지 확인*/
     private boolean isValidAddress(String userInput, String searchResult) {
+        if (userInput == null || userInput.isBlank() ||
+                searchResult == null || searchResult.isBlank()) {
+            return false;
+        }
+
         String[] inputKeywords = userInput.split(" ");
 
         for (String keyword : inputKeywords) {
