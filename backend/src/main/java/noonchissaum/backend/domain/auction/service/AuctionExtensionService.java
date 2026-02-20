@@ -18,7 +18,6 @@ public class AuctionExtensionService {
     private final StringRedisTemplate redisTemplate;
     private final AuctionMessageService auctionMessageService;
 
-
     /**
     * 입찰 성공 이후 호출.
     * - Auction.extendIfNeeded(now)로 DB endAt/isExtended 갱신

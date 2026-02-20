@@ -145,7 +145,6 @@ public class AuctionRealtimeSnapshotService {
             return Optional.empty();
         }
 
-        //
         return Optional.of(getSnapshot(auctionId));
     }
 }

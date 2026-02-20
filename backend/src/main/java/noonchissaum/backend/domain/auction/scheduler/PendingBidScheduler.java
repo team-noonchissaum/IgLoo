@@ -89,8 +89,6 @@ public class PendingBidScheduler {
 
             } catch (Exception e) {
                 log.error("Pending bid 저장 실패. requestId={}, reason={}", requestId, e.toString());
-                // 스케줄러 전체 중단 방지: 다음 요청으로 진행
-                continue;
             }
         }
     }

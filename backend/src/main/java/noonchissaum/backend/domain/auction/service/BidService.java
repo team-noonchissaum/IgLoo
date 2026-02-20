@@ -20,14 +20,17 @@ import noonchissaum.backend.domain.task.dto.DbUpdateEvent;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import noonchissaum.backend.global.util.UserLockExecutor;
+
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
@@ -56,7 +59,6 @@ public class BidService {
     private final UserLockExecutor userLockExecutor;
     private static final BigDecimal BID_INCREMENT_RATE = new BigDecimal("0.10");
     private static final BigDecimal MIN_BID_INCREMENT = new BigDecimal("100");
-
 
     public void placeBid(Long auctionId, Long userId, BigDecimal bidAmount, String requestId) {
         // 1. 멱등성 체크 (락 획득 전 수행하여 불필요한 대기 방지)
@@ -169,7 +171,6 @@ public class BidService {
 
                 //검증용 데이터 (Bid,Wallet 재저장용 데이터)
                 Map<String, String> bidInfo = getStringStringMap(auctionId, userId, bidAmount, requestId, previousBidderId, currentPrice);
-
 
                 String infoKey = RedisKeys.pendingBidInfo(requestId);
 

@@ -10,10 +10,8 @@ import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.spec.AuctionSpecs;
 import noonchissaum.backend.domain.category.entity.Category;
-
 import noonchissaum.backend.domain.category.service.CategoryService;
 import noonchissaum.backend.domain.item.entity.Item;
-
 import noonchissaum.backend.domain.item.service.ItemService;
 import noonchissaum.backend.domain.item.service.UserViewRedisLogger;
 import noonchissaum.backend.domain.item.service.WishService;
@@ -60,8 +58,6 @@ public class AuctionService {
     private final UserViewRedisLogger userViewRedisLogger; // 상세 조회 시 Redis 조회 로그 기록
     private final RecommendationService recommendationService; // 추천 서비스 주입
     private final LocationService locationService;
-    private final UserRepository userRepository;
-
 
     /**
      * 경매 등록을 처리한다.
@@ -123,7 +119,6 @@ public class AuctionService {
                 AuctionRes.from(a, wishedItemIds.contains(a.getItem().getId()))
         );
     }
-
 
     /**
      * 경매 상세 조회.
@@ -355,8 +350,6 @@ public class AuctionService {
                 filteredAuctions.size()
         );
     }
-
-
 
     /**
      * 핫딜 경매 등록

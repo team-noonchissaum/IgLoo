@@ -1,6 +1,5 @@
 package noonchissaum.backend.domain.auction.dto.ws;
 
-
 import lombok.Builder;
 import lombok.Getter;
 

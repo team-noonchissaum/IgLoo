@@ -10,7 +10,6 @@ import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;

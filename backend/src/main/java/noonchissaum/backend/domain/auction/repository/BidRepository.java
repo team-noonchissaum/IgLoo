@@ -22,7 +22,6 @@ public interface BidRepository extends JpaRepository<Bid,Long> {
 
     Optional<Bid> findFirstByAuctionIdOrderByBidPriceDesc(Long auctionId);
 
-
     // 내가 한 번이라도 입찰한 경매 목록
     @Query("""
         select distinct a
@@ -59,7 +58,6 @@ public interface BidRepository extends JpaRepository<Bid,Long> {
             "from Bid b " +
             "where b.auction.id = :auctionId ")
     List<Long> findDistinctBidderIdsByAuctionId(@Param("auctionId") Long auctionId);
-
 
     // User 엔티티 조회
     @Query("select distinct b.bidder " +

@@ -57,7 +57,6 @@ public class AuctionExposureScheduler {
      */
     @Scheduled(fixedRate = 60_000)
     public void resultAuctions() {
-//        LocalDateTime now = LocalDateTime.now();
         auctionSchedulerService.result();
     }
 

@@ -1,6 +1,5 @@
 package noonchissaum.backend.domain.auction.controller;
 
-
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.auction.dto.ws.AuctionSnapshotPayload;
 import noonchissaum.backend.domain.auction.service.AuctionRealtimeSnapshotService;

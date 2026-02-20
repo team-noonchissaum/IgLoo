@@ -64,8 +64,6 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
             @Param("threshold") LocalDateTime threshold
     );
 
-    List<Auction> findByStartAt(LocalDateTime startAt);
-
     /**
      *스케줄 관련 상태값 변경쿼리
      * deadline -> ended
@@ -136,7 +134,6 @@ where a.status = :status
   and a.endAt <= :now
 """)
     List<Long> findIdsToEnd(@Param("status") AuctionStatus status, @Param("now") LocalDateTime now);
-
 
     /**
      */

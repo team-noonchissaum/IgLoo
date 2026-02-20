@@ -34,7 +34,6 @@ public class Bid extends BaseTimeEntity {
     @Column(nullable = false)
     private String requestId;
 
-
     public Bid(Auction auction, User bidder, BigDecimal bidPrice , String requestId) {
         this.auction = auction;
         this.bidder = bidder;
