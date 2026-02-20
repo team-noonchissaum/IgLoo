@@ -21,7 +21,6 @@ import noonchissaum.backend.global.exception.ErrorCode;
 import noonchissaum.backend.global.handler.ReportTargetHandler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.Map;
 

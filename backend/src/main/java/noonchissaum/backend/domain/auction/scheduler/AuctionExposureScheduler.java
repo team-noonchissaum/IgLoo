@@ -3,10 +3,8 @@ package noonchissaum.backend.domain.auction.scheduler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.auction.service.AuctionSchedulerService;
-import noonchissaum.backend.domain.wallet.service.WalletService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
 import java.time.LocalDateTime;
 
 @Slf4j
@@ -57,7 +55,6 @@ public class AuctionExposureScheduler {
      */
     @Scheduled(fixedRate = 60_000)
     public void resultAuctions() {
-//        LocalDateTime now = LocalDateTime.now();
         auctionSchedulerService.result();
     }
 

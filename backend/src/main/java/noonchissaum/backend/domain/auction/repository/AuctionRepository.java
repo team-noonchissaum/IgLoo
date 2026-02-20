@@ -7,7 +7,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -63,8 +62,6 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> , JpaSpe
             @Param("fromStatus") AuctionStatus fromStatus,
             @Param("threshold") LocalDateTime threshold
     );
-
-    List<Auction> findByStartAt(LocalDateTime startAt);
 
     /**
      *스케줄 관련 상태값 변경쿼리
@@ -136,7 +133,6 @@ where a.status = :status
   and a.endAt <= :now
 """)
     List<Long> findIdsToEnd(@Param("status") AuctionStatus status, @Param("now") LocalDateTime now);
-
 
     /**
      */

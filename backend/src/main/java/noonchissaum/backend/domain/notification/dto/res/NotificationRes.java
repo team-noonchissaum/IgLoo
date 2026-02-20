@@ -4,7 +4,6 @@ import lombok.Builder;
 import lombok.Getter;
 import noonchissaum.backend.domain.notification.entity.Notification;
 import noonchissaum.backend.domain.notification.entity.NotificationType;
-
 import java.time.LocalDateTime;
 
 @Getter

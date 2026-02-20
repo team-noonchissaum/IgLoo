@@ -1,7 +1,6 @@
 package noonchissaum.backend.domain.coupon.dto.res;
 
 import noonchissaum.backend.domain.coupon.entity.CouponIssued;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 

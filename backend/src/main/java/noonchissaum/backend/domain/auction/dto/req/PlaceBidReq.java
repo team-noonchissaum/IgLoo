@@ -1,7 +1,6 @@
 package noonchissaum.backend.domain.auction.dto.req;
 
 import jakarta.validation.constraints.NotNull;
-
 import java.math.BigDecimal;
 
 public record PlaceBidReq(

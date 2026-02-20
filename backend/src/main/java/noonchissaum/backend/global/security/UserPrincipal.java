@@ -7,7 +7,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -16,7 +15,6 @@ import java.util.Map;
  * 통합 Principal
  * 로컬, 소셜 @AuthenticationPrincipal로 통일해서 사용
  */
-
 @Getter
 public class UserPrincipal implements UserDetails, OAuth2User {
 

@@ -34,7 +34,6 @@ public class StompJwtChannelInterceptor implements ChannelInterceptor {
 
         if (accessor == null) return message;
 
-
         //CONNECT 프레임에서만 확인
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
             String raw = accessor.getFirstNativeHeader("Authorization");

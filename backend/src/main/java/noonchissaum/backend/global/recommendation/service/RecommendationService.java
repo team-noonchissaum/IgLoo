@@ -16,7 +16,6 @@ import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -325,6 +324,7 @@ public class RecommendationService {
         }
         return filtered;
     }
+
     private List<AuctionRes> finalizeRecommendations(Long userId, Long contextItemId, Long contextAuctionId, List<Long> itemIds) {
         List<AuctionRes> base = convertItemIdsToAuctionRes(userId, itemIds, RECOMMENDATION_POOL_SIZE);
         List<AuctionRes> filtered = new ArrayList<>(filterOutContextAuction(base, contextAuctionId));
@@ -444,6 +444,7 @@ public class RecommendationService {
                 .filter(a -> !contextAuctionId.equals(a.getAuctionId()))
                 .collect(Collectors.toCollection(ArrayList::new));
     }
+
     private record UserSimilarity(Long userId, double similarity) {}
 
     private List<AuctionRes> convertItemIdsToAuctionRes(Long userId, List<Long> itemIds, int limit) {

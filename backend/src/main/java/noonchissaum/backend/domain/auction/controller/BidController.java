@@ -56,7 +56,6 @@ public class BidController {
         );
     }
 
-
     @PostMapping()
     public ResponseEntity<ApiResponse<Void>> placeBid(
             @AuthenticationPrincipal UserPrincipal userDetails,

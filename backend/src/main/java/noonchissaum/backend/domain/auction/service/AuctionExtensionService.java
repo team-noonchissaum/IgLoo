@@ -8,7 +8,6 @@ import noonchissaum.backend.global.RedisKeys;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 
 @Service
@@ -17,7 +16,6 @@ public class AuctionExtensionService {
     private final AuctionRepository auctionRepository;
     private final StringRedisTemplate redisTemplate;
     private final AuctionMessageService auctionMessageService;
-
 
     /**
     * 입찰 성공 이후 호출.

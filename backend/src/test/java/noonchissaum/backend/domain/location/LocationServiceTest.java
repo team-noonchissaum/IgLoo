@@ -1,6 +1,5 @@
 package noonchissaum.backend.domain.location;
 
-
 import noonchissaum.backend.global.dto.KakaoKeywordRes;
 import noonchissaum.backend.global.dto.LocationDto;
 import noonchissaum.backend.global.exception.ApiException;
@@ -16,11 +15,9 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
-
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;

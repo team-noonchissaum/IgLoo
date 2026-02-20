@@ -1,7 +1,6 @@
 package noonchissaum.backend.domain.auction.dto.ws;
 
 import lombok.*;
-
 import java.math.BigDecimal;
 
 @Getter

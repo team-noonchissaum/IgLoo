@@ -5,7 +5,6 @@ import noonchissaum.backend.domain.wallet.entity.*;
 import noonchissaum.backend.domain.wallet.repository.WalletTransactionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 
 @Service

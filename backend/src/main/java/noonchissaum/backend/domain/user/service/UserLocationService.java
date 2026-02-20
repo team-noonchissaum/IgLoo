@@ -6,20 +6,12 @@ import noonchissaum.backend.domain.user.dto.request.UserLocationUpdateReq;
 import noonchissaum.backend.domain.user.dto.response.UserLocationUpdateRes;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.repository.UserRepository;
-import noonchissaum.backend.global.dto.KakaoGeocodeRes;
-import noonchissaum.backend.global.dto.KakaoKeywordRes;
 import noonchissaum.backend.global.dto.LocationDto;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import noonchissaum.backend.global.service.LocationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-
 /**
  * 사용자 위치 관련 기능
  * 위치 설정/수정, 내 위치 조회
@@ -180,5 +172,4 @@ public class UserLocationService {
         }
         return true;
     }
-
 }

@@ -6,7 +6,6 @@ import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.repository.BidRepository;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.service.AuctionRedisService;
-import noonchissaum.backend.domain.auction.service.AuctionService;
 import lombok.extern.slf4j.Slf4j;
 import noonchissaum.backend.domain.auction.service.BidRollbackService;
 import noonchissaum.backend.domain.inquiry.service.InquiryService;
@@ -14,7 +13,6 @@ import noonchissaum.backend.domain.item.entity.Item;
 import noonchissaum.backend.domain.notification.constants.NotificationConstants;
 import noonchissaum.backend.domain.notification.entity.NotificationType;
 import noonchissaum.backend.domain.notification.service.AuctionNotificationService;
-import noonchissaum.backend.domain.order.service.OrderService;
 import noonchissaum.backend.domain.report.entity.Report;
 import noonchissaum.backend.domain.report.entity.ReportStatus;
 import noonchissaum.backend.domain.report.entity.ReportTargetType;
@@ -27,8 +25,6 @@ import noonchissaum.backend.domain.user.entity.UserStatus;
 import noonchissaum.backend.domain.user.repository.*;
 import noonchissaum.backend.domain.wallet.service.WalletRecordService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
-import noonchissaum.backend.global.exception.CustomException;
-import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import noonchissaum.backend.global.util.MoneyUtil;
@@ -38,7 +34,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -54,9 +49,7 @@ public class AdminService {
     private final UserRepository userRepository;
     private final AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
-    private final AuctionService auctionService;
     private final AuctionRedisService auctionRedisService;
-    private final OrderService orderService;
     private final WalletService walletService;
     private final WalletRecordService walletRecordService;
     private final AuctionNotificationService auctionNotificationService;
@@ -66,7 +59,6 @@ public class AdminService {
     private final BidRollbackService bidRollbackService;
 
     /* ================= 신고 관리 ================= */
-
     /**
      * 신고 목록 조회
      */
@@ -170,7 +162,6 @@ public class AdminService {
     /**
      * 신고 처리
      */
-
     @Transactional
     public void processReport(Long reportId, AdminReportProcessReq req) {
         Report report = reportRepository.findById(reportId)
@@ -192,7 +183,9 @@ public class AdminService {
         }
     }
 
-    /**신고 대상 제재 처리*/
+    /**
+     * 신고 대상 제재 처리
+     */
     private void blockReportTarget(Report report, String reason) {
         ReportTargetType targetType = report.getTargetType();
         Long targetId = report.getTargetId();
@@ -210,7 +203,6 @@ public class AdminService {
     }
 
     /* ================= 경매 게시글 관리 ================= */
-
     /**
      * 경매 차단 공통 로직
      */
@@ -224,7 +216,7 @@ public class AdminService {
         }
 
         if (item.isDeleted() && auction.getStatus() != AuctionStatus.TEMP_BLOCKED) {
-            throw new CustomException(ErrorCode.ITEM_ALREADY_BLOCKED);
+            throw new ApiException(ErrorCode.ITEM_ALREADY_BLOCKED);
         }
 
         // 진행 중이거나 임시차단인 경매만 차단 가능
@@ -322,7 +314,7 @@ public class AdminService {
         }
 
         if (auction.getStatus() != AuctionStatus.TEMP_BLOCKED) {
-            throw new CustomException(ErrorCode.AUCTION_NOT_BLOCKED);
+            throw new ApiException(ErrorCode.AUCTION_NOT_BLOCKED);
         }
 
         item.restore();
@@ -424,7 +416,9 @@ public class AdminService {
 
 
     /* ================= 사용자 관리 ================= */
-    /**유저 차단*/
+    /**
+     * 유저 차단
+     */
 
     @Transactional
     public AdminBlockUserRes blockUser(Long userId, String reason) {
@@ -444,7 +438,9 @@ public class AdminService {
         return AdminBlockUserRes.from(user);
     }
 
-    /**유저 차단 해제*/
+    /**
+     *유저 차단 해제
+     */
     @Transactional
     public void unblockUser(Long userId) {
         User user = userRepository.findById(userId)
@@ -458,7 +454,9 @@ public class AdminService {
         user.unblock();
     }
 
-    /**닉네임으로 유저 차단 해제*/
+    /**
+     * 닉네임으로 유저 차단 해제
+     */
     @Transactional
     public void unblockUserByNickname(String nickname) {
         User user = userRepository.findByNickname(nickname)
@@ -476,7 +474,9 @@ public class AdminService {
         inquiryService.deleteByNickname(nickname);
     }
 
-    /**유저 목록 조회*/
+    /**
+     * 유저 목록 조회
+     */
     public Page<AdminUserListRes> getUsers(String status, String keyword, Pageable pageable) {
         Page<User> users = userRepository.findAll(pageable);
 
@@ -489,7 +489,9 @@ public class AdminService {
         });
     }
 
-    /** 차단된 사용자 목록 조회 */
+    /**
+     * 차단된 사용자 목록 조회
+     */
     public Page<AdminBlockedUserRes> getBlockedUsers(Pageable pageable) {
         return userRepository.findByStatus(UserStatus.BLOCKED, pageable)
                 .map(AdminBlockedUserRes::from);

@@ -3,7 +3,6 @@ package noonchissaum.backend.domain.auction.service;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.auction.dto.res.AuctionListRes;
 import noonchissaum.backend.domain.auction.dto.ws.AuctionSnapshotPayload;

@@ -34,11 +34,9 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.context.ApplicationEventPublisher;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -113,8 +111,8 @@ class BidServiceUnitTest {
                 .status(UserStatus.ACTIVE)
                 .build();
         Category category = new Category("cat-unit", null);
-        Item item1 = new Item(seller, category, "item-1", "desc", BigDecimal.valueOf(1000));
-        Item item2 = new Item(seller, category, "item-2", "desc", BigDecimal.valueOf(1000));
+        Item item1 = new Item(seller, category, "item-1", "desc");
+        Item item2 = new Item(seller, category, "item-2", "desc");
 
         Auction a1 = Auction.builder()
                 .item(item1)
@@ -204,3 +202,4 @@ class BidServiceUnitTest {
         verify(bidRepository).existsByRequestId("req-1");
     }
 }
+

@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import noonchissaum.backend.domain.item.entity.Item;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
-
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;

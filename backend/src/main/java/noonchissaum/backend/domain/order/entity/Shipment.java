@@ -3,7 +3,6 @@ package noonchissaum.backend.domain.order.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
-
 import java.time.LocalDateTime;
 
 @Entity

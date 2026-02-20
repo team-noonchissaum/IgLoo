@@ -4,13 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.entity.UserStatus;
-
 import java.time.LocalDateTime;
 
 /**
  * 사용자 차단 응답
  */
-
 @Getter
 @AllArgsConstructor
 public class AdminBlockUserRes {

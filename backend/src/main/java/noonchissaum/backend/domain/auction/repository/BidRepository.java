@@ -9,10 +9,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
 import java.math.BigDecimal;
 import java.util.List;
-
 import java.util.Optional;
 
 public interface BidRepository extends JpaRepository<Bid,Long> {
@@ -21,7 +19,6 @@ public interface BidRepository extends JpaRepository<Bid,Long> {
     Page<Bid> findByAuctionIdOrderByCreatedAtDesc(Long auctionId, Pageable pageable);
 
     Optional<Bid> findFirstByAuctionIdOrderByBidPriceDesc(Long auctionId);
-
 
     // 내가 한 번이라도 입찰한 경매 목록
     @Query("""
@@ -59,7 +56,6 @@ public interface BidRepository extends JpaRepository<Bid,Long> {
             "from Bid b " +
             "where b.auction.id = :auctionId ")
     List<Long> findDistinctBidderIdsByAuctionId(@Param("auctionId") Long auctionId);
-
 
     // User 엔티티 조회
     @Query("select distinct b.bidder " +

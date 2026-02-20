@@ -16,7 +16,6 @@ import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import noonchissaum.backend.domain.order.dto.shipment.req.SaveAddressReq;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -74,8 +73,6 @@ public class ShipmentService {
 
         return ShipmentRes.from(shipment);
     }
-
-
 
     @Transactional(readOnly = true)
     public ShipmentRes getShipment(Long orderId, Long userId){

@@ -25,11 +25,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -80,7 +78,7 @@ class BidServiceFlowIntegrationTest {
         testUser.registerWallet(wallet);
 
         Category category = categoryRepository.save(new Category("flow-cat-" + suffix, null));
-        Item item = itemRepository.save(new Item(testUser, category, "flow-item-" + suffix, "desc", new BigDecimal("1000")));
+        Item item = itemRepository.save(new Item(testUser, category, "flow-item-" + suffix, "desc"));
         testAuction = Auction.builder()
                 .item(item)
                 .startPrice(new BigDecimal("1000"))
@@ -163,3 +161,4 @@ class BidServiceFlowIntegrationTest {
         assertEquals(ErrorCode.INSUFFICIENT_BALANCE.getMessage(), exception.getMessage());
     }
 }
+

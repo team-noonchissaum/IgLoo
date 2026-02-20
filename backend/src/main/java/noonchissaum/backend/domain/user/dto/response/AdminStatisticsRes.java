@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import noonchissaum.backend.domain.statistics.entity.DailyStatistics;
 
-
 /**
  * 관리자 통계 조회 API 응답용
  */

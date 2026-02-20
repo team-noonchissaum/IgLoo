@@ -55,12 +55,4 @@ public class Settlement extends BaseTimeEntity {
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
-    public void markCompleted(LocalDateTime now) {
-        this.status = SettlementStatus.COMPLETED;
-        this.completedAt = now;
-    }
-
-    public void markFailed() {
-        this.status = SettlementStatus.FAILED;
-    }
 }
