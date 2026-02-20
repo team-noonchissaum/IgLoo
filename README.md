@@ -64,7 +64,7 @@
 
 ## 시스템 아키텍처
 
-![System Architecture](https://github.com/user-attachments/assets/39bf4fa3-0e1d-4dc4-9250-7d54d3f5bf74)
+![System Architecture](https://github.com/user-attachments/assets/92f3639e-4c8f-456d-9a45-bd3e9c55fbc1)
 
 - 사용자는 Vercel에 배포된 React SPA로 접속, API 요청은 Nginx Reverse Proxy를 통해 Spring Boot 서버로 라우팅
 - 실시간 경매 흐름은 STOMP/SockJS 기반 WSS 채널로 처리, 입찰 상태와 이벤트가 즉시 동기화
