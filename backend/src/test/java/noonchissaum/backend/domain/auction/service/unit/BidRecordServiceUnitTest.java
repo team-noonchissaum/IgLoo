@@ -79,7 +79,6 @@ class BidRecordServiceUnitTest {
                 .category(category)
                 .title("item-" + suffix)
                 .description("desc-" + suffix)
-                .startPrice(BigDecimal.valueOf(10000))
                 .build();
         ReflectionTestUtils.setField(item, "id", auctionId + 1000);
 
@@ -104,3 +103,4 @@ class BidRecordServiceUnitTest {
         return user;
     }
 }
+

@@ -121,7 +121,6 @@ class AuctionRecordServiceUnitTest {
                 .category(category)
                 .title("item")
                 .description("desc")
-                .startPrice(BigDecimal.valueOf(10000))
                 .build();
 
         Auction auction = Auction.builder()
@@ -145,3 +144,4 @@ class AuctionRecordServiceUnitTest {
         return user;
     }
 }
+

@@ -1,6 +1,6 @@
 # IgLoo
 
-> 기존의 당근마켓, 번개장터, 중고나라와 같은 중고거래 서비스 모델에 '경매 낙찰 시스템'을 도입하여 거래의 재미와 효율성을 극대화한 서비스
+> 기존의 당근마켓, 번개장터, 중고나라와 같은 중고거래 서비스 모델에 **경매 낙찰 시스템**을 도입하여 거래의 재미와 효율성을 극대화한 서비스
 
 ![Backend](https://img.shields.io/badge/Backend-Spring%20Boot%203.4.1-6DB33F?logo=springboot&logoColor=white)
 ![AI Service](https://img.shields.io/badge/AI%20Service-FastAPI-009688?logo=fastapi&logoColor=white)
@@ -19,7 +19,7 @@
 - [DB/ERD](#dberd)
 - [리포지토리 구조](#리포지토리-구조)
 - [기술 스택](#기술-스택)
-- [도메인 맵](#도메인-맵)
+- [주요 도메인](#주요-도메인)
 - [사전 요구사항](#사전-요구사항)
 - [실행 방법](#실행-방법)
 - [테스트](#테스트)
@@ -30,13 +30,12 @@
 
 ## 프로젝트 소개
 
-IgLoo는 중고거래 모델에 경매 낙찰 시스템을 결합한 서비스
+- IgLoo는 중고거래 모델에 경매 낙찰 시스템을 결합한 서비스
 
-기본 거래 흐름:
+- 기본 거래 흐름 :
+  - `경매 등록 -> 입찰 -> 낙찰/유찰 처리 -> 주문/배송 -> 정산`
 
-`경매 등록 -> 입찰 -> 낙찰/유찰 처리 -> 주문/배송 -> 정산`
-
-기존 중고거래의 "기다리는 판매"를 줄이고, 짧은 시간 안에 거래 성사를 목표로 함
+- 기존 중고거래의 **기다리는 판매**를 줄이고, 짧은 시간 안에 거래 성사를 목표로 함
 
 ---
 
@@ -46,7 +45,7 @@ IgLoo는 중고거래 모델에 경매 낙찰 시스템을 결합한 서비스
 | --------- | ----------------------------------------------------- | --------------------- |
 | 경매 기간 | 초단기 운영 (1시간 / 3시간 / 6시간 / 12시간 / 24시간) | 수일 단위 경매 중심   |
 | 거래 방식 | 직거래 + 택배 하이브리드                              | 택배 중심             |
-| 가격 보조 | 카테고리 기반 가격 추천 + AI 보조 등록                | 일반 검색/리스팅 중심 |
+| 편의사항  | 경매 게시글 AI 보조 등록                              | 직접 등록             |
 | 안전 장치 | 결제/충전/지갑 기반 자금 보호 흐름                    | 플랫폼 정책 중심      |
 
 ---
@@ -65,13 +64,19 @@ IgLoo는 중고거래 모델에 경매 낙찰 시스템을 결합한 서비스
 
 ## 시스템 아키텍처
 
-![System Architecture](https://github.com/user-attachments/assets/408ccb52-7059-4056-8684-504b144cff7b)
+![System Architecture](https://github.com/user-attachments/assets/39bf4fa3-0e1d-4dc4-9250-7d54d3f5bf74)
+
+- 사용자는 Vercel에 배포된 React SPA로 접속, API 요청은 Nginx Reverse Proxy를 통해 Spring Boot 서버로 라우팅됨.
+- 실시간 경매 흐름은 STOMP/SockJS 기반 WSS 채널로 처리, 입찰 상태와 이벤트가 즉시 동기화됨.
+- 백엔드는 핵심 거래 데이터를 AWS RDS(MySQL)에 저장, Redis/Redisson으로 캐시와 분산 락을 관리함.
+- 이미지 업로드/조회는 S3 Object Storage 사용, AI 분석 요청은 FastAPI AI Service를 거쳐 OpenAI API로 전달됨.
+- 배포는 GitHub Actions가 Docker 이미지를 빌드해 Docker Hub에 반영, AWS 환경에 백엔드/AI 서비스로 배포됨.
 
 ---
 
 ## DB/ERD
 
-![ERD](https://github.com/user-attachments/assets/2d0bd266-3307-40ad-82cd-63b36e77df44)
+![ERD](https://github.com/user-attachments/assets/55b004c2-b4e1-4cbc-a816-6640b867c674)
 
 - DB 명세: [Notion DB 명세서](https://www.notion.so/DB-2ef4a9f8e43980c8a656fb2eb2f82daa)
 
@@ -86,6 +91,7 @@ IgLoo/
 ├── nginx/                   # Nginx 설정
 ├── redis/                   # Redis 설정
 ├── docs/                    # 프로젝트 문서
+├── prometheus.yml           # 모니터링 수집 설정
 ├── docker-compose.yml       # 서버/배포용 compose (이미지 기반)
 ├── local-docker-compose.yml # 로컬 인프라용 compose (redis/mysql/nginx)
 └── README.md
@@ -103,27 +109,36 @@ IgLoo/
 - Backend
   - Java 21
   - Spring Boot 3.4.1
-  - Spring Data JPA, Spring Security, OAuth2 Client
-  - Redis, Redisson
+  - Spring Data JPA
+  - Spring Security, OAuth2 Client, JWT
+  - Spring WebSocket (STOMP)
   - Spring Batch
   - OpenFeign
-  - MySQL
+  - Redis, Redisson
+  - MySQL 8.0 (AWS RDS)
 - AI Service
   - FastAPI
+  - Pydantic
+  - Uvicorn
   - OpenAI API 연동
-- Infra
+- Infra / Cloud
   - Docker / Docker Compose
   - Nginx
+  - AWS S3
 
 ---
 
-## 도메인 맵
+## 주요 도메인
 
 - `auction`: 경매 등록/조회, 입찰, 실시간 상태 동기화, 스케줄링
 - `order`: 낙찰 이후 주문 생성, 거래 방식(직거래/택배), 배송 처리
 - `wallet`: 잔액/락 잔액, 거래별 지갑 기록, 출금 처리
+- `payment`: 결제 승인/검증, 취소/환불, 거래 금액 정합성 처리
+- `auth`: JWT 기반 인증/인가, OAuth2 로그인 연동
+- `notification`: 경매 상태/입찰/주문 이벤트 알림 전송
 - `task`: 비동기 작업 상태 저장/복구, 대기 작업 검증
 - `report`: 신고 접수/처리 및 운영자 처리 흐름
+- `ai`: 이미지 분석, 카테고리 분류, 상품 설명 생성, 백엔드 연동 API 제공
 
 ---
 
@@ -218,7 +233,7 @@ cd backend
 - 인증: JWT 기반 인증/인가 (Spring Security)
 - 실시간 통신: STOMP(WebSocket) 기반 경매/알림 메시징
 - API 명세: [Notion API 명세서](https://www.notion.so/API-2f04a9f8e4398062bd14c52c4864f5ea)
-- 보조 문서: `docs/used-market-flow.md`, `docs/used-market-implementation-log.md`
+- 보조 문서: [거래 흐름](docs/used-market-flow.md), [구현 로그](docs/used-market-implementation-log.md)
 
 ---
 

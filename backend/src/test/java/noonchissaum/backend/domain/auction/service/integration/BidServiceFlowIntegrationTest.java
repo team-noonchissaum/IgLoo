@@ -78,7 +78,7 @@ class BidServiceFlowIntegrationTest {
         testUser.registerWallet(wallet);
 
         Category category = categoryRepository.save(new Category("flow-cat-" + suffix, null));
-        Item item = itemRepository.save(new Item(testUser, category, "flow-item-" + suffix, "desc", new BigDecimal("1000")));
+        Item item = itemRepository.save(new Item(testUser, category, "flow-item-" + suffix, "desc"));
         testAuction = Auction.builder()
                 .item(item)
                 .startPrice(new BigDecimal("1000"))
@@ -161,3 +161,4 @@ class BidServiceFlowIntegrationTest {
         assertEquals(ErrorCode.INSUFFICIENT_BALANCE.getMessage(), exception.getMessage());
     }
 }
+

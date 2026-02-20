@@ -98,7 +98,7 @@ public class BidServiceConcurrencyTest {
         // 2. 테스트용 경매 데이터 생성
         User seller = testUsers.get(0);
         Category category = categoryRepository.save(new Category("ccat-" + suffix, null));
-        Item item = itemRepository.save(new Item(seller, category, "concurrency-item-" + suffix, "desc", new BigDecimal("1000")));
+        Item item = itemRepository.save(new Item(seller, category, "concurrency-item-" + suffix, "desc"));
 
         testAuction = Auction.builder()
                 .item(item)
@@ -185,3 +185,4 @@ public class BidServiceConcurrencyTest {
         assertThat(numberOfThreads).isEqualTo(successCount + failureCount.get());
     }
 }
+

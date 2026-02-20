@@ -143,7 +143,6 @@ class AuctionNotificationServiceTest {
                 .category(category)
                 .title("title")
                 .description("desc")
-                .startPrice(BigDecimal.valueOf(1000))
                 .build();
         ReflectionTestUtils.setField(item, "id", id + 1000);
 
@@ -171,3 +170,4 @@ class AuctionNotificationServiceTest {
         return notification;
     }
 }
+
