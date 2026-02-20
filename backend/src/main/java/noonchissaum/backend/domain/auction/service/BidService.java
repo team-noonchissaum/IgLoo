@@ -69,7 +69,6 @@ public class BidService {
         List<RLock> userLocks = new ArrayList<>();
         try{
             boolean available = lock.tryLock(5, 2, TimeUnit.SECONDS);
-            // 입찰 조건 확인 로직
 
             if (!available){
                 throw new ApiException(ErrorCode.BID_LOCK_ACQUISITION);

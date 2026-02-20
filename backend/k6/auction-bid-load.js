@@ -81,12 +81,14 @@ function getBidInfo(token) {
 
   const body = res.json();
   const data = body && body.data ? body.data : {};
+  const startPrice = Number(data.startPrice || 0);
   const currentPrice = Number(data.currentPrice || data.startPrice || 0);
   const bidCount = Number(data.bidCount || 0);
   const status = String(data.status || "");
 
   return {
     ok: true,
+    startPrice,
     currentPrice,
     bidCount,
     status,
@@ -112,11 +114,11 @@ function newRequestId() {
   return `${__VU}-${__ITER}-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
 }
 
-function nextBidAmount(currentPrice, bidCount) {
+function nextBidAmount(startPrice, currentPrice, bidCount) {
+  const incrementByStartPrice = Math.ceil(startPrice * (BID_MULTIPLIER - 1));
+  const minIncrement = Math.max(incrementByStartPrice, 100);
   const minBid =
-    bidCount === 0
-      ? currentPrice
-      : roundUpToStep(currentPrice * BID_MULTIPLIER, BID_STEP);
+    bidCount === 0 ? currentPrice : roundUpToStep(currentPrice + minIncrement, BID_STEP);
   const extraSteps = Math.floor(Math.random() * (EXTRA_STEPS_MAX + 1));
   return minBid + extraSteps * BID_STEP;
 }
@@ -172,7 +174,7 @@ export default function (setupData) {
     return;
   }
 
-  const bidAmount = nextBidAmount(info.currentPrice, info.bidCount);
+  const bidAmount = nextBidAmount(info.startPrice, info.currentPrice, info.bidCount);
   const payload = JSON.stringify({
     auctionId: AUCTION_ID,
     bidAmount,

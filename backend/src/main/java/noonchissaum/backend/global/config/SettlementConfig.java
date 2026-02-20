@@ -11,6 +11,5 @@ import java.math.BigDecimal;
 @Component
 @ConfigurationProperties(prefix = "platform")
 public class SettlementConfig {
-    private Long systemUserId = 10000L;
     private BigDecimal feeRate = new BigDecimal("0.10");
 }
