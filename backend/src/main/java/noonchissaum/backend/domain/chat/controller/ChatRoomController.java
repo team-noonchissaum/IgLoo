@@ -51,7 +51,6 @@ public class ChatRoomController {
         return ApiResponse.success("읽음 처리 완료", updated);
     }
 
-
     @GetMapping("/rooms/{roomId}/messages")
     public ApiResponse<ChatMessagePageRes> messages(
             @PathVariable Long roomId,

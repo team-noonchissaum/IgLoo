@@ -137,7 +137,4 @@ public class ChatMessageService {
         }
         return chatMessageRepository.markAllAsReadInRoom(roomId, userId);
     }
-
-
-
 }

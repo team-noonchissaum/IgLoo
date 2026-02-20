@@ -9,19 +9,14 @@ import java.time.LocalDateTime;
 @Getter
 @AllArgsConstructor
 public class ChatRoomRes {
-
     private Long roomId;
     private Long auctionId;
-
     private Long buyerId;
     private Long sellerId;
-
     private Long myUserId;
     private String myRole;        // BUYER / SELLER
-
     private Long opponentId;
     private String opponentRole;  // BUYER / SELLER
-
     private LocalDateTime createdAt;
 
     public static ChatRoomRes from(ChatRoom room, Long myUserId) {
