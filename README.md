@@ -64,13 +64,19 @@
 
 ## 시스템 아키텍처
 
-![System Architecture](https://github.com/user-attachments/assets/4f050954-49bc-46f6-a217-91553299a3c5)
+![System Architecture](https://github.com/user-attachments/assets/39bf4fa3-0e1d-4dc4-9250-7d54d3f5bf74)
+
+- 사용자는 Vercel에 배포된 React SPA로 접속, API 요청은 Nginx Reverse Proxy를 통해 Spring Boot 서버로 라우팅됨.
+- 실시간 경매 흐름은 STOMP/SockJS 기반 WSS 채널로 처리, 입찰 상태와 이벤트가 즉시 동기화됨.
+- 백엔드는 핵심 거래 데이터를 AWS RDS(MySQL)에 저장, Redis/Redisson으로 캐시와 분산 락을 관리함.
+- 이미지 업로드/조회는 S3 Object Storage 사용, AI 분석 요청은 FastAPI AI Service를 거쳐 OpenAI API로 전달됨.
+- 배포는 GitHub Actions가 Docker 이미지를 빌드해 Docker Hub에 반영, AWS 환경에 백엔드/AI 서비스로 배포됨.
 
 ---
 
 ## DB/ERD
 
-![ERD](https://github.com/user-attachments/assets/2d0bd266-3307-40ad-82cd-63b36e77df44)
+![ERD](https://github.com/user-attachments/assets/55b004c2-b4e1-4cbc-a816-6640b867c674)
 
 - DB 명세: [Notion DB 명세서](https://www.notion.so/DB-2ef4a9f8e43980c8a656fb2eb2f82daa)
 
