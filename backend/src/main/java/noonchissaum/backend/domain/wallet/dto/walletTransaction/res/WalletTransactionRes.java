@@ -3,7 +3,6 @@ package noonchissaum.backend.domain.wallet.dto.walletTransaction.res;
 import noonchissaum.backend.domain.wallet.entity.TransactionRefType;
 import noonchissaum.backend.domain.wallet.entity.TransactionType;
 import noonchissaum.backend.domain.wallet.entity.WalletTransaction;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 

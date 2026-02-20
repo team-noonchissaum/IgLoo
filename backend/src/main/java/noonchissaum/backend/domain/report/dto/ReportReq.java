@@ -1,7 +1,6 @@
 package noonchissaum.backend.domain.report.dto;
 
 import lombok.Getter;
-import noonchissaum.backend.domain.report.entity.Report;
 import noonchissaum.backend.domain.report.entity.ReportTargetType;
 
 @Getter

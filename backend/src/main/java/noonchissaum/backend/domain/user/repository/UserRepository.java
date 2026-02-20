@@ -8,14 +8,12 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
 import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User,Long> {
 
     Page<User> findByStatus(UserStatus status, Pageable pageable);
-
     boolean existsByNickname(String Nickname);
 
     // (마이페이지) user + wallet

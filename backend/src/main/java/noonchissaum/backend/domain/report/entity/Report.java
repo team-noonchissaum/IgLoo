@@ -5,7 +5,6 @@ import lombok.*;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
 import org.hibernate.annotations.Formula;
-
 import java.time.LocalDateTime;
 
 @Entity

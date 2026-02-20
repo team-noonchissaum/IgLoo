@@ -7,7 +7,6 @@ import noonchissaum.backend.global.exception.ErrorCode;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -42,7 +41,6 @@ public class UserLockExecutor {
     /**
      * Lock 안에서 작업한 값을 반환받아야 할 경우
      */
-
     public <T> T withUserLock(Long userId, Supplier<T> supplier) {
         return withUserLocks(List.of(userId), supplier);
     }

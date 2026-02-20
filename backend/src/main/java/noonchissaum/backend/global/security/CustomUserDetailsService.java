@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
  * 로컬 로그인용
  * security가 로컬 인증 시 사용
  */
-
 @Service
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {

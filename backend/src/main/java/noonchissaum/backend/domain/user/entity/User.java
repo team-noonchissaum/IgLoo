@@ -16,7 +16,6 @@ import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.hibernate.annotations.ColumnTransformer;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;

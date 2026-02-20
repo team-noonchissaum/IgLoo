@@ -16,7 +16,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 
 @Slf4j
@@ -29,7 +28,9 @@ public class MyPageService {
     private final WalletRepository walletRepository;
     private final AuctionService auctionService;
 
-    /**마이페이지 조회*/
+    /**
+     * 마이페이지
+     */
     public MyPageRes getMyPage(Long userId) {
         User user = userRepository.findByIdWithWallet(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
@@ -47,7 +48,9 @@ public class MyPageService {
                 wallet.getBalance()
         );
     }
-    /**사용자 지갑 정보 조회*/
+    /**
+     * 사용자 지갑 정보 조회
+     */
     public UserWalletRes getWallet(Long userId) {
         Wallet wallet = walletRepository.findByUserId(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));

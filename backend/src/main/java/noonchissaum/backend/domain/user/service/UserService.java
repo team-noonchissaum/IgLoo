@@ -42,8 +42,6 @@ public class UserService {
     private final CategorySubscriptionRepository categorySubscriptionRepository;
     private final WalletService walletService;
     private final StringRedisTemplate redisTemplate;
-    private final ItemService itemService;
-    private final LocationService locationService;
 
     /**본인 프로필 조회*/
     public ProfileRes getMyProfile(Long userId) {

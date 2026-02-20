@@ -23,14 +23,12 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-
 /**
  * Spring Security 설정
  * - JWT 기반 인증
  * - OAuth2 소셜 로그인
  * - 인증/인가 예외 시 JSON 응답 처리
  */
-
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -43,7 +41,6 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
-
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -117,7 +114,6 @@ public class SecurityConfig {
                         // coupon
                         .requestMatchers("/api/coupons/issues/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/api/coupons/**").hasRole("ADMIN")
-
                         .requestMatchers("/public/**").permitAll() // 지도 api 테스트용
 
                         //그 외 모두 차단
@@ -131,8 +127,6 @@ public class SecurityConfig {
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class);
-
-
         return http.build();
     }
     @Bean

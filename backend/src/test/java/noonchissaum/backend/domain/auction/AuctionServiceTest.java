@@ -2,7 +2,6 @@ package noonchissaum.backend.domain.auction;
 
 import noonchissaum.backend.domain.auction.dto.res.AuctionRes;
 import noonchissaum.backend.domain.auction.entity.Auction;
-import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.service.AuctionService;
 import noonchissaum.backend.domain.category.entity.Category;
@@ -12,7 +11,6 @@ import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.entity.UserRole;
 import noonchissaum.backend.domain.user.entity.UserStatus;
 import noonchissaum.backend.domain.user.service.UserService;
-import noonchissaum.backend.global.dto.LocationDto;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import noonchissaum.backend.global.service.LocationService;
@@ -26,14 +24,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;

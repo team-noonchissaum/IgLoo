@@ -19,12 +19,9 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import static org.springframework.transaction.event.TransactionPhase.AFTER_COMMIT;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-
-
 
 @Slf4j
 @Service
@@ -41,7 +38,6 @@ public class SettlementService {
 
         Long orderId = event.orderId();
         log.info("정산 시작: orderId={}", orderId);
-
 
         try {
             settleOnOrderConfirmed(orderId);
@@ -106,5 +102,4 @@ public class SettlementService {
             log.info("Settlement already created (orderId={})", orderId);
         }
     }
-
 }
