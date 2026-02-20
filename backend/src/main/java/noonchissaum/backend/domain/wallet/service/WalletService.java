@@ -152,23 +152,6 @@ public class WalletService {
             walletTransactionRecordService.record(wallet, TransactionType.SETTLEMENT_IN, amount, orderId);
         });
     }
-    @Transactional
-    public void settleFeeToPlatform(Long systemUserId, BigDecimal feeAmount, Long orderId) {
-        userLockExecutor.withUserLock(systemUserId, () -> {
-            Wallet wallet = walletRepository.findByUserId(systemUserId)
-                    .orElseThrow(() -> new ApiException(ErrorCode.SETTLEMENT_WALLET_NOT_FOUND));
-
-            wallet.addBalance(feeAmount);
-
-            String balanceKey = RedisKeys.userBalance(systemUserId);
-            if (Boolean.TRUE.equals(redisTemplate.hasKey(balanceKey))) {
-                redisTemplate.opsForValue().increment(balanceKey, feeAmount.longValue());
-            }
-
-            walletTransactionRecordService.record(wallet, TransactionType.SETTLEMENT_IN, feeAmount, orderId);
-        });
-    }
-
 
     public WalletRes getMyWallet(Long userId) {
         Wallet wallet = walletRepository.findByUserId(userId)

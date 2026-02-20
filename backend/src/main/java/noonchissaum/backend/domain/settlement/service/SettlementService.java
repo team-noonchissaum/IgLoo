@@ -76,7 +76,6 @@ public class SettlementService {
 
         Long buyerId = order.getBuyer().getId();
         Long sellerId = order.getSeller().getId();
-        Long systemUserId = settlementConfig.getSystemUserId();
 
         BigDecimal feeRate = settlementConfig.getFeeRate();
         if (feeRate == null) feeRate = new BigDecimal("0.10");
@@ -86,14 +85,12 @@ public class SettlementService {
 
         walletService.releaseBuyerLockedForOrder(buyerId, gross, orderId);
         walletService.settleToSellerForOrder(sellerId, net, orderId);
-        walletService.settleFeeToPlatform(systemUserId, fee, orderId);
 
         try {
             Settlement settlement = Settlement.builder()
                     .order(order)
                     .buyerId(buyerId)
                     .sellerId(sellerId)
-                    .platformUserId(systemUserId)
                     .grossAmount(gross)
                     .feeAmount(fee)
                     .netAmount(net)
