@@ -27,7 +27,7 @@ public class PendingBidScheduler {
     private final BidRecordService bidRecordService;
     private final WalletRepository walletRepository;
 
-    @Scheduled(fixedDelay = 5 * 60 * 1000) // 5분마다
+    @Scheduled(fixedDelay = 5 * 60 * 1000)
     public void reconcilePendingBids() {
 
         Set<String> requestIds =
@@ -41,11 +41,9 @@ public class PendingBidScheduler {
             Map<Object, Object> info =
                     redisTemplate.opsForHash().entries(infoKey);
 
-            // 이미 DB에 있으면 pending 삭제
+            // Already in DB: only cleanup pending markers.
             if (bidRepository.existsByRequestId(requestId)) {
-                redisTemplate.opsForSet()
-                        .remove(RedisKeys.pendingBidRequestsSet(), requestId);
-                redisTemplate.delete(infoKey);
+                cleanupPendingKeys(requestId, infoKey, info);
                 continue;
             }
 
@@ -66,7 +64,6 @@ public class PendingBidScheduler {
                                 ? BigDecimal.ZERO
                                 : new BigDecimal(rawRefund);
 
-                // Bid 저장
                 if (!bidRepository.existsByRequestId(requestId)) {
                     bidRecordService.saveBidRecord(
                             auctionId,
@@ -76,7 +73,6 @@ public class PendingBidScheduler {
                     );
                 }
 
-                // Wallet 저장
                 Wallet newWallet = walletRepository.findByUserId(userId)
                         .orElseThrow(() -> new ApiException(ErrorCode.CANNOT_FIND_WALLET));
                 newWallet.bid(bidAmount);
@@ -87,11 +83,33 @@ public class PendingBidScheduler {
                     prevWallet.bidCanceled(refundAmount);
                 }
 
+                cleanupPendingKeys(requestId, infoKey, info);
+
             } catch (Exception e) {
-                log.error("Pending bid 저장 실패. requestId={}, reason={}", requestId, e.toString());
-                // 스케줄러 전체 중단 방지: 다음 요청으로 진행
+                log.error("Pending bid reconciliation failed. requestId={}, reason={}", requestId, e.toString());
                 continue;
             }
         }
+    }
+
+    private void cleanupPendingKeys(String requestId, String infoKey, Map<Object, Object> info) {
+        redisTemplate.opsForSet().remove(RedisKeys.pendingBidRequestsSet(), requestId);
+
+        if (info != null && !info.isEmpty()) {
+            Object rawUserId = info.get("userId");
+            if (rawUserId instanceof String userId && !userId.isBlank()) {
+                redisTemplate.opsForSet().remove(RedisKeys.pendingUser(Long.parseLong(userId)), requestId);
+            }
+
+            Object rawPrev = info.get("previousBidderId");
+            if (rawPrev instanceof String prevUserId && !prevUserId.isBlank()) {
+                Long parsedPrevUserId = Long.parseLong(prevUserId);
+                if (parsedPrevUserId != -1L) {
+                    redisTemplate.opsForSet().remove(RedisKeys.pendingUser(parsedPrevUserId), requestId);
+                }
+            }
+        }
+
+        redisTemplate.delete(infoKey);
     }
 }
