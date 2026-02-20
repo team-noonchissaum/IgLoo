@@ -2,7 +2,6 @@ package noonchissaum.backend.domain.chat.dto.ws;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
 import java.time.LocalDateTime;
 
 @Getter

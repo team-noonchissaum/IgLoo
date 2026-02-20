@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import noonchissaum.backend.domain.auction.dto.req.AuctionRegisterReq;
-
 import java.util.List;
 
 @Getter

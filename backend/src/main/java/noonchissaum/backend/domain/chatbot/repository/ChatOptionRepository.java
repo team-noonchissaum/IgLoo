@@ -2,7 +2,6 @@ package noonchissaum.backend.domain.chatbot.repository;
 
 import noonchissaum.backend.domain.chatbot.entity.ChatOption;
 import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.List;
 import java.util.Optional;
 

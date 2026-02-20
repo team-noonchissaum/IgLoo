@@ -3,7 +3,6 @@ package noonchissaum.backend.domain.chat.dto.res;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import noonchissaum.backend.domain.chat.entity.ChatRoom;
-
 import java.time.LocalDateTime;
 
 @Getter

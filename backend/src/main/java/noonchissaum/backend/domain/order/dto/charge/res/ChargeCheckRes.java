@@ -2,7 +2,6 @@ package noonchissaum.backend.domain.order.dto.charge.res;
 
 import noonchissaum.backend.domain.order.entity.ChargeCheck;
 import noonchissaum.backend.domain.order.entity.CheckStatus;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 

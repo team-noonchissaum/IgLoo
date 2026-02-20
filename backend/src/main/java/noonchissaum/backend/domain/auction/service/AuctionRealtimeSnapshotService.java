@@ -5,7 +5,6 @@ import noonchissaum.backend.domain.auction.dto.ws.AuctionSnapshotPayload;
 import noonchissaum.backend.global.RedisKeys;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;

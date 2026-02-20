@@ -12,7 +12,6 @@ import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Set;

@@ -8,7 +8,6 @@ import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.item.entity.Item;
 import noonchissaum.backend.domain.item.entity.ItemImage;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 

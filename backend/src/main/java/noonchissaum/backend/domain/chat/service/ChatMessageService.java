@@ -17,7 +17,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import noonchissaum.backend.domain.chat.dto.res.ChatMessagePageRes;
 import noonchissaum.backend.domain.chat.dto.res.ChatMessageRes;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service

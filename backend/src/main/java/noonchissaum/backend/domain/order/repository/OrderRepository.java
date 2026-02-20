@@ -7,8 +7,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
-import org.springframework.data.jpa.repository.Modifying;
-
 import java.time.LocalDate;
 import java.util.List;
 
@@ -25,7 +23,6 @@ public interface OrderRepository extends JpaRepository<Order,Long> {
     Optional<Order> findByIdAndBuyerId(Long orderId, Long buyerId);
 
     Optional<Order> findByIdAndSellerId(Long orderId, Long sellerId);
-
     // 배송완료 + 3일 자동확정 (deliveredAt 기준)
     // 대상 조회 추가
     @Query(value = """

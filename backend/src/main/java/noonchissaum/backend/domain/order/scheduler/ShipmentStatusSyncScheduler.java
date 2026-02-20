@@ -1,19 +1,15 @@
 package noonchissaum.backend.domain.order.scheduler;
 
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import noonchissaum.backend.domain.order.entity.Shipment;
 import noonchissaum.backend.domain.order.repository.ShipmentRepository;
 import noonchissaum.backend.domain.order.client.SweetTrackerClient;
 import noonchissaum.backend.domain.order.dto.shipment.res.SweetTrackerTrackingInfoRes;
-
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.PageRequest;
-
 import java.time.LocalDateTime;
 import java.util.List;
 

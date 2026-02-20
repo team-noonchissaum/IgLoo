@@ -1,7 +1,6 @@
 package noonchissaum.backend.domain.auction.dto.res;
 
 import noonchissaum.backend.domain.auction.entity.AuctionStatus;
-
 import java.time.LocalDateTime;
 
 public record MyBidAuctionRes(

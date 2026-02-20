@@ -4,12 +4,10 @@ import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.global.RedisKeys;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
 @Service
 @RequiredArgsConstructor
 public class UserViewRedisLogger {

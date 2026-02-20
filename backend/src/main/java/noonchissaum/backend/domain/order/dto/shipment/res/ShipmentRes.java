@@ -10,15 +10,12 @@ import java.time.LocalDateTime;
 public class ShipmentRes {
     private Long shipmentId;
     private Long orderId;
-
     private String recipientName;
     private String recipientPhone;
     private String zipCode;
     private String address1;
     private String address2;
     private String deliveryMemo;
-
-
     private String carrierCode;
     private String trackingNumber;
     private String status;
