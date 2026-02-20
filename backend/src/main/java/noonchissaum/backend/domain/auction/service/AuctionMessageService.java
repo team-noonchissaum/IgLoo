@@ -31,7 +31,6 @@ public class AuctionMessageService {
         );
     }
 
-
     // 입찰 성공 브로드캐스트
     public void sendBidSucceeded(Long auctionId, BidSucceededPayload payload) {
         sendToAuctionTopic(auctionId, SocketMessageType.BID_SUCCESSED, payload);
@@ -44,7 +43,6 @@ public class AuctionMessageService {
     public void sendAuctionExtended(Long auctionId, AuctionExtendedPayload payload){
         sendToAuctionTopic(auctionId, SocketMessageType.AUCTION_EXTENDED, payload);
     }
-
 
     // 경매 전체 스냅샷 브로드캐스트 (주기적 중계용)
     public void sendAuctionSnapshot(Long auctionId, Object payload) {

@@ -1,7 +1,6 @@
 package noonchissaum.backend.global.handler;
 
 import noonchissaum.backend.domain.report.entity.ReportTargetType;
-import org.springframework.stereotype.Component;
 
 public interface ReportTargetHandler {
 

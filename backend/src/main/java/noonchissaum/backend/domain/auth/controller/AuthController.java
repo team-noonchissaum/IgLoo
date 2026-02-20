@@ -67,6 +67,4 @@ public class AuthController {
         authService.resetPassword(req.getToken(), req.getNewPassword());
         return ResponseEntity.ok(ApiResponse.success("비밀번호가 재설정되었습니다."));
     }
-
-
 }

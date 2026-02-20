@@ -12,7 +12,6 @@ import noonchissaum.backend.domain.item.entity.Item;
 import noonchissaum.backend.domain.item.repository.ItemRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.ArrayList;
 import java.util.List;
 

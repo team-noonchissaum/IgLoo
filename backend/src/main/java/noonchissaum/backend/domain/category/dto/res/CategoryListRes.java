@@ -16,7 +16,6 @@ public class CategoryListRes {
     private String name;
     private Long parentId;
 
-
     public static CategoryListRes from(Category c) {
         return CategoryListRes.builder()
                 .id(c.getId())

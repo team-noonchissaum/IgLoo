@@ -9,7 +9,6 @@ import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.category.entity.Category;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
-
 import java.util.ArrayList;
 import java.util.List;
 

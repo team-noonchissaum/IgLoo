@@ -2,8 +2,6 @@ package noonchissaum.backend.domain.wallet.controller;
 
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.wallet.dto.walletTransaction.res.WalletTransactionRes;
-import noonchissaum.backend.domain.wallet.dto.withdrawal.res.WithdrawalRes;
-import noonchissaum.backend.domain.wallet.entity.WalletTransaction;
 import noonchissaum.backend.domain.wallet.service.WalletTransactionService;
 import noonchissaum.backend.global.dto.ApiResponse;
 import noonchissaum.backend.global.security.UserPrincipal;

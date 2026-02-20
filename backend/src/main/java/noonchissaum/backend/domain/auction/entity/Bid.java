@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
-
 import java.math.BigDecimal;
 
 @Entity
@@ -33,7 +32,6 @@ public class Bid extends BaseTimeEntity {
 
     @Column(nullable = false)
     private String requestId;
-
 
     public Bid(Auction auction, User bidder, BigDecimal bidPrice , String requestId) {
         this.auction = auction;

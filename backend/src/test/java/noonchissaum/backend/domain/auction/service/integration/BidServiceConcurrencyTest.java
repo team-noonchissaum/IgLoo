@@ -23,7 +23,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -36,7 +35,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -100,7 +98,7 @@ public class BidServiceConcurrencyTest {
         // 2. 테스트용 경매 데이터 생성
         User seller = testUsers.get(0);
         Category category = categoryRepository.save(new Category("ccat-" + suffix, null));
-        Item item = itemRepository.save(new Item(seller, category, "concurrency-item-" + suffix, "desc", new BigDecimal("1000")));
+        Item item = itemRepository.save(new Item(seller, category, "concurrency-item-" + suffix, "desc"));
 
         testAuction = Auction.builder()
                 .item(item)
@@ -187,3 +185,4 @@ public class BidServiceConcurrencyTest {
         assertThat(numberOfThreads).isEqualTo(successCount + failureCount.get());
     }
 }
+

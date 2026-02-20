@@ -2,7 +2,6 @@ package noonchissaum.backend.global.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.global.dto.KakaoGeocodeRes;
 import noonchissaum.backend.global.dto.KakaoKeywordRes;
@@ -10,12 +9,9 @@ import noonchissaum.backend.global.dto.LocationDto;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -95,9 +91,6 @@ public class LocationService {
 
             String encodedAddress = URLEncoder.encode(address, StandardCharsets.UTF_8);
             String urlString = KAKAO_ADDRESS_URL + "?query=" + encodedAddress;
-
-//            log.info("=== 주소 검색 URL: {}", urlString);
-
             // URI 객체로 변환해서 이중 인코딩 방지
             URI uri = new URI(urlString);
             HttpEntity<Void> entity = new HttpEntity<>(headers);
@@ -108,8 +101,6 @@ public class LocationService {
                     entity,
                     KakaoGeocodeRes.class
             );
-
-//            log.info("주소 검색 응답: {}", response.getBody());
 
             KakaoGeocodeRes body = response.getBody();
             if (body == null || body.getDocuments() == null || body.getDocuments().isEmpty()) {
@@ -132,11 +123,6 @@ public class LocationService {
 
             String roadAddress = doc.getRoadAddress() != null
                     ? doc.getRoadAddress().getAddressName() : null;
-
-//            String jibunAddress = doc.getAddress() != null
-//                    ? doc.getAddress().getAddressName() : null;
-//            String dongFromJibun = extractDongFromAddress(jibunAddress);
-
 
             return LocationDto.builder()
                     .latitude(Double.parseDouble(doc.getY()))

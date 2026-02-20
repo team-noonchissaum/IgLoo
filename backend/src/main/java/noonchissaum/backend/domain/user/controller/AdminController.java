@@ -20,7 +20,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
@@ -33,7 +32,6 @@ public class AdminController {
     /**
      * 신고 목록 조회
      */
-
     @GetMapping("/reports")
     public ResponseEntity<ApiResponse<Page<AdminReportListRes>>> getReports(
             @RequestParam(required = false) String status,
@@ -47,7 +45,6 @@ public class AdminController {
     /**
      * 신고 상세 조회
      */
-
     @GetMapping("/reports/{reportId}")
     public ResponseEntity<ApiResponse<AdminReportDetailRes>> getReportDetail(@PathVariable Long reportId) {
         AdminReportDetailRes result = adminService.getReportDetail(reportId);
@@ -57,7 +54,6 @@ public class AdminController {
     /**
      * 신고 처리
      */
-
     @PatchMapping("/reports/{reportId}")
     public ResponseEntity<ApiResponse<Void>> processReport(
             @PathVariable Long reportId,
@@ -85,7 +81,6 @@ public class AdminController {
     /**
      * 일일 통계 조회
      */
-
     @GetMapping("/statistics")
     public ResponseEntity<ApiResponse<AdminStatisticsRes>> getStatistics(
             @RequestParam(required = false) String date // 날짜 파라미터
@@ -99,7 +94,6 @@ public class AdminController {
     /**
      * 사용자 목록 조회
      */
-
     @GetMapping("/users")
     public ResponseEntity<ApiResponse<Page<AdminUserListRes>>> getUsers(
             @RequestParam(required = false) String status,
@@ -113,7 +107,6 @@ public class AdminController {
     /**
      * 사용자 차단
      */
-
     @PatchMapping("/users/{userId}/block")
     public ResponseEntity<ApiResponse<AdminBlockUserRes>> blockUser(
             @PathVariable Long userId,
@@ -126,7 +119,6 @@ public class AdminController {
     /**
      * 사용자 차단 해제
      */
-
     @PatchMapping("/users/{userId}/unblock")
     public ResponseEntity<ApiResponse<Void>> unblockUser(@PathVariable Long userId) {
         adminService.unblockUser(userId);

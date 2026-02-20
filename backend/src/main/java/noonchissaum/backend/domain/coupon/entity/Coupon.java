@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
-
 import java.math.BigDecimal;
 import java.util.List;
 

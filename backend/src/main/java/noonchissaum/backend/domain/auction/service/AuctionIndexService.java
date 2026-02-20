@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.auction.redis.RedisIndexKeys;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 
 @Service

@@ -1,4 +1,5 @@
 package noonchissaum.backend.global.config;
+
 import noonchissaum.backend.domain.order.properties.SweetTrackerProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

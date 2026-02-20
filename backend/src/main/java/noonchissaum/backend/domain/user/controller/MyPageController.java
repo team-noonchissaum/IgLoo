@@ -2,13 +2,9 @@ package noonchissaum.backend.domain.user.controller;
 
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.auction.dto.res.AuctionRes;
-import noonchissaum.backend.domain.auction.dto.res.MyBidAuctionRes;
-import noonchissaum.backend.domain.auction.service.BidService;
 import noonchissaum.backend.domain.user.service.MyPageService;
 import noonchissaum.backend.domain.user.dto.response.MyPageRes;
-import noonchissaum.backend.domain.user.dto.response.UserWalletRes;
 import noonchissaum.backend.global.dto.ApiResponse;
-import noonchissaum.backend.global.dto.LocationUpdateReq;
 import noonchissaum.backend.global.security.UserPrincipal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

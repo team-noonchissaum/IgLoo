@@ -129,11 +129,7 @@ ai:
 app:
   base-url: ${BASE_URL:http://localhost:8080}
   front:
-    base-url: ${FRONT_BASE_URL:http://localhost:3000}
+    base-url: ${FRONT_BASE_URL}
     paths:
-      password-reset: ${FRONT_PASSWORD_RESET_PATH:/reset-password}
-      auction-detail: ${FRONT_AUCTION_DETAIL_PATH:/auctions/{auctionId}}
-#logging:
-#  level:
-#    org.hibernate.SQL: debug
-#    org.hibernate.orm.jdbc.bind: trace
+      password-reset: /reset-password
+      auction-detail: /auctions/{auctionId}

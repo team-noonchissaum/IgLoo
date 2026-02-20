@@ -1,7 +1,6 @@
 package noonchissaum.backend.domain.auction.dto.res;
 
 import noonchissaum.backend.domain.auction.entity.Bid;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 

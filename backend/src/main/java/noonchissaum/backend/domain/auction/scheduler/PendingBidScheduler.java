@@ -12,7 +12,6 @@ import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Set;
@@ -86,8 +85,7 @@ public class PendingBidScheduler {
                 cleanupPendingKeys(requestId, infoKey, info);
 
             } catch (Exception e) {
-                log.error("Pending bid reconciliation failed. requestId={}, reason={}", requestId, e.toString());
-                continue;
+                log.error("Pending bid 저장 실패. requestId={}, reason={}", requestId, e.toString());
             }
         }
     }

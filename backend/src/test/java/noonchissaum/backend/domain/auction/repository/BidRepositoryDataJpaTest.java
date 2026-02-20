@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.domain.*;
-
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -70,9 +69,9 @@ class BidRepositoryDataJpaTest {
         em.persist(c1);
 
         // ---------- Items ----------
-        i1 = new Item(u1, c1, "I1", "desc-1", BigDecimal.valueOf(1000));
-        i2 = new Item(u1, c1, "I2", "desc-2", BigDecimal.valueOf(1000));
-        i3 = new Item(u1, c1, "I3", "desc-3", BigDecimal.valueOf(1000));
+        i1 = new Item(u1, c1, "I1", "desc-1");
+        i2 = new Item(u1, c1, "I2", "desc-2");
+        i3 = new Item(u1, c1, "I3", "desc-3");
         em.persist(i1);
         em.persist(i2);
         em.persist(i3);
@@ -183,3 +182,4 @@ class BidRepositoryDataJpaTest {
         return auction;
     }
 }
+

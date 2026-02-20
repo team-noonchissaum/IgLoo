@@ -9,18 +9,15 @@ import noonchissaum.backend.domain.auction.entity.Auction;
 import noonchissaum.backend.domain.order.event.OrderConfirmedEvent;
 import noonchissaum.backend.domain.order.repository.OrderRepository;
 import noonchissaum.backend.domain.order.repository.ShipmentRepository;
-import noonchissaum.backend.domain.settlement.service.SettlementService;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-
 import java.time.LocalDate;
 
 @Service
