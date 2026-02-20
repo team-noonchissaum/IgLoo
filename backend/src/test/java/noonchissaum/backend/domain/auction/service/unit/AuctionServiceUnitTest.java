@@ -17,11 +17,9 @@ import noonchissaum.backend.domain.item.service.WishService;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.entity.UserRole;
 import noonchissaum.backend.domain.user.entity.UserStatus;
-import noonchissaum.backend.domain.user.repository.UserRepository;
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.ApiException;
-import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import noonchissaum.backend.global.recommendation.service.RecommendationService;
 import noonchissaum.backend.global.service.LocationService;
@@ -73,8 +71,6 @@ class AuctionServiceUnitTest {
     private RecommendationService recommendationService;
     @Mock
     private LocationService locationService;
-    @Mock
-    private UserRepository userRepository;
 
     @Test
     @DisplayName("경매 취소 시 생성 5분 이내면 보증금 환불 처리 후 취소")
@@ -105,13 +101,13 @@ class AuctionServiceUnitTest {
 
     @Test
     @DisplayName("경매 상세 조회 시 차단 상태면 AUCTION_BLOCKED 예외 던짐")
-    void getAuctionDetail_whenBlocked_throwsCustomException() {
+    void getAuctionDetail_whenBlocked_throwsApiException() {
         AuctionService service = createService();
         Auction auction = sampleAuction(300L, 8L, "detail-blocked");
         ReflectionTestUtils.setField(auction, "status", AuctionStatus.BLOCKED);
         when(auctionRepository.findById(300L)).thenReturn(Optional.of(auction));
 
-        CustomException ex = assertThrows(CustomException.class, () -> service.getAuctionDetail(8L, 300L));
+        ApiException ex = assertThrows(ApiException.class, () -> service.getAuctionDetail(8L, 300L));
 
         assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.AUCTION_BLOCKED);
     }
@@ -131,8 +127,7 @@ class AuctionServiceUnitTest {
                 walletService,
                 userViewRedisLogger,
                 recommendationService,
-                locationService,
-                userRepository
+                locationService
         );
     }
 
