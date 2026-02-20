@@ -135,7 +135,6 @@ class ShipmentServiceUnitTest {
                 .category(category)
                 .title("item")
                 .description("desc")
-                .startPrice(BigDecimal.valueOf(10000))
                 .build();
         ReflectionTestUtils.setField(item, "id", 15L);
 
@@ -171,3 +170,4 @@ class ShipmentServiceUnitTest {
         return user;
     }
 }
+

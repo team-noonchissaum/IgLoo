@@ -113,8 +113,8 @@ class BidServiceUnitTest {
                 .status(UserStatus.ACTIVE)
                 .build();
         Category category = new Category("cat-unit", null);
-        Item item1 = new Item(seller, category, "item-1", "desc", BigDecimal.valueOf(1000));
-        Item item2 = new Item(seller, category, "item-2", "desc", BigDecimal.valueOf(1000));
+        Item item1 = new Item(seller, category, "item-1", "desc");
+        Item item2 = new Item(seller, category, "item-2", "desc");
 
         Auction a1 = Auction.builder()
                 .item(item1)
@@ -204,3 +204,4 @@ class BidServiceUnitTest {
         verify(bidRepository).existsByRequestId("req-1");
     }
 }
+

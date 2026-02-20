@@ -116,7 +116,6 @@ class OrderServiceUnitTest {
                 .category(category)
                 .title("item")
                 .description("desc")
-                .startPrice(BigDecimal.valueOf(10000))
                 .build();
         ReflectionTestUtils.setField(item, "id", 5L);
 
@@ -152,3 +151,4 @@ class OrderServiceUnitTest {
         return user;
     }
 }
+

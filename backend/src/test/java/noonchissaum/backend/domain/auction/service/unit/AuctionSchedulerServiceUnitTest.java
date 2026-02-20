@@ -72,7 +72,7 @@ class AuctionSchedulerServiceUnitTest {
         );
         Auction a1 = sampleReadyAuction(101L, 11L, "scheduler-1");
         Auction a2 = sampleReadyAuction(102L, 12L, "scheduler-2");
-        when(auctionRepository.findReadyAuctions(any(), any())).thenReturn(Optional.of(List.of(a1, a2)));
+        when(auctionRepository.findReadyNormalAuctions(any(), any())).thenReturn(Optional.of(List.of(a1, a2)));
         when(categorySubscriptionRepository.findActiveUserEmailsByCategoryId(any())).thenReturn(List.of());
 
         int updated = service.expose(LocalDateTime.now());
@@ -139,7 +139,6 @@ class AuctionSchedulerServiceUnitTest {
                 .category(category)
                 .title("title-" + suffix)
                 .description("desc")
-                .startPrice(BigDecimal.valueOf(10000))
                 .build();
 
         Auction auction = Auction.builder()
@@ -153,3 +152,4 @@ class AuctionSchedulerServiceUnitTest {
         return auction;
     }
 }
+

@@ -203,7 +203,6 @@ class AuctionServiceHotDealTest {
                 .category(category)
                 .title("title")
                 .description("desc")
-                .startPrice(BigDecimal.valueOf(1000))
                 .build();
         ReflectionTestUtils.setField(item, "id", itemId);
         return item;
@@ -230,3 +229,4 @@ class AuctionServiceHotDealTest {
         return auction;
     }
 }
+

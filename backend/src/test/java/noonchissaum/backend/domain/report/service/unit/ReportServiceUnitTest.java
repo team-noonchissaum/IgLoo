@@ -135,7 +135,6 @@ class ReportServiceUnitTest {
                 .category(category)
                 .title("title-" + suffix)
                 .description("desc")
-                .startPrice(BigDecimal.valueOf(10000))
                 .build();
 
         Auction auction = Auction.builder()
@@ -158,3 +157,4 @@ class ReportServiceUnitTest {
         return req;
     }
 }
+

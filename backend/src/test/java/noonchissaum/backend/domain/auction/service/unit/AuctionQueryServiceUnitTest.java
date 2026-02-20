@@ -116,7 +116,6 @@ class AuctionQueryServiceUnitTest {
                 .category(category)
                 .title("item-" + suffix)
                 .description("desc")
-                .startPrice(BigDecimal.valueOf(price))
                 .build();
         ReflectionTestUtils.setField(item, "id", itemId);
 
@@ -130,3 +129,4 @@ class AuctionQueryServiceUnitTest {
         return auction;
     }
 }
+

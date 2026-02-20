@@ -107,9 +107,9 @@ class BidServiceQueryIntegrationTest {
         Category c1 = new Category("C1", null);
         em.persist(c1);
 
-        Item i1 = new Item(u1, c1, "I1", "desc-1", BigDecimal.valueOf(1000));
-        Item i2 = new Item(u1, c1, "I2", "desc-2", BigDecimal.valueOf(1000));
-        Item i3 = new Item(u1, c1, "I3", "desc-3", BigDecimal.valueOf(1000));
+        Item i1 = new Item(u1, c1, "I1", "desc-1");
+        Item i2 = new Item(u1, c1, "I2", "desc-2");
+        Item i3 = new Item(u1, c1, "I3", "desc-3");
         em.persist(i1);
         em.persist(i2);
         em.persist(i3);
@@ -215,3 +215,4 @@ class BidServiceQueryIntegrationTest {
         return auction;
     }
 }
+

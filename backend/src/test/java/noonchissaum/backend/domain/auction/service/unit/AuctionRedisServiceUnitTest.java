@@ -109,7 +109,6 @@ class AuctionRedisServiceUnitTest {
                 .category(category)
                 .title("auction-redis-item")
                 .description("desc")
-                .startPrice(BigDecimal.valueOf(10000))
                 .build();
 
         Auction auction = Auction.builder()
@@ -122,3 +121,4 @@ class AuctionRedisServiceUnitTest {
         return auction;
     }
 }
+
