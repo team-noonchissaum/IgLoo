@@ -3,7 +3,6 @@ package noonchissaum.backend.domain.inquiry.dto.res;
 import lombok.Builder;
 import lombok.Getter;
 import noonchissaum.backend.domain.inquiry.entity.Inquiry;
-
 import java.time.LocalDateTime;
 
 @Getter

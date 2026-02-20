@@ -13,9 +13,6 @@ public final class MoneyUtil {
         int rateAmount = (int) Math.ceil(startPrice * DEPOSIT_RATE);
         return Math.max(FIXED_MIN_DEPOSIT, rateAmount);
     }
-
-
-
     /**
      * 경매 시작가가 0원이면 첫입찰은 0원
      * 다음 입찰은 1000원부터 시작하고 10%씩 증가

@@ -6,17 +6,12 @@ import noonchissaum.backend.domain.order.entity.CheckStatus;
 import noonchissaum.backend.domain.order.repository.ChargeCheckRepository;
 import noonchissaum.backend.domain.order.service.ChargeRecordService;
 import noonchissaum.backend.domain.task.service.TaskService;
-import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.util.UserLockExecutor;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @Component
 @RequiredArgsConstructor

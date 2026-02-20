@@ -12,7 +12,6 @@ import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Set;
@@ -89,8 +88,6 @@ public class PendingBidScheduler {
 
             } catch (Exception e) {
                 log.error("Pending bid 저장 실패. requestId={}, reason={}", requestId, e.toString());
-                // 스케줄러 전체 중단 방지: 다음 요청으로 진행
-                continue;
             }
         }
     }

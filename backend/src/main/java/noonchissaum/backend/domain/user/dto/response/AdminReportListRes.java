@@ -2,13 +2,11 @@ package noonchissaum.backend.domain.user.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
 import java.time.LocalDateTime;
 
 /**
  * 신고 목록 조회 응답
  */
-
 @Getter
 @AllArgsConstructor
 public class AdminReportListRes {

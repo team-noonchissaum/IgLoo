@@ -10,7 +10,6 @@ import noonchissaum.backend.global.dto.ApiResponse;
 import noonchissaum.backend.global.security.UserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
@@ -50,7 +49,6 @@ public class ChatRoomController {
         int updated = chatMessageService.ReadMessage(roomId, userId);
         return ApiResponse.success("읽음 처리 완료", updated);
     }
-
 
     @GetMapping("/rooms/{roomId}/messages")
     public ApiResponse<ChatMessagePageRes> messages(

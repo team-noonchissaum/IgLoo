@@ -13,10 +13,8 @@ import noonchissaum.backend.domain.order.entity.Payment;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
 import noonchissaum.backend.global.exception.ApiException;
-import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.hibernate.annotations.ColumnTransformer;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -115,6 +113,9 @@ public class User extends BaseTimeEntity {
     }
     /** 위치 정보 업데이트(주소,위도 ,경도)*/
     public void updateLocation(String address, String dong, Double latitude, Double longitude) {
+        if (latitude == null || longitude == null) {
+            throw new ApiException(ErrorCode.SET_LOCATION_ERROR);
+        }
         this.address = address;
         this.dong = dong;
         this.latitude = latitude;
@@ -138,7 +139,7 @@ public class User extends BaseTimeEntity {
      */
     public void block(String reason) {
         if (this.status == UserStatus.BLOCKED) {
-            throw new CustomException(ErrorCode.USER_ALREADY_BLOCKED);
+            throw new ApiException(ErrorCode.USER_ALREADY_BLOCKED);
         }
         this.status = UserStatus.BLOCKED;
         this.blockedAt = LocalDateTime.now();
@@ -168,4 +169,9 @@ public class User extends BaseTimeEntity {
         this.status = UserStatus.DELETED;
         this.deletedAt = LocalDateTime.now();
     }
+
+    //test용
+    public void assignId(Long id){
+        this.id=id;
+;    }
 }

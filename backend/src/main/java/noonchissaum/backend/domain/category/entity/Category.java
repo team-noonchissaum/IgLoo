@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,5 +31,13 @@ public class Category {
     public Category(String name, Category parent) {
         this.name = name;
         this.parent = parent;
+    }
+    //테스트용
+    public Category(String name) {
+        this.name = name;
+        this.parent = null;
+    }
+    public void assignId(Long id) {
+        this.id = id;
     }
 }

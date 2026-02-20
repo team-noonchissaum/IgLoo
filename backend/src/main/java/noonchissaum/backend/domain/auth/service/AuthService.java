@@ -19,8 +19,6 @@ import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.security.JwtTokenProvider;
 import noonchissaum.backend.global.service.MailService;
-import noonchissaum.backend.global.exception.ApiException;
-import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

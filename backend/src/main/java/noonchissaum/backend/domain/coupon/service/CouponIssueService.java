@@ -15,17 +15,13 @@ import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
 import noonchissaum.backend.domain.task.service.TaskService;
 import noonchissaum.backend.domain.wallet.entity.TransactionType;
 import noonchissaum.backend.domain.wallet.entity.Wallet;
-import noonchissaum.backend.domain.wallet.repository.WalletRepository;
 import noonchissaum.backend.domain.wallet.service.WalletTransactionRecordService;
 import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.util.UserLockExecutor;

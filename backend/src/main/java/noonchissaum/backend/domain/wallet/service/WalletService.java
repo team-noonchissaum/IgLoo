@@ -15,7 +15,6 @@ import noonchissaum.backend.domain.wallet.repository.WalletTransactionRepository
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.time.Duration;
 
@@ -207,6 +206,4 @@ public class WalletService {
             redisTemplate.opsForValue().increment(prevLockedKey, previousBidderRelockAmount.longValue());
         }
     }
-
-
 }

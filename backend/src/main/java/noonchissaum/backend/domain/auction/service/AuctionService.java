@@ -10,20 +10,16 @@ import noonchissaum.backend.domain.auction.entity.AuctionStatus;
 import noonchissaum.backend.domain.auction.repository.AuctionRepository;
 import noonchissaum.backend.domain.auction.spec.AuctionSpecs;
 import noonchissaum.backend.domain.category.entity.Category;
-
 import noonchissaum.backend.domain.category.service.CategoryService;
 import noonchissaum.backend.domain.item.entity.Item;
-
 import noonchissaum.backend.domain.item.service.ItemService;
 import noonchissaum.backend.domain.item.service.UserViewRedisLogger;
 import noonchissaum.backend.domain.item.service.WishService;
 import noonchissaum.backend.domain.user.entity.User;
-import noonchissaum.backend.domain.user.repository.UserRepository;
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
 import noonchissaum.backend.global.RedisKeys;
 import noonchissaum.backend.global.exception.ApiException;
-import noonchissaum.backend.global.exception.CustomException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import noonchissaum.backend.global.recommendation.service.RecommendationService;
 import noonchissaum.backend.global.util.MoneyUtil;
@@ -36,7 +32,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -60,8 +55,6 @@ public class AuctionService {
     private final UserViewRedisLogger userViewRedisLogger; // 상세 조회 시 Redis 조회 로그 기록
     private final RecommendationService recommendationService; // 추천 서비스 주입
     private final LocationService locationService;
-    private final UserRepository userRepository;
-
 
     /**
      * 경매 등록을 처리한다.
@@ -124,18 +117,17 @@ public class AuctionService {
         );
     }
 
-
     /**
      * 경매 상세 조회.
      */
     public AuctionRes getAuctionDetail(Long userId, Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
 
         if (auction.getStatus() == AuctionStatus.TEMP_BLOCKED ||
                 auction.getStatus() == AuctionStatus.BLOCKED ||
                 auction.getStatus() == AuctionStatus.BLOCKED_ENDED) {
-            throw new CustomException(ErrorCode.AUCTION_BLOCKED);
+            throw new ApiException(ErrorCode.AUCTION_BLOCKED);
         }
 
         boolean isWished = wishService.isWished(userId, auction.getItem().getId());
@@ -356,8 +348,6 @@ public class AuctionService {
         );
     }
 
-
-
     /**
      * 핫딜 경매 등록
      * 플랫폼 내에서 이벤트 용으로 등록함으로 admin이 등록하도록 함
@@ -407,20 +397,20 @@ public class AuctionService {
     @Transactional
     public void cancelHotDeal(Long adminUserId, Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUCTIONS));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
 
         if (!Boolean.TRUE.equals(auction.getIsHotDeal())) {
-            throw new CustomException(ErrorCode.AUCTION_NOT_HOTDEAL);
+            throw new ApiException(ErrorCode.AUCTION_NOT_HOTDEAL);
         }
 
         // 시작 전(READY)만 취소 허용 (원하면 RUNNING도 허용 가능)
         if (auction.getStatus() != AuctionStatus.READY) {
-            throw new CustomException(ErrorCode.AUCTION_INVALID_STATUS);
+            throw new ApiException(ErrorCode.AUCTION_INVALID_STATUS);
         }
 
         // 입찰이 이미 있으면 취소 불가 (핫딜도 동일 정책이면 유지)
         if (auction.getBidCount() != null && auction.getBidCount() > 0) {
-            throw new CustomException(ErrorCode.AUCTION_HAS_BIDS);
+            throw new ApiException(ErrorCode.AUCTION_HAS_BIDS);
         }
 
         auction.cancel(); // status = CANCELED

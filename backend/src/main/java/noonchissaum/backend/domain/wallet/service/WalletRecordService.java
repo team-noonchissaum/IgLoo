@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-
 import java.math.BigDecimal;
 
 @Service
@@ -43,7 +42,6 @@ public class WalletRecordService {
     /**
      * 경매 차단 확정시 환불 로직
      */
-
     @Transactional
     public void refundBlockedAuctionBid(Long userId, BigDecimal refundAmount, Long auctionId) {
         Wallet wallet = walletRepository.findByUserId(userId)
@@ -89,5 +87,4 @@ public class WalletRecordService {
             walletTransactionRecordService.record(prevBidUserWallet, TransactionType.BID_HOLD, previousBidderRelockAmount, auctionId);
         }
     }
-
 }

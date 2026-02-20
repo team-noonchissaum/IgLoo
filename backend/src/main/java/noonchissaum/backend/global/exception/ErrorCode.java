@@ -224,7 +224,10 @@ public enum ErrorCode {
     ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "LOCATION-004", "입력한 주소를 찾을 수 없습니다"),
     LOCATION_API_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "LOCATION-005", "위치 조회 API 호출에 실패했습니다"),
     LOCATION_ENCODING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "LOCATION-006", "주소 인코딩에 실패했습니다"),
-    USER_LOCATION_NOT_SET(HttpStatus.BAD_REQUEST,"LOCATION-007","설정된 위치가 없습니다. 위치를 설정 해 주세요");
+    USER_LOCATION_NOT_SET(HttpStatus.BAD_REQUEST,"LOCATION-007","설정된 위치가 없습니다. 위치를 설정 해 주세요"),
+    ADDRESS_MISSMATCH(HttpStatus.BAD_REQUEST,"LOCATION-008","입력한 주소와 결과가 일치하지 않습니다. 정확한 주소를 입력해주세요."),
+    SET_LOCATION_ERROR(HttpStatus.BAD_REQUEST,"LOCATION-009","위도와 경도는 필수입니다");
+
 
 
     private final HttpStatus status;

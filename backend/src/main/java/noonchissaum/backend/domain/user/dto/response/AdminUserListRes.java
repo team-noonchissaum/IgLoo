@@ -5,13 +5,11 @@ import lombok.Getter;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.entity.UserRole;
 import noonchissaum.backend.domain.user.entity.UserStatus;
-
 import java.time.LocalDateTime;
 
 /**
  * 사용자 목록 조회 응답
  */
-
 @Getter
 @AllArgsConstructor
 public class AdminUserListRes {

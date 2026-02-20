@@ -4,11 +4,8 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import noonchissaum.backend.global.exception.ApiException;
-import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 

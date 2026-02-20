@@ -7,7 +7,6 @@ import lombok.Getter;
 public class ChatNextReq {
     @NotNull
     private Long nodeId;
-
     @NotNull
     private Long optionId;
 }

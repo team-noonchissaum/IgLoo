@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
-
 import java.time.LocalDate;
 
 @Entity

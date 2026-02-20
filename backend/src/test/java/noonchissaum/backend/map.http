@@ -147,3 +147,7 @@ GET http://localhost:8080/api/location/auctions/nearby?userId=5&radiusKm=20&page
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI1Iiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzA4ODE0OTQsImV4cCI6MTc3MDg4MzI5NH0.f14JWTLHQ_lJTq6ltjWQ4VAt-Ww36yrCPo-k_7Y5_ps
 Content-Type: application/json
 
+###
+GET http://localhost:8080/api/users/location/search?keyword=산초
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzA5NjkyMjgsImV4cCI6MTc3MDk3MTAyOH0.DYiYk8b45WtRlRDNbIrfg1SOJOgxSwgSLtNxz1wP32k
+Content-Type: application/json

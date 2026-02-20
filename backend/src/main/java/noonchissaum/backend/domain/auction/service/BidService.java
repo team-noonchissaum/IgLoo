@@ -57,7 +57,6 @@ public class BidService {
     private static final BigDecimal BID_INCREMENT_RATE = new BigDecimal("0.10");
     private static final BigDecimal MIN_BID_INCREMENT = new BigDecimal("100");
 
-
     public void placeBid(Long auctionId, Long userId, BigDecimal bidAmount, String requestId) {
         // 1. 멱등성 체크 (락 획득 전 수행하여 불필요한 대기 방지)
         // requestId는 FE가 UUID를 이용해서 담당
@@ -169,7 +168,6 @@ public class BidService {
 
                 //검증용 데이터 (Bid,Wallet 재저장용 데이터)
                 Map<String, String> bidInfo = getStringStringMap(auctionId, userId, bidAmount, requestId, previousBidderId, currentPrice);
-
 
                 String infoKey = RedisKeys.pendingBidInfo(requestId);
 

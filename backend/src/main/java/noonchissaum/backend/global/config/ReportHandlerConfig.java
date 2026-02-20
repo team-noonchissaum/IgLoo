@@ -5,7 +5,6 @@ import noonchissaum.backend.domain.report.entity.ReportTargetType;
 import noonchissaum.backend.global.handler.ReportTargetHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;

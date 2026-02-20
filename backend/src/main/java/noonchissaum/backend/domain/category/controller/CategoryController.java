@@ -8,7 +8,6 @@ import noonchissaum.backend.domain.category.service.CategoryService;
 import noonchissaum.backend.global.dto.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController

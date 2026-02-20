@@ -10,13 +10,12 @@ import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.entity.UserStatus;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 import noonchissaum.backend.domain.user.entity.UserRole;
-import noonchissaum.backend.global.exception.CustomException;
+import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
 import java.io.IOException;
 
 @Slf4j
@@ -43,12 +42,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Long userId = jwtTokenProvider.getUserId(token);
                 String roleStr = jwtTokenProvider.getRole(token);
 
-                User user = userRepository.findById(userId).orElseThrow(()->new CustomException(ErrorCode.USER_NOT_FOUND));
+                User user = userRepository.findById(userId).orElseThrow(()->new ApiException(ErrorCode.USER_NOT_FOUND));
                 if (user.getStatus() == UserStatus.BLOCKED) {
-                    throw new CustomException(ErrorCode.USER_BLOCKED);
+                    throw new ApiException(ErrorCode.USER_BLOCKED);
                 }
                 if (user.getStatus() == UserStatus.DELETED) {
-                    throw new CustomException(ErrorCode.USER_DELETED);
+                    throw new ApiException(ErrorCode.USER_DELETED);
                 }
 
                 UserRole role = UserRole.valueOf(roleStr);

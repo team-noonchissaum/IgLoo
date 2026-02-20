@@ -6,7 +6,6 @@ import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.global.entity.BaseTimeEntity;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;

@@ -10,7 +10,6 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
-
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.math.BigDecimal;
@@ -61,7 +60,6 @@ public class MailService {
                 </body>
                 </html>
                 """.formatted(resetLink, resetLink, resetLink);
-
         try {
             sendHtmlMail(toEmail, subject, html);
         } catch (MailException | MessagingException e) {
