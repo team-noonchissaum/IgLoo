@@ -6,12 +6,19 @@ import noonchissaum.backend.domain.user.dto.request.UserLocationUpdateReq;
 import noonchissaum.backend.domain.user.dto.response.UserLocationUpdateRes;
 import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.repository.UserRepository;
+import noonchissaum.backend.global.dto.KakaoGeocodeRes;
+import noonchissaum.backend.global.dto.KakaoKeywordRes;
 import noonchissaum.backend.global.dto.LocationDto;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import noonchissaum.backend.global.service.LocationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * 사용자 위치 관련 기능
@@ -43,6 +50,16 @@ public class UserLocationService {
         // 내부에서 주소 검색 실패 시 키워드 검색으로 fallback
         LocationDto locationDto = locationService.getCoordinates(req.getAddress());
 
+        // 주소 검증
+        if (locationDto == null) {
+            throw new ApiException(ErrorCode.ADDRESS_NOT_FOUND);
+        }
+
+        //사용자 입력과 비교
+        if (!isValidAddress(req.getAddress(), locationDto.getAddress())) {
+            throw new ApiException(ErrorCode.ADDRESS_MISSMATCH);
+        }
+
         // 주소에서 동 정보 추출
         String dong = extractDong(locationDto.getAddress(), locationDto.getJibunAddress());
 
@@ -73,6 +90,10 @@ public class UserLocationService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
+
+        if(user.getLatitude()==null||user.getLongitude()==null) {
+            throw new  ApiException(ErrorCode.USER_LOCATION_NOT_SET);
+        }
 
         return UserLocationUpdateRes.builder()
                 .latitude(user.getLatitude())
@@ -138,4 +159,21 @@ public class UserLocationService {
         log.warn("유효하지 않은 위경도 값입니다. address={}, lat={}, lon={}", address, latitude, longitude);
         throw new ApiException(ErrorCode.INVALID_LOCATION_PARAMS);
     }
+
+    /**
+     * 입력한 주소와 검색 결과가 유사한지 확인*/
+    private boolean isValidAddress(String userInput, String searchResult) {
+        String[] inputKeywords = userInput.split(" ");
+
+        for (String keyword : inputKeywords) {
+            if (keyword.length() >= 2) {
+                if (!searchResult.contains(keyword)) {
+                    log.warn("주소 검증 실패 - 입력: {}, 결과: {}", userInput, searchResult);
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
 }

@@ -19,6 +19,10 @@ import org.springframework.web.client.RestTemplate;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -82,7 +86,7 @@ public class LocationService {
     }
 
     /**
-     * 주소 검색 API (도로명/지번 주소)
+     * 주소 검색 API (도로명/지번 주소)->입력한 주소를 좌표로 변환
      */
     private LocationDto searchByAddress(String address) {
         try {
@@ -184,8 +188,8 @@ public class LocationService {
             String dongFromJibun = extractDongFromAddress(jibunAddress);//거기서 dong을 추출함
 
             return LocationDto.builder()
-                    .latitude(Double.parseDouble(doc.getY()))
-                    .longitude(Double.parseDouble(doc.getX()))
+                    .latitude(doc.getY())
+                    .longitude(doc.getX())
                     .address(doc.getRoadAddressName() != null ? doc.getRoadAddressName() : doc.getAddressName())
                     .jibunAddress(doc.getAddressName())
                     .dong(dongFromJibun)
@@ -248,6 +252,112 @@ public class LocationService {
 
         // 둘 다 없으면 마지막 부분 반환
         return parts.length > 0 ? parts[parts.length - 1] : null;
+    }
+
+    /**
+     * 키워드로 주소 검색 (자동완성용)
+     */
+    public List<KakaoKeywordRes.Document> searchAddressByKeyword(String keyword) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "KakaoAK " + kakaoRestApiKey);
+
+            String encodedKeyword = URLEncoder.encode(keyword, StandardCharsets.UTF_8);
+            String urlString = KAKAO_KEYWORD_URL + "?query=" + encodedKeyword
+                    + "&size=10";  // 최대 10개
+
+            URI uri = new URI(urlString);
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<KakaoKeywordRes> response = restTemplate.exchange(
+                    uri,
+                    HttpMethod.GET,
+                    entity,
+                    KakaoKeywordRes.class
+            );
+
+            KakaoKeywordRes body = response.getBody();
+            if (body == null || body.getDocuments() == null) {
+                return List.of();
+            }
+
+            return body.getDocuments();
+
+        } catch (Exception e) {
+            log.error("키워드 검색 실패: {}", e.getMessage());
+            return List.of();
+        }
+    }
+
+    /**키워드  기반 자동완성 주소검색 제공->정확한 위치 가져오기*/
+    public List<LocationDto> searchAddress(String keyword) {
+        if(keyword==null || keyword.isEmpty()){
+            throw new ApiException(ErrorCode.INVALID_ADDRESS);
+        }
+        try {
+            List<KakaoKeywordRes.Document> documents =
+                    this.searchAddressByKeyword(keyword);
+
+            if (documents == null || documents.isEmpty()) {
+                return List.of();
+            }
+
+            Set<String> uniqueAddresses = new LinkedHashSet<>();
+            List<LocationDto> suggestions = new ArrayList<>();
+
+            for (KakaoKeywordRes.Document doc : documents) {
+                String address = doc.getAddressName();
+
+                //검색어가 결과에 포함되었는지 확인->이게없으면 카카오 api특성상 키워드와 유사한장소를 찾음(키워드포함 혹은 관련장소)
+                if(!isValidAddress(keyword, address)) {
+                    log.warn("검색 결과 부정확 - 검색어: {}, 결과: {}", keyword, address);
+                    continue;
+                }
+
+                if (uniqueAddresses.contains(address)) {
+                    continue;
+                }
+                uniqueAddresses.add(address);
+
+                String roadAddress = doc.getRoadAddressName();
+                if (roadAddress == null || roadAddress.isBlank()) {
+                    roadAddress = null;
+                }
+                suggestions.add(LocationDto.builder()
+                        .address(roadAddress != null ? roadAddress : address)
+                        .jibunAddress(address)
+                        .latitude(doc.getY())
+                        .longitude(doc.getX())
+                        .dong(null)  // ← 아직 계산 안 함
+                        .build());
+
+                if (suggestions.size() >= 10) {
+                    break;
+                }
+            }
+
+            return suggestions;
+
+        } catch (Exception e) {
+            log.error("주소 검색 실패: {}", e.getMessage());
+            return List.of();
+        }
+    }
+    /**
+     * 입력한 주소와 검색 결과가 유사한지 확인
+     */
+    private boolean isValidAddress(String userInput, String searchResult) {
+        String[] inputKeywords = userInput.split(" ");
+
+        for (String keyword : inputKeywords) {
+            if (keyword.length() >= 2) {
+                if (!searchResult.contains(keyword)) {
+                    log.warn("주소 검증 실패 - 입력: {}, 결과: {}", userInput, searchResult);
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }
 
