@@ -16,7 +16,7 @@ import noonchissaum.backend.domain.user.entity.UserRole;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 import noonchissaum.backend.domain.user.service.UserService;
 import noonchissaum.backend.domain.wallet.service.WalletService;
-import noonchissaum.backend.global.exception.CustomException;
+import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import noonchissaum.backend.global.recommendation.service.RecommendationService;
 import noonchissaum.backend.global.service.LocationService;
@@ -129,8 +129,8 @@ class AuctionServiceHotDealTest {
         given(auctionRepository.findById(auctionId)).willReturn(Optional.of(normalAuction));
 
         assertThatThrownBy(() -> auctionService.cancelHotDeal(1L, auctionId))
-                .isInstanceOf(CustomException.class)
-                .extracting(ex -> ((CustomException) ex).getErrorCode())
+                .isInstanceOf(ApiException.class)
+                .extracting(ex -> ((ApiException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_REQUEST);
 
         verify(auctionRedisService, never()).cancelAuction(any());
@@ -144,8 +144,8 @@ class AuctionServiceHotDealTest {
         given(auctionRepository.findById(auctionId)).willReturn(Optional.of(runningHotDeal));
 
         assertThatThrownBy(() -> auctionService.cancelHotDeal(1L, auctionId))
-                .isInstanceOf(CustomException.class)
-                .extracting(ex -> ((CustomException) ex).getErrorCode())
+                .isInstanceOf(ApiException.class)
+                .extracting(ex -> ((ApiException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.AUCTION_INVALID_STATUS);
     }
 

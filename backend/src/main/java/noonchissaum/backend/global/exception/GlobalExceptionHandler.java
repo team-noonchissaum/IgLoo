@@ -16,24 +16,6 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /**
-     * CustomException 처리
-     * - 비즈니스 로직에서 발생한 의도된 예외
-     */
-    @ExceptionHandler(CustomException.class)
-    public ResponseEntity<Map<String, Object>> handleCustomException(CustomException e) {
-        ErrorCode errorCode = e.getErrorCode();
-        log.error("CustomException 발생: {}", errorCode.getMessage());
-
-        return ResponseEntity
-                .status(errorCode.getStatus())
-                .body(Map.of(
-                        "success", false,
-                        "code", errorCode.getCode(),
-                        "message", e.getMessage()
-                ));
-    }
-
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<Map<String, Object>> handleApiException(ApiException e) {
         ErrorCode errorCode = e.getErrorCode();
