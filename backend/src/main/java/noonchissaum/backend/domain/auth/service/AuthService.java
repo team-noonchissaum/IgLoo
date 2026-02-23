@@ -2,7 +2,6 @@ package noonchissaum.backend.domain.auth.service;
 
 import lombok.RequiredArgsConstructor;
 import noonchissaum.backend.domain.auth.dto.request.LoginReq;
-import noonchissaum.backend.domain.auth.dto.request.RefreshReq;
 import noonchissaum.backend.domain.auth.dto.request.SignupReq;
 import noonchissaum.backend.domain.auth.dto.response.LoginRes;
 import noonchissaum.backend.domain.auth.dto.response.RefreshRes;
@@ -180,9 +179,7 @@ public class AuthService {
     /**
      * 토큰 재발급(refresh)
      * */
-    public RefreshRes refresh(RefreshReq req) {
-        String refreshToken= req.getRefreshToken();
-
+    public RefreshRes refresh(String refreshToken) {
         if(!jwtTokenProvider.validateToken(refreshToken)) {
             throw new ApiException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
