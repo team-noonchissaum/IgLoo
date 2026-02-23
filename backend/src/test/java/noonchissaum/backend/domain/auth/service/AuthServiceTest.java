@@ -262,7 +262,7 @@ class AuthServiceTest {
                 .willReturn("newRefreshToken");
 
         // when
-        RefreshRes result = authService.refresh(req);
+        RefreshRes result = authService.refresh("validRefreshToken");
 
         // then
         assertEquals("newAccessToken", result.getAccessToken());
@@ -284,7 +284,7 @@ class AuthServiceTest {
 
         // when & then
         assertThrows(ApiException.class, () ->
-                authService.refresh(req));
+                authService.refresh("invalidToken"));
     }
 
     /* ================= 로그아웃 ================= */
