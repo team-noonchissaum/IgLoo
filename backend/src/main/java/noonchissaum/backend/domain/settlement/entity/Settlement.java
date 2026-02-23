@@ -39,9 +39,6 @@ public class Settlement extends BaseTimeEntity {
     @Column(name = "seller_id", nullable = false)
     private Long sellerId;
 
-    @Column(name = "platform_user_id", nullable = false)
-    private Long platformUserId;
-
     @Column(name = "gross_amount", precision = 15, scale = 0, nullable = false)
     private BigDecimal grossAmount; // 낙찰가
 

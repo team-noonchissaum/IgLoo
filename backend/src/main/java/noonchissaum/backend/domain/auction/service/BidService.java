@@ -204,7 +204,7 @@ public class BidService {
             throw e;
         } finally {
             // 락 해제
-            if (auctionLocked && lock.isHeldByCurrentThread()){
+            if (lock.isHeldByCurrentThread()){
                 lock.unlock();
             }
         }
