@@ -67,13 +67,17 @@ public class BidService {
 
         RLock lock = redissonClient.getLock(RedisKeys.auctionLock(auctionId));
         List<RLock> userLocks = new ArrayList<>();
+        boolean auctionLocked = false;
+        Long previousBidderId;
+        BigDecimal currentPrice;
         try{
-            boolean available = lock.tryLock(5, 2, TimeUnit.SECONDS);
+            boolean available = lock.tryLock(3, 3, TimeUnit.SECONDS);
             // 입찰 조건 확인 로직
 
             if (!available){
                 throw new ApiException(ErrorCode.BID_LOCK_ACQUISITION);
             }
+            auctionLocked = true;
             String priceKey = RedisKeys.auctionCurrentPrice(auctionId);
             String bidderKey = RedisKeys.auctionCurrentBidder(auctionId);
             String bidCount = RedisKeys.auctionCurrentBidCount(auctionId);
@@ -92,8 +96,8 @@ public class BidService {
 
             }
 
-            Long previousBidderId = !rawPreviousBidderId.isBlank() ? Long.parseLong(rawPreviousBidderId) : -1L;
-            BigDecimal currentPrice = new BigDecimal(rawPrice);
+            previousBidderId = !rawPreviousBidderId.isBlank() ? Long.parseLong(rawPreviousBidderId) : -1L;
+            currentPrice = new BigDecimal(rawPrice);
 
             //유저락 추가 - 이전 입찰자가 충전하는 도중 타 경매의
             List<Long> lockUserIds = new ArrayList<>();
@@ -123,24 +127,6 @@ public class BidService {
                 // previousBidderId가 null인 경우에는 신규 입찰자이므로 walletService에서 처리 필요
                 walletService.processBidWallet(userId, previousBidderId, bidAmount, currentPrice,auctionId,requestId);
 
-                eventPublisher.publishEvent(new DbUpdateEvent(userId, previousBidderId, bidAmount, currentPrice, auctionId, requestId));
-
-                // 경매 정보 및 시간 연장은 동기적으로 즉시 업데이트 (데이터 정합성 유지)
-                auctionRecordService.updateAuctionWithExtension(auctionId, userId, bidAmount);
-
-                // Stomp 메세지 발행 로직 - 갱신된 경매 정보로 payload 구성 (모든 시청자 화면 실시간 반영)
-                Auction updatedAuction = auctionRepository.findById(auctionId)
-                        .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
-                BidSucceededPayload bidSucceededPayload = BidSucceededPayload
-                        .builder()
-                        .auctionId(auctionId)
-                        .currentPrice(bidAmount.longValueExact())
-                        .currentBidderId(userId)
-                        .bidCount(updatedAuction.getBidCount())
-                        .endAt(updatedAuction.getEndAt())
-                        .build();
-                auctionMessageService.sendBidSucceeded(auctionId, bidSucceededPayload);
-
                 if (previousBidderId != -1L){
                     String msg = NotificationConstants.MSG_AUCTION_OUTBID;
                     OutbidPayload outbidPayload = OutbidPayload
@@ -151,13 +137,6 @@ public class BidService {
                             .message(msg)
                             .build();
                     auctionMessageService.sendOutbid(previousBidderId, outbidPayload);
-                    notificationService.create(
-                            previousBidderId,
-                            NotificationType.OUTBID,
-                            msg,
-                            NotificationConstants.REF_TYPE_AUCTION,
-                            auctionId
-                    );
                 }
 
                 Integer bidCountInt = Integer.parseInt(initialBidCount);
@@ -182,6 +161,40 @@ public class BidService {
                     redisTemplate.opsForSet().add(prevUserPendingKey, requestId);
                 }
             });
+
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+                auctionLocked = false;
+            }
+
+            eventPublisher.publishEvent(new DbUpdateEvent(userId, previousBidderId, bidAmount, currentPrice, auctionId, requestId));
+
+            // 경매 정보 및 시간 연장은 동기적으로 즉시 업데이트 (데이터 정합성 유지)
+            auctionRecordService.updateAuctionWithExtension(auctionId, userId, bidAmount);
+
+            // Stomp 메세지 발행 로직 - 갱신된 경매 정보로 payload 구성 (모든 시청자 화면 실시간 반영)
+            Auction updatedAuction = auctionRepository.findById(auctionId)
+                    .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_AUCTIONS));
+            BidSucceededPayload bidSucceededPayload = BidSucceededPayload
+                    .builder()
+                    .auctionId(auctionId)
+                    .currentPrice(bidAmount.longValueExact())
+                    .currentBidderId(userId)
+                    .bidCount(updatedAuction.getBidCount())
+                    .endAt(updatedAuction.getEndAt())
+                    .build();
+            auctionMessageService.sendBidSucceeded(auctionId, bidSucceededPayload);
+
+            if (previousBidderId != -1L){
+                String msg = NotificationConstants.MSG_AUCTION_OUTBID;
+                notificationService.create(
+                        previousBidderId,
+                        NotificationType.OUTBID,
+                        msg,
+                        NotificationConstants.REF_TYPE_AUCTION,
+                        auctionId
+                );
+            }
         }
         catch (InterruptedException e){
             Thread.currentThread().interrupt();
@@ -191,7 +204,7 @@ public class BidService {
             throw e;
         } finally {
             // 락 해제
-            if (lock.isHeldByCurrentThread()){
+            if (auctionLocked && lock.isHeldByCurrentThread()){
                 lock.unlock();
             }
         }
