@@ -79,7 +79,7 @@
 
 ![ERD](https://github.com/user-attachments/assets/55b004c2-b4e1-4cbc-a816-6640b867c674)
 
-- DB 명세: [Notion DB 명세서](https://www.notion.so/DB-2ef4a9f8e43980c8a656fb2eb2f82daa)
+- DB 명세: [Notion DB 명세서](https://free-nutmeg-5e5.notion.site/DB-2ef4a9f8e43980c8a656fb2eb2f82daa)
 
 ---
 
@@ -233,7 +233,7 @@ cd backend
 - API 서버 (로컬): `http://localhost:8080`
 - 인증: JWT 기반 인증/인가 (Spring Security)
 - 실시간 통신: STOMP(WebSocket) 기반 경매/알림 메시징
-- API 명세: [Notion API 명세서](https://www.notion.so/API-2f04a9f8e4398062bd14c52c4864f5ea)
+- API 명세: [Notion API 명세서](https://free-nutmeg-5e5.notion.site/API-2f04a9f8e4398062bd14c52c4864f5ea)
 - 보조 문서: [거래 흐름](docs/used-market-flow.md), [구현 로그](docs/used-market-implementation-log.md)
 
 ---
