@@ -58,7 +58,7 @@ public class Wallet extends BaseTimeEntity {
     }
 
     public void bid(BigDecimal amount) {
-        if (this.balance.compareTo(amount) <= 0) {
+        if (this.balance.compareTo(amount) < 0) {
             throw new ApiException(ErrorCode.INSUFFICIENT_BALANCE);
         }
         this.balance = this.balance.subtract(amount);

@@ -58,12 +58,12 @@ Content-Type: application/json
 %}
 
 ###
-PUT http://localhost:8080/api/mypage/location?userId=4
+PUT http://localhost:8080/api/users/location?userId=3
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI0Iiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzA4NjA0OTEsImV4cCI6MTc3MDg2MjI5MX0.Z2Piw8ogH1eW-AyjCVY4cta4cMFtKH0zcnRH5M18d88
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzE5MDU4NjAsImV4cCI6MTc3MTkwNzY2MH0.fUnc06nYW66qs2D1AMo7vaIOG-lreceFiMXrf1Mk-SM
 
 {
-  "address": "서울시 강남구 역삼동"
+  "address": "서울 송파구 올림픽로 393"
 }
 
 ###
@@ -85,7 +85,7 @@ GET http://localhost:8080/api/auctions?page=0&size=20
 
 ###
 GET http://localhost:8080/api/location/auctions/nearby?userId=3&radiusKm=1&page=0&size=20
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzA4NjE1NDgsImV4cCI6MTc3MDg2MzM0OH0.xDSpRefybJosCugeOTV_guI11RjxhgBZaERFK2fJ-3o
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzE5MDU4NjAsImV4cCI6MTc3MTkwNzY2MH0.fUnc06nYW66qs2D1AMo7vaIOG-lreceFiMXrf1Mk-SM
 
 ###
 GET http://localhost:8080/api/location/auctions/nearby?userId=3&radiusKm=1&page=0&size=20
