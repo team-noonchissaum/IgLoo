@@ -10,6 +10,7 @@ import noonchissaum.backend.domain.user.entity.User;
 import noonchissaum.backend.domain.user.entity.UserStatus;
 import noonchissaum.backend.domain.user.repository.UserRepository;
 import noonchissaum.backend.domain.user.entity.UserRole;
+import noonchissaum.backend.domain.user.service.UserCacheService;
 import noonchissaum.backend.global.exception.ApiException;
 import noonchissaum.backend.global.exception.ErrorCode;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,6 +26,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
+    private final UserCacheService userCacheService;
 
     @Override
     protected void doFilterInternal(
@@ -42,7 +44,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Long userId = jwtTokenProvider.getUserId(token);
                 String roleStr = jwtTokenProvider.getRole(token);
 
-                User user = userRepository.findById(userId).orElseThrow(()->new ApiException(ErrorCode.USER_NOT_FOUND));
+                SecurityUserCache user = userCacheService.getUser(userId);
+
+//                User user = userRepository.findById(userId).orElseThrow(()->new ApiException(ErrorCode.USER_NOT_FOUND));
                 if (user.getStatus() == UserStatus.BLOCKED) {
                     throw new ApiException(ErrorCode.USER_BLOCKED);
                 }
@@ -50,8 +54,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     throw new ApiException(ErrorCode.USER_DELETED);
                 }
 
-                UserRole role = UserRole.valueOf(roleStr);
+                UserRole role = UserRole.valueOf(user.getRole());
+
                 UserPrincipal principal = UserPrincipal.of(userId, role);
+//                UserRole role = UserRole.valueOf(roleStr);
+//                UserPrincipal principal = UserPrincipal.of(userId, role);
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(

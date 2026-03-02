@@ -35,6 +35,8 @@ public final class RedisKeys {
         return "user:*:views";
     }
 
+    public static String userCache(Long userId) { return "user:" + userId + ":cache"; }
+
     /**
      * item view trending (hour bucket)
      */
